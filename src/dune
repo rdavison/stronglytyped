@@ -1,0 +1,6 @@
+(library
+ (name ypou)
+ (libraries core core_unix.command_unix incremental)
+ (preprocess
+  (pps ppx_jane ppx_jsonaf_conv))
+ (flags :standard -open Core))
