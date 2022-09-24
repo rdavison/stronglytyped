@@ -1,0 +1,29 @@
+{
+  "name": "ypounercds",
+  "version": "0.0.1",
+  "description": "Keyboard analysis",
+  "esy": {
+    "build": "dune build --root #{self.root} --profile=prod @install",
+    "buildDev": "dune build --root #{self.root} --profile=dev @all",
+    "buildsInSource": "_build"
+  },
+  "dependencies": {
+    "@opam/core": "v0.15.0",
+    "@opam/core_unix": "*",
+    "@opam/incremental": "*",
+    "@opam/jsonaf": "*",
+    "@opam/dune": "*",
+    "@opam/ppx_blob": "*",
+    "@opam/ppx_jane": "*",
+    "@opam/ppx_jsonaf_conv": "*",
+    "@opam/shexp": "*",
+    "@opam/ppx_deriving_yojson": "*",
+    "ocaml": "4.14.0"
+  },
+  "devDependencies": {
+    "@opam/ocaml-lsp-server": "*",
+    "@opam/ocamlformat": "*",
+    "@opam/ocamlformat-rpc": "*"
+  },
+  "resolutions": {}
+}
