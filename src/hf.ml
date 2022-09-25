@@ -1,3 +1,5 @@
+open! Import
+
 module T = struct
   type t = Hand.t * Finger.t [@@deriving sexp, compare, hash, equal]
 end
