@@ -16,7 +16,7 @@ let anneal ~kmax ~config =
     match !best with
     | None -> actually_set_best s_new
     | Some (s : Analysis.t) ->
-      if Float.( < ) s.score s_new.score then actually_set_best s_new else ()
+      if Float.( < ) s_new.score s.score then actually_set_best s_new else ()
   in
   let node = Incr.observe (Analysis.v ~config) in
   let observations = ref 0 in
