@@ -1,4 +1,4 @@
-open! Core
+open! Import
 
 module P = struct
   open Command.Param
