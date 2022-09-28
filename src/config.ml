@@ -33,7 +33,7 @@ let skipgrams =
 ;;
 
 let w_sfb = return 1.
-let w_dsfb = return 0.5
+let w_dsfb = return 2.
 
 let w_weight =
   return
@@ -51,8 +51,12 @@ let w_weight =
 ;;
 
 let w_rolls = return 1.
-let neighbour = return (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2 ])))
+let w_lsbs = return 1.
+let neighbour = return (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3 ])))
 let kmax = return 1_000_000
+let progress_v = Var.create 0.
+let progress = Var.watch progress_v
+let set_progress i = Var.set progress_v i
 
 let incr =
   let open Let_syntax in

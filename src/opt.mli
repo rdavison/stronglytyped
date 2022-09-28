@@ -1,3 +1,3 @@
 open! Import
 
-val anneal : Analysis.t list Incr.t
+val anneal : (Analysis.t list * Analysis.t list) Incr.t

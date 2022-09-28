@@ -5,10 +5,11 @@ type t =
   { sfb : float Hf.Table.t
   ; dsfb : float Hf.Table.t
   ; rolls : Roll.t Hf.Table.t
+  ; lsbs : Lsb.t Hand.Table.t
   ; weight : float Hf.Table.t
   }
 
-let make sfb dsfb rolls weight = { sfb; dsfb; rolls; weight }
+let make sfb dsfb rolls lsbs weight = { sfb; dsfb; rolls; lsbs; weight }
 
 let incr : t Incr.t =
   let open Let_syntax in
@@ -34,5 +35,5 @@ let incr : t Incr.t =
     |> all
     |> map ~f:Hf.Table.of_alist_exn
   in
-  map4 sfb dsfb Roll.incr weight ~f:make
+  map5 sfb dsfb Roll.incr Lsb.incr weight ~f:make
 ;;

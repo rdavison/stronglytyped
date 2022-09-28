@@ -1,19 +1,35 @@
 open! Import
 
+let acceptance_curve ?(a = 3.) ?(b = 20.) x =
+  (1. -. (x ** (1. /. a))) *. (Float.cos (x *. Float.pi *. b) +. 1.) /. 2.
+;;
+
 let anneal =
-  let best = ref [] in
-  let actually_set_best ({ Analysis.score; layout = _; pretty } as analysis) =
+  let true_best = ref [] in
+  let accepted_best = ref [] in
+  let set_best ({ Analysis.score; layout = _; pretty } as analysis) =
     printf "Score: %f\n%s\n" score pretty;
-    best := analysis :: !best
+    accepted_best := analysis :: !accepted_best;
+    (match !true_best with
+    | [] -> true_best := analysis :: !true_best
+    | (true_best' : Analysis.t) :: _ ->
+      if Float.( < ) score true_best'.score
+      then true_best := analysis :: !true_best
+      else ());
+    !accepted_best, !true_best
   in
-  let set_best (s_new : Analysis.t) =
-    match !best with
-    | [] -> actually_set_best s_new
-    | (s_prev : Analysis.t) :: _ ->
-      if Float.( < ) s_new.score s_prev.score then actually_set_best s_new else ()
+  let accept_or_reject pct s_old s_new =
+    match Float.( < ) s_new s_old with
+    | true -> `Accept
+    | false ->
+      let probability = acceptance_curve pct in
+      if Float.( < ) (Random.float 1.0) probability then `Accept else `Reject
   in
-  let open Incr.Let_syntax in
-  let%map analysis = Analysis.incr in
-  set_best analysis;
-  !best
+  Incr.map2 Config.progress Analysis.incr ~f:(fun progress s_new ->
+      match !accepted_best with
+      | [] -> set_best s_new
+      | (s_old : Analysis.t) :: _ ->
+        (match accept_or_reject progress s_old.score s_new.score with
+        | `Accept -> set_best s_new
+        | `Reject -> !accepted_best, !true_best))
 ;;
