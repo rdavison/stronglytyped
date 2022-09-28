@@ -1,6 +1,16 @@
 open! Import
 
-let base = ref Root.qwerty
+let base =
+  ref
+    (let b = Bytes.of_string Root.qwerty in
+     for _ = 1 to 50 do
+       let i, j = Random.int2 30 in
+       let tmp = Bytes.get b i in
+       Bytes.set b i (Bytes.get b j);
+       Bytes.set b j tmp
+     done;
+     Bytes.to_string b)
+;;
 
 let stabilize () =
   Incr.stabilize ();
@@ -19,7 +29,7 @@ let main =
        let () =
          Incr.observe Opt.anneal
          |> Incr.Observer.on_update_exn ~f:(function
-                | Initialized (best :: _) | Changed (_, best :: _) ->
+                | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
                   incr observations;
                   let { Analysis.score; layout; pretty } = best in
                   base := layout;
@@ -33,6 +43,7 @@ let main =
              for k = 1 to kmax do
                let pct = Float.of_int k /. Float.of_int kmax in
                neighbour pct;
+               Config.set_progress pct;
                stabilize ()
              done)
        in

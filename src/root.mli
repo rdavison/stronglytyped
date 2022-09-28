@@ -6,4 +6,5 @@ val qwerty : string
 val all : t array
 val swap : int -> int -> unit
 val rebase : string -> unit
+val scramble : int -> unit
 val length : int
