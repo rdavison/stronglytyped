@@ -6,7 +6,6 @@ let main =
     (let%map_open.Command () = return () in
      fun () ->
        let observations = ref 0 in
-       let span = ref None in
        let observer = Incr.observe (Incr.both Config.kmax Config.neighbour) in
        Incr.stabilize ();
        let kmax, neighbour = Incr.Observer.value_exn observer in
@@ -21,7 +20,7 @@ let main =
        in
        Incr.stabilize ();
        Incr.save_dot_to_file "ypounercds.dot";
-       let span', _ =
+       let span, _ =
          time_it (fun () ->
              for k = 1 to kmax do
                let pct = Float.of_int k /. Float.of_int kmax in
@@ -29,8 +28,6 @@ let main =
                Incr.stabilize ()
              done)
        in
-       span := Some span';
-       let span = Option.value_exn !span in
        printf
          "Analyzed %s layouts, observed changes %s times. Time elapsed: %s\n"
          (Int.to_string_hum kmax)
