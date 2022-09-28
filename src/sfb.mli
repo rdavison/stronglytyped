@@ -1,6 +1,6 @@
 open! Import
 
-type t = float Incr.t Hf.Table.t
+type t = float
 
-val make : Key.t list -> bigrams:float String.Table.t -> float
-val v : bigrams:float String.Table.t -> t
+val make : Key.t list -> bigrams:float String.Table.t -> t
+val table : bigrams:float String.Table.t -> t Incr.t Hf.Table.t

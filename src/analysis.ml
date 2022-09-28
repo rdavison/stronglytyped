@@ -6,7 +6,4 @@ type t =
   ; pretty : Pretty.t
   }
 
-let v ~config =
-  let score = Score.incr ~config in
-  map2 score Pretty.v ~f:(fun score pretty -> { score; pretty })
-;;
+let incr = map2 Score.incr Pretty.incr ~f:(fun score pretty -> { score; pretty })

@@ -1,9 +1,9 @@
 open! Import
 open! Incr
 
-type t = char Var.t array
+type t = char Var.t
 
-let v =
+let all =
   "qwertyuiopasdfghjkl;zxcvbnm,./"
   |> String.to_list
   |> List.map ~f:(fun c -> Var.create c)
@@ -11,9 +11,9 @@ let v =
 ;;
 
 let swap a b =
-  let tmp = Var.value v.(a) in
-  Var.set v.(a) (Var.value v.(b));
-  Var.set v.(b) tmp
+  let tmp = Var.value all.(a) in
+  Var.set all.(a) (Var.value all.(b));
+  Var.set all.(b) tmp
 ;;
 
-let length = Array.length v
+let length = Array.length all

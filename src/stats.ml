@@ -8,16 +8,18 @@ type t =
 
 let make sfb weight = { sfb; weight }
 
-let incr ~(config : Config.t) : t Incr.t =
+let incr : t Incr.t =
+  let open Let_syntax in
+  let%bind config = Config.incr in
   let sfb =
-    Sfb.v ~bigrams:config.bigrams
+    Sfb.table ~bigrams:config.bigrams
     |> Hf.Table.to_alist
     |> List.map ~f:(fun (key, data) -> map data ~f:(fun data -> key, data))
     |> all
     |> map ~f:Hf.Table.of_alist_exn
   in
   let weight =
-    Weight.v ~monograms:config.monograms
+    Weight.table ~monograms:config.monograms
     |> Hf.Table.to_alist
     |> List.map ~f:(fun (key, data) -> map data ~f:(fun data -> key, data))
     |> all

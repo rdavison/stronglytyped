@@ -1,7 +1,7 @@
 open! Import
 open! Incr
 
-type t = float Incr.t Hf.Table.t
+type t = float
 
 let make keys ~bigrams =
   List.fold keys ~init:0. ~f:(fun init k1 ->
@@ -20,4 +20,4 @@ let make keys ~bigrams =
                 ~default:(fun () -> 0.))))
 ;;
 
-let v ~bigrams : t = By_hf.v |> Hf.Table.map ~f:(map ~f:(make ~bigrams))
+let table ~bigrams = By_hf.table |> Hf.Table.map ~f:(map ~f:(make ~bigrams))

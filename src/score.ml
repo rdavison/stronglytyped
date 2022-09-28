@@ -12,4 +12,4 @@ let make { Stats.sfb; weight } =
   Random.float 1.
 ;;
 
-let incr ~config : t Incr.t = map (Stats.incr ~config) ~f:make
+let incr : t Incr.t = map Stats.incr ~f:make
