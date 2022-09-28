@@ -3,27 +3,33 @@ open! Incr
 
 type t = float
 
-let make { Stats.sfb; dsfb; weight } =
+let make { Stats.sfb; dsfb; rolls; weight } ~w_sfb ~w_dsfb ~w_weight ~w_rolls =
   let total_sfb = List.sum (module Float) (Hf.Table.data sfb) ~f:Fn.id in
   let total_dsfb = List.sum (module Float) (Hf.Table.data dsfb) ~f:Fn.id in
-  let w_weight =
-    Hf.Table.mapi weight ~f:(fun ~key:(_, f) ~data ->
-        let mult =
-          1.
-          -.
-          match f with
-          | `P -> 1.5 /. 5.5
-          | `R -> 3.6 /. 5.5
-          | `M -> 4.8 /. 5.5
-          | `I -> 5.5 /. 5.5
-        in
-        mult *. data)
-  in
+  let total_rolls = List.sum (module Roll) (Hf.Table.data rolls) ~f:Fn.id in
   let total_w_weight =
-    List.sum (module Float) (Hf.Table.data w_weight) ~f:Fn.id
-    /. Float.of_int (Hf.Table.length w_weight)
+    let inea =
+      Hf.Table.mapi weight ~f:(fun ~key ~data ->
+          let _, f = key in
+          Finger.Table.find_exn w_weight f *. data)
+    in
+    List.sum (module Float) (Hf.Table.data inea) ~f:Fn.id
+    /. Float.of_int (Finger.Table.length w_weight)
   in
-  (0.25 *. total_sfb) +. (0.125 *. total_dsfb) +. ((1. -. 0.25 -. 0.125) *. total_w_weight)
+  (w_sfb *. total_sfb)
+  +. (w_dsfb *. total_dsfb)
+  +. total_w_weight
+  +. (w_rolls *. (1. -. total_rolls.inward))
+  +. (w_rolls *. (1. -. total_rolls.outward))
 ;;
 
-let incr : t Incr.t = map Stats.incr ~f:make
+let incr : t Incr.t =
+  map5
+    Config.w_sfb
+    Config.w_dsfb
+    Config.w_weight
+    Config.w_rolls
+    Stats.incr
+    ~f:(fun w_sfb w_dsfb w_weight w_rolls stats ->
+      make stats ~w_sfb ~w_dsfb ~w_weight ~w_rolls)
+;;
