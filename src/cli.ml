@@ -19,6 +19,7 @@ let main =
                   printf "Score: %.4f\n%s\n%!" score pretty
                 | _ -> ())
        in
+       Incr.stabilize ();
        let span', _ =
          time_it (fun () ->
              for k = 1 to kmax do
