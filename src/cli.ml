@@ -1,5 +1,12 @@
 open! Import
 
+let base = ref Root.qwerty
+
+let stabilize () =
+  Incr.stabilize ();
+  Root.rebase !base
+;;
+
 let main =
   Command.basic
     ~summary:"Ypou Nercds"
@@ -7,25 +14,26 @@ let main =
      fun () ->
        let observations = ref 0 in
        let observer = Incr.observe (Incr.both Config.kmax Config.neighbour) in
-       Incr.stabilize ();
+       stabilize ();
        let kmax, neighbour = Incr.Observer.value_exn observer in
        let () =
          Incr.observe Opt.anneal
          |> Incr.Observer.on_update_exn ~f:(function
                 | Initialized (best :: _) | Changed (_, best :: _) ->
                   incr observations;
-                  let { Analysis.score; pretty } = best in
+                  let { Analysis.score; layout; pretty } = best in
+                  base := layout;
                   printf "Score: %.4f\n%s\n%!" score pretty
                 | _ -> ())
        in
-       Incr.stabilize ();
+       stabilize ();
        Incr.save_dot_to_file "ypounercds.dot";
        let span, _ =
          time_it (fun () ->
              for k = 1 to kmax do
                let pct = Float.of_int k /. Float.of_int kmax in
                neighbour pct;
-               Incr.stabilize ()
+               stabilize ()
              done)
        in
        printf
