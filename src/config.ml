@@ -15,8 +15,8 @@ let n v =
 
 let monograms = map Corpus.incr ~f:(fun v -> n v.Corpus.singles)
 let bigrams = map Corpus.incr ~f:(fun v -> n v.Corpus.s1)
-let neighbour = return (Neighbour.make (Neighbour.Config.make (`Const 1)))
-let kmax = return 1_000_000
+let neighbour = return (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2 ])))
+let kmax = return 10_000_000
 
 let incr =
   let open Let_syntax in
