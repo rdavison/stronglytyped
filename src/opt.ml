@@ -2,7 +2,7 @@ open! Import
 
 let anneal =
   let best = ref [] in
-  let actually_set_best ({ Analysis.score; pretty } as analysis) =
+  let actually_set_best ({ Analysis.score; layout = _; pretty } as analysis) =
     printf "Score: %f\n%s\n" score pretty;
     best := analysis :: !best
   in
