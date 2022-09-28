@@ -1,3 +1,4 @@
 open! Import
 
-val main : Command.t
+val main : unit -> unit
+val command : Command.t
