@@ -8,8 +8,13 @@ type t =
   ; kmax : int
   }
 
-let monograms = return (Char.Table.create ())
-let bigrams = return (String.Table.create ())
+let n v =
+  let total = Hashtbl.data v |> List.sum (module Float) ~f:Fn.id in
+  Hashtbl.map v ~f:(fun x -> x /. total)
+;;
+
+let monograms = map Corpus.incr ~f:(fun v -> n v.Corpus.singles)
+let bigrams = map Corpus.incr ~f:(fun v -> n v.Corpus.s1)
 let neighbour = return (Neighbour.make (Neighbour.Config.make (`Const 1)))
 let kmax = return 1_000_000
 
