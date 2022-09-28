@@ -6,6 +6,7 @@ module Config : sig
     [ `Const of int
     | `Linear
     | `Curved of int
+    | `Random of int list
     ]
 
   type t
