@@ -5,6 +5,7 @@ module Config = struct
     [ `Const of int
     | `Linear
     | `Curved of int
+    | `Random of int list
     ]
 
   type t =
@@ -15,7 +16,7 @@ module Config = struct
   let make ?(max_swaps_at_once = 10) kind =
     let () =
       match kind with
-      | `Const _ | `Linear -> ()
+      | `Const _ | `Linear | `Random _ -> ()
       | `Curved a ->
         if a > 0 && a mod 2 = 0
         then ()
@@ -36,6 +37,10 @@ let make (t : Config.t) : t =
     | `Const n -> Fn.const n
     | `Linear -> curve 1.
     | `Curved a -> curve (Int.to_float a)
+    | `Random lst ->
+      let arr = Array.of_list lst in
+      let len = Array.length arr in
+      fun _ -> arr.(Random.int len)
   in
   fun x ->
     for _ = 1 to num_swaps x do
