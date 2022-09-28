@@ -1,0 +1,6 @@
+(install
+ (section
+  (site
+   (ypounercds corpus)))
+ (files
+  (data.json as data.json)))

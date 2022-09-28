@@ -1,6 +1,10 @@
 (library
  (name ypou)
- (libraries core core_unix.command_unix incremental)
+ (libraries core core_unix.command_unix incremental jsonaf dune-site)
  (preprocess
-  (pps ppx_jane ppx_jsonaf_conv))
+  (pps ppx_jane))
  (flags :standard -open Core))
+
+(generate_sites_module
+ (module sites)
+ (sites ypounercds))
