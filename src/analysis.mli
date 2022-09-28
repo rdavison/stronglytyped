@@ -5,4 +5,4 @@ type t =
   ; pretty : Pretty.t
   }
 
-val v : config:Config.t -> t Incr.t
+val incr : t Incr.t

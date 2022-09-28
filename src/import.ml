@@ -9,16 +9,11 @@ let time_it f =
   span, res
 ;;
 
-let rec rand2 ~cache x =
-  let i, j = Random.int x, Random.int x in
-  let return y =
-    cache := Some y;
-    y
-  in
-  if i <> j
-  then (
-    match !cache with
-    | None -> return (i, j)
-    | Some (i', j') -> if i = i' && j = j' then rand2 ~cache x else return (i, j))
-  else rand2 ~cache x
-;;
+module Random = struct
+  include Random
+
+  let rec int2 x =
+    let i, j = Random.int x, Random.int x in
+    if i <> j then i, j else int2 x
+  ;;
+end

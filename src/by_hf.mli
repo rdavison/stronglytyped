@@ -1,5 +1,5 @@
 open! Import
 
-type t = Key.t list Incr.t Hf.Table.t
+type t = Key.t list
 
-val v : t
+val table : t Incr.t Hf.Table.t

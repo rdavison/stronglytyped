@@ -24,4 +24,4 @@ let make i c : t =
   { code; rc = r, c; hand; finger }
 ;;
 
-let all = Array.mapi Root.v ~f:(fun i v -> map (Var.watch v) ~f:(make i))
+let all = Array.mapi Root.all ~f:(fun i v -> map (Var.watch v) ~f:(make i))

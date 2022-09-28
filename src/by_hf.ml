@@ -1,9 +1,9 @@
 open! Import
 open! Incr
 
-type t = Key.t list Incr.t Hf.Table.t
+type t = Key.t list
 
-let v =
+let table =
   let ks cols =
     List.concat_map cols ~f:(fun c ->
         [ Key.all.(index 0 c); Key.all.(index 1 c); Key.all.(index 2 c) ])

@@ -1,7 +1,7 @@
 open! Import
 open! Incr
 
-type t = float Incr.t Hf.Table.t
+type t = float
 
 let make keys ~monograms =
   List.fold keys ~init:0. ~f:(fun acc key ->
@@ -11,4 +11,4 @@ let make keys ~monograms =
       | `Char code -> Char.Table.find_or_add monograms code ~default:(fun () -> 0.))
 ;;
 
-let v ~monograms : t = By_hf.v |> Hf.Table.map ~f:(map ~f:(make ~monograms))
+let table ~monograms = By_hf.table |> Hf.Table.map ~f:(map ~f:(make ~monograms))

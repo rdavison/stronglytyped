@@ -1,5 +1,5 @@
 open! Import
 
-type t = Key.t list Incr.t Hand.Table.t
+type t = Key.t list
 
-val v : t
+val table : t Incr.t Hand.Table.t

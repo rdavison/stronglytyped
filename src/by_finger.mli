@@ -1,5 +1,5 @@
 open! Import
 
-type t = Key.t list Incr.t Finger.Table.t
+type t = Key.t list
 
-val v : t
+val table : t Incr.t Finger.Table.t

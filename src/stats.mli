@@ -6,4 +6,4 @@ type t =
   }
 
 val make : float Hf.Table.t -> float Hf.Table.t -> t
-val incr : config:Config.t -> t Incr.t
+val incr : t Incr.t
