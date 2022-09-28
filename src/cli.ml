@@ -20,6 +20,7 @@ let main =
                 | _ -> ())
        in
        Incr.stabilize ();
+       Incr.save_dot_to_file "ypounercds.dot";
        let span', _ =
          time_it (fun () ->
              for k = 1 to kmax do
