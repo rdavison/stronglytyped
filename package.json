@@ -20,7 +20,8 @@
   "devDependencies": {
     "@opam/ocaml-lsp-server": "*",
     "@opam/ocamlformat": "*",
-    "@opam/ocamlformat-rpc": "*"
+    "@opam/ocamlformat-rpc": "*",
+    "@opam/js_of_ocaml-compiler": "*"
   },
   "resolutions": {}
 }

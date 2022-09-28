@@ -1,0 +1,1 @@
+let () = Ypou.Cli.main ()
