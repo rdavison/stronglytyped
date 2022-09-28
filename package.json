@@ -13,11 +13,8 @@
     "@opam/incremental": "*",
     "@opam/jsonaf": "*",
     "@opam/dune": "*",
-    "@opam/ppx_blob": "*",
+    "@opam/dune-site": "*",
     "@opam/ppx_jane": "*",
-    "@opam/ppx_jsonaf_conv": "*",
-    "@opam/shexp": "*",
-    "@opam/ppx_deriving_yojson": "*",
     "ocaml": "4.14.0"
   },
   "devDependencies": {
