@@ -1,14 +1,6 @@
 open! Import
 open! Incr
 
-type t =
-  { monograms : float Char.Table.t
-  ; bigrams : float String.Table.t
-  ; skipgrams : float String.Table.t
-  ; neighbour : Neighbour.t
-  ; kmax : int
-  }
-
 let n v =
   let total = Hashtbl.data v |> List.sum (module Float) ~f:Fn.id in
   Hashtbl.map v ~f:(fun x -> x /. total)
@@ -57,13 +49,3 @@ let kmax = return 1_000_000
 let progress_v = Var.create 0.
 let progress = Var.watch progress_v
 let set_progress i = Var.set progress_v i
-
-let incr =
-  let open Let_syntax in
-  let%map_open monograms = monograms
-  and bigrams = bigrams
-  and skipgrams = skipgrams
-  and neighbour = neighbour
-  and kmax = kmax in
-  { monograms; bigrams; skipgrams; neighbour; kmax }
-;;

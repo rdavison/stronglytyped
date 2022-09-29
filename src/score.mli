@@ -3,7 +3,11 @@ open! Import
 type t = float
 
 val make
-  :  Stats.t
+  :  sfb:Sfb.t Hf.Table.t
+  -> dsfb:Dsfb.t Hf.Table.t
+  -> roll:Roll.t Hf.Table.t
+  -> lsb:Lsb.t Hand.Table.t
+  -> weight:Weight.t Hf.Table.t
   -> w_sfb:float
   -> w_dsfb:float
   -> w_weight:float Finger.Table.t

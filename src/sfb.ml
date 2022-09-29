@@ -20,4 +20,12 @@ let make keys ~bigrams =
                 ~default:(fun () -> 0.))))
 ;;
 
-let table ~bigrams = By_hf.table |> Hf.Table.map ~f:(map ~f:(make ~bigrams))
+let incr =
+  let%bind.Incr bigrams = Config.bigrams in
+  By_hf.table
+  |> Hf.Table.map ~f:(map ~f:(make ~bigrams))
+  |> Hf.Table.to_alist
+  |> List.map ~f:(fun (key, data) -> map data ~f:(fun data -> key, data))
+  |> all
+  |> map ~f:Hf.Table.of_alist_exn
+;;
