@@ -13,6 +13,7 @@ type t =
   ; singles : float Char.Table.t
   ; triples : float String.Table.t
   }
+[@@deriving sexp]
 
 module Parse = struct
   type t =
@@ -28,74 +29,20 @@ module Parse = struct
     ; singles : float Char.Table.t option
     ; triples : float String.Table.t option
     }
+  [@@deriving sexp]
 
-  let empty =
-    { s1 = None
-    ; s2 = None
-    ; s3 = None
-    ; s4 = None
-    ; s5 = None
-    ; s6 = None
-    ; s7 = None
-    ; s8 = None
-    ; s9 = None
-    ; singles = None
-    ; triples = None
-    }
-  ;;
+  let data_v = Incr.Var.create ""
+  let set_data = Incr.Var.set data_v
+  let data = Incr.Var.watch data_v
 
   let incr =
-    let json =
-      let path =
-        match Sites.Sites.corpus with
-        | [ path ] -> path ^/ "data.json"
-        | _ -> failwith "No path to corpus"
-      in
-      Jsonaf.of_string (In_channel.read_all path)
-    in
-    let v =
-      let assoc = Jsonaf.assoc_list_exn json in
-      List.fold assoc ~init:empty ~f:(fun acc (key, json) ->
-          if String.is_suffix key ~suffix:"-skipgram"
-          then (
-            let s =
-              Jsonaf.assoc_list_exn json
-              |> List.Assoc.map ~f:Jsonaf.float_exn
-              |> String.Table.of_alist_exn
-            in
-            match key.[0] with
-            | '1' -> { acc with s1 = Some s }
-            | '2' -> { acc with s2 = Some s }
-            | '3' -> { acc with s3 = Some s }
-            | '4' -> { acc with s4 = Some s }
-            | '5' -> { acc with s5 = Some s }
-            | '6' -> { acc with s6 = Some s }
-            | '7' -> { acc with s7 = Some s }
-            | '8' -> { acc with s8 = Some s }
-            | '9' -> { acc with s9 = Some s }
-            | _ -> failwithf "Invalid field %s" key ())
-          else if String.equal key "singles"
-          then (
-            let s =
-              Jsonaf.assoc_list_exn json
-              |> List.Assoc.map ~f:Jsonaf.float_exn
-              |> List.map ~f:(fun (k, v) -> k.[0], v)
-              |> Char.Table.of_alist_exn
-            in
-            { acc with singles = Some s })
-          else if String.equal key "triples"
-          then (
-            let s =
-              Jsonaf.assoc_list_exn json
-              |> List.Assoc.map ~f:Jsonaf.float_exn
-              |> String.Table.of_alist_exn
-            in
-            { acc with triples = Some s })
-          else acc)
-    in
+    let%bind.Incr data = data in
+    let v = t_of_sexp (Sexp.of_string data) in
     Incr.return v
   ;;
 end
+
+let set_data = Parse.set_data
 
 let incr =
   Incr.map

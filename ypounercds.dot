@@ -1,76 +1,82 @@
 digraph G {
   rankdir = BT
-  n1010 [shape=Mrecord label="{{n1010|Const|height=0}}" ]
-  n103 [shape=Mrecord label="{{n103|Map2|height=16}}" ]
-  n81 -> n103
-  n102 -> n103
-  n81 [shape=Mrecord label="{{n81|Var|height=0}}" ]
-  n102 [shape=Mrecord label="{{n102|Map2|height=15}}" ]
-  n99 -> n102
-  n101 -> n102
-  n99 [shape=Mrecord label="{{n99|Map6|height=14}}" ]
-  n74 -> n99
-  n75 -> n99
-  n76 -> n99
-  n77 -> n99
-  n78 -> n99
-  n98 -> n99
-  n74 [shape=Mrecord label="{{n74|Const|height=0}}" ]
-  n75 [shape=Mrecord label="{{n75|Const|height=0}}" ]
+  n1012 [shape=Mrecord label="{{n1012|Const|height=0}}" ]
+  n105 [shape=Mrecord label="{{n105|Map2|height=19}}" ]
+  n83 -> n105
+  n104 -> n105
+  n83 [shape=Mrecord label="{{n83|Var|height=0}}" ]
+  n104 [shape=Mrecord label="{{n104|Map2|height=18}}" ]
+  n101 -> n104
+  n103 -> n104
+  n101 [shape=Mrecord label="{{n101|Map6|height=17}}" ]
+  n76 -> n101
+  n77 -> n101
+  n78 -> n101
+  n79 -> n101
+  n80 -> n101
+  n100 -> n101
   n76 [shape=Mrecord label="{{n76|Const|height=0}}" ]
   n77 [shape=Mrecord label="{{n77|Const|height=0}}" ]
   n78 [shape=Mrecord label="{{n78|Const|height=0}}" ]
-  n98 [shape=Mrecord label="{{n98|Bind_main|height=13}}" ]
-  n97 -> n98
-  n1065 -> n98
-  n97 [shape=Mrecord label="{{n97|Bind_lhs_change|height=7}}" ]
-  n86 -> n97
-  n86 [shape=Mrecord label="{{n86|Map|height=6}}" ]
-  n85 -> n86
-  n85 [shape=Mrecord label="{{n85|Map2|height=5}}" ]
-  n71 -> n85
-  n84 -> n85
-  n71 [shape=Mrecord label="{{n71|Map|height=2}}" ]
-  n70 -> n71
-  n70 [shape=Mrecord label="{{n70|Map|height=1}}" ]
-  n69 -> n70
-  n69 [shape=Mrecord label="{{n69|Const|height=0}}" ]
-  n84 [shape=Mrecord label="{{n84|Map2|height=4}}" ]
-  n72 -> n84
-  n83 -> n84
-  n72 [shape=Mrecord label="{{n72|Map|height=2}}" ]
-  n70 -> n72
-  n83 [shape=Mrecord label="{{n83|Map2|height=3}}" ]
-  n73 -> n83
-  n82 -> n83
-  n73 [shape=Mrecord label="{{n73|Map|height=2}}" ]
-  n70 -> n73
-  n82 [shape=Mrecord label="{{n82|Map2|height=1}}" ]
-  n79 -> n82
-  n80 -> n82
   n79 [shape=Mrecord label="{{n79|Const|height=0}}" ]
   n80 [shape=Mrecord label="{{n80|Const|height=0}}" ]
-  n1065 [shape=Mrecord label="{{n1065|Map5|height=12}}" ]
-  n1028 -> n1065
-  n1046 -> n1065
-  n96 -> n1065
-  n88 -> n1065
-  n1064 -> n1065
-  n1028 [shape=Mrecord label="{{n1028|Map|height=11}}" ]
-  n1027 -> n1028
-  n1027 [shape=Mrecord label="{{n1027|Array_fold|height=10}}" ]
-  n1026 -> n1027
-  n1025 -> n1027
-  n1024 -> n1027
-  n1023 -> n1027
-  n1022 -> n1027
-  n1021 -> n1027
-  n1020 -> n1027
-  n1019 -> n1027
-  n1026 [shape=Mrecord label="{{n1026|Map|height=9}}" ]
-  n1011 -> n1026
-  n1011 [shape=Mrecord label="{{n1011|Map|height=8}}" ]
-  n64 -> n1011
+  n100 [shape=Mrecord label="{{n100|Bind_main|height=16}}" ]
+  n99 -> n100
+  n1068 -> n100
+  n99 [shape=Mrecord label="{{n99|Bind_lhs_change|height=10}}" ]
+  n88 -> n99
+  n88 [shape=Mrecord label="{{n88|Map|height=9}}" ]
+  n87 -> n88
+  n87 [shape=Mrecord label="{{n87|Map2|height=8}}" ]
+  n73 -> n87
+  n86 -> n87
+  n73 [shape=Mrecord label="{{n73|Map|height=5}}" ]
+  n72 -> n73
+  n72 [shape=Mrecord label="{{n72|Map|height=4}}" ]
+  n71 -> n72
+  n71 [shape=Mrecord label="{{n71|Bind_main|height=3}}" ]
+  n70 -> n71
+  n1013 -> n71
+  n70 [shape=Mrecord label="{{n70|Bind_lhs_change|height=1}}" ]
+  n69 -> n70
+  n69 [shape=Mrecord label="{{n69|Var|height=0}}" ]
+  n1013 [shape=Mrecord label="{{n1013|Const|height=2}}" ]
+  n86 [shape=Mrecord label="{{n86|Map2|height=7}}" ]
+  n74 -> n86
+  n85 -> n86
+  n74 [shape=Mrecord label="{{n74|Map|height=5}}" ]
+  n72 -> n74
+  n85 [shape=Mrecord label="{{n85|Map2|height=6}}" ]
+  n75 -> n85
+  n84 -> n85
+  n75 [shape=Mrecord label="{{n75|Map|height=5}}" ]
+  n72 -> n75
+  n84 [shape=Mrecord label="{{n84|Map2|height=1}}" ]
+  n81 -> n84
+  n82 -> n84
+  n81 [shape=Mrecord label="{{n81|Const|height=0}}" ]
+  n82 [shape=Mrecord label="{{n82|Const|height=0}}" ]
+  n1068 [shape=Mrecord label="{{n1068|Map5|height=15}}" ]
+  n1031 -> n1068
+  n1049 -> n1068
+  n98 -> n1068
+  n90 -> n1068
+  n1067 -> n1068
+  n1031 [shape=Mrecord label="{{n1031|Map|height=14}}" ]
+  n1030 -> n1031
+  n1030 [shape=Mrecord label="{{n1030|Array_fold|height=13}}" ]
+  n1029 -> n1030
+  n1028 -> n1030
+  n1027 -> n1030
+  n1026 -> n1030
+  n1025 -> n1030
+  n1024 -> n1030
+  n1023 -> n1030
+  n1022 -> n1030
+  n1029 [shape=Mrecord label="{{n1029|Map|height=12}}" ]
+  n1014 -> n1029
+  n1014 [shape=Mrecord label="{{n1014|Map|height=11}}" ]
+  n64 -> n1014
   n64 [shape=Mrecord label="{{n64|Array_fold|height=2}}" ]
   n55 -> n64
   n45 -> n64
@@ -96,10 +102,10 @@ digraph G {
   n34 [shape=Mrecord label="{{n34|Map|height=1}}" ]
   n4 -> n34
   n4 [shape=Mrecord label="{{n4|Var|height=0}}" ]
-  n1025 [shape=Mrecord label="{{n1025|Map|height=9}}" ]
-  n1012 -> n1025
-  n1012 [shape=Mrecord label="{{n1012|Map|height=8}}" ]
-  n61 -> n1012
+  n1028 [shape=Mrecord label="{{n1028|Map|height=12}}" ]
+  n1015 -> n1028
+  n1015 [shape=Mrecord label="{{n1015|Map|height=11}}" ]
+  n61 -> n1015
   n61 [shape=Mrecord label="{{n61|Array_fold|height=2}}" ]
   n51 -> n61
   n41 -> n61
@@ -113,10 +119,10 @@ digraph G {
   n31 [shape=Mrecord label="{{n31|Map|height=1}}" ]
   n1 -> n31
   n1 [shape=Mrecord label="{{n1|Var|height=0}}" ]
-  n1024 [shape=Mrecord label="{{n1024|Map|height=9}}" ]
-  n1013 -> n1024
-  n1013 [shape=Mrecord label="{{n1013|Map|height=8}}" ]
-  n67 -> n1013
+  n1027 [shape=Mrecord label="{{n1027|Map|height=12}}" ]
+  n1016 -> n1027
+  n1016 [shape=Mrecord label="{{n1016|Map|height=11}}" ]
+  n67 -> n1016
   n67 [shape=Mrecord label="{{n67|Array_fold|height=2}}" ]
   n58 -> n67
   n48 -> n67
@@ -130,10 +136,10 @@ digraph G {
   n38 [shape=Mrecord label="{{n38|Map|height=1}}" ]
   n8 -> n38
   n8 [shape=Mrecord label="{{n8|Var|height=0}}" ]
-  n1023 [shape=Mrecord label="{{n1023|Map|height=9}}" ]
-  n1014 -> n1023
-  n1014 [shape=Mrecord label="{{n1014|Map|height=8}}" ]
-  n68 -> n1014
+  n1026 [shape=Mrecord label="{{n1026|Map|height=12}}" ]
+  n1017 -> n1026
+  n1017 [shape=Mrecord label="{{n1017|Map|height=11}}" ]
+  n68 -> n1017
   n68 [shape=Mrecord label="{{n68|Array_fold|height=2}}" ]
   n57 -> n68
   n47 -> n68
@@ -159,10 +165,10 @@ digraph G {
   n36 [shape=Mrecord label="{{n36|Map|height=1}}" ]
   n6 -> n36
   n6 [shape=Mrecord label="{{n6|Var|height=0}}" ]
-  n1022 [shape=Mrecord label="{{n1022|Map|height=9}}" ]
-  n1015 -> n1022
-  n1015 [shape=Mrecord label="{{n1015|Map|height=8}}" ]
-  n65 -> n1015
+  n1025 [shape=Mrecord label="{{n1025|Map|height=12}}" ]
+  n1018 -> n1025
+  n1018 [shape=Mrecord label="{{n1018|Map|height=11}}" ]
+  n65 -> n1018
   n65 [shape=Mrecord label="{{n65|Array_fold|height=2}}" ]
   n60 -> n65
   n50 -> n65
@@ -176,10 +182,10 @@ digraph G {
   n40 [shape=Mrecord label="{{n40|Map|height=1}}" ]
   n10 -> n40
   n10 [shape=Mrecord label="{{n10|Var|height=0}}" ]
-  n1021 [shape=Mrecord label="{{n1021|Map|height=9}}" ]
-  n1016 -> n1021
-  n1016 [shape=Mrecord label="{{n1016|Map|height=8}}" ]
-  n66 -> n1016
+  n1024 [shape=Mrecord label="{{n1024|Map|height=12}}" ]
+  n1019 -> n1024
+  n1019 [shape=Mrecord label="{{n1019|Map|height=11}}" ]
+  n66 -> n1019
   n66 [shape=Mrecord label="{{n66|Array_fold|height=2}}" ]
   n59 -> n66
   n49 -> n66
@@ -193,10 +199,10 @@ digraph G {
   n39 [shape=Mrecord label="{{n39|Map|height=1}}" ]
   n9 -> n39
   n9 [shape=Mrecord label="{{n9|Var|height=0}}" ]
-  n1020 [shape=Mrecord label="{{n1020|Map|height=9}}" ]
-  n1017 -> n1020
-  n1017 [shape=Mrecord label="{{n1017|Map|height=8}}" ]
-  n63 -> n1017
+  n1023 [shape=Mrecord label="{{n1023|Map|height=12}}" ]
+  n1020 -> n1023
+  n1020 [shape=Mrecord label="{{n1020|Map|height=11}}" ]
+  n63 -> n1020
   n63 [shape=Mrecord label="{{n63|Array_fold|height=2}}" ]
   n53 -> n63
   n43 -> n63
@@ -210,10 +216,10 @@ digraph G {
   n33 [shape=Mrecord label="{{n33|Map|height=1}}" ]
   n3 -> n33
   n3 [shape=Mrecord label="{{n3|Var|height=0}}" ]
-  n1019 [shape=Mrecord label="{{n1019|Map|height=9}}" ]
-  n1018 -> n1019
-  n1018 [shape=Mrecord label="{{n1018|Map|height=8}}" ]
-  n62 -> n1018
+  n1022 [shape=Mrecord label="{{n1022|Map|height=12}}" ]
+  n1021 -> n1022
+  n1021 [shape=Mrecord label="{{n1021|Map|height=11}}" ]
+  n62 -> n1021
   n62 [shape=Mrecord label="{{n62|Array_fold|height=2}}" ]
   n52 -> n62
   n42 -> n62
@@ -227,268 +233,269 @@ digraph G {
   n32 [shape=Mrecord label="{{n32|Map|height=1}}" ]
   n2 -> n32
   n2 [shape=Mrecord label="{{n2|Var|height=0}}" ]
-  n1046 [shape=Mrecord label="{{n1046|Map|height=11}}" ]
-  n1045 -> n1046
-  n1045 [shape=Mrecord label="{{n1045|Array_fold|height=10}}" ]
-  n1044 -> n1045
-  n1043 -> n1045
-  n1042 -> n1045
-  n1041 -> n1045
-  n1040 -> n1045
-  n1039 -> n1045
-  n1038 -> n1045
-  n1037 -> n1045
-  n1044 [shape=Mrecord label="{{n1044|Map|height=9}}" ]
-  n1029 -> n1044
-  n1029 [shape=Mrecord label="{{n1029|Map|height=8}}" ]
-  n64 -> n1029
-  n1043 [shape=Mrecord label="{{n1043|Map|height=9}}" ]
-  n1030 -> n1043
-  n1030 [shape=Mrecord label="{{n1030|Map|height=8}}" ]
-  n61 -> n1030
-  n1042 [shape=Mrecord label="{{n1042|Map|height=9}}" ]
-  n1031 -> n1042
-  n1031 [shape=Mrecord label="{{n1031|Map|height=8}}" ]
-  n67 -> n1031
-  n1041 [shape=Mrecord label="{{n1041|Map|height=9}}" ]
-  n1032 -> n1041
-  n1032 [shape=Mrecord label="{{n1032|Map|height=8}}" ]
-  n68 -> n1032
-  n1040 [shape=Mrecord label="{{n1040|Map|height=9}}" ]
-  n1033 -> n1040
-  n1033 [shape=Mrecord label="{{n1033|Map|height=8}}" ]
-  n65 -> n1033
-  n1039 [shape=Mrecord label="{{n1039|Map|height=9}}" ]
-  n1034 -> n1039
-  n1034 [shape=Mrecord label="{{n1034|Map|height=8}}" ]
-  n66 -> n1034
-  n1038 [shape=Mrecord label="{{n1038|Map|height=9}}" ]
-  n1035 -> n1038
-  n1035 [shape=Mrecord label="{{n1035|Map|height=8}}" ]
-  n63 -> n1035
-  n1037 [shape=Mrecord label="{{n1037|Map|height=9}}" ]
-  n1036 -> n1037
-  n1036 [shape=Mrecord label="{{n1036|Map|height=8}}" ]
-  n62 -> n1036
-  n96 [shape=Mrecord label="{{n96|Bind_main|height=7}}" ]
-  n95 -> n96
-  n1077 -> n96
-  n95 [shape=Mrecord label="{{n95|Bind_lhs_change|height=3}}" ]
-  n72 -> n95
-  n1077 [shape=Mrecord label="{{n1077|Map|height=6}}" ]
-  n1076 -> n1077
-  n1076 [shape=Mrecord label="{{n1076|Array_fold|height=5}}" ]
-  n1075 -> n1076
-  n1074 -> n1076
-  n1073 -> n1076
-  n1072 -> n1076
-  n1071 -> n1076
-  n1070 -> n1076
-  n1075 [shape=Mrecord label="{{n1075|Map|height=4}}" ]
-  n89 -> n1075
-  n89 [shape=Mrecord label="{{n89|Array_fold|height=2}}" ]
-  n35 -> n89
-  n34 -> n89
-  n33 -> n89
-  n32 -> n89
-  n31 -> n89
-  n1074 [shape=Mrecord label="{{n1074|Map|height=4}}" ]
-  n90 -> n1074
-  n90 [shape=Mrecord label="{{n90|Array_fold|height=2}}" ]
-  n45 -> n90
-  n44 -> n90
-  n43 -> n90
-  n42 -> n90
-  n41 -> n90
-  n1073 [shape=Mrecord label="{{n1073|Map|height=4}}" ]
-  n93 -> n1073
-  n93 [shape=Mrecord label="{{n93|Array_fold|height=2}}" ]
-  n50 -> n93
-  n49 -> n93
-  n48 -> n93
-  n47 -> n93
-  n46 -> n93
-  n1072 [shape=Mrecord label="{{n1072|Map|height=4}}" ]
-  n94 -> n1072
-  n94 [shape=Mrecord label="{{n94|Array_fold|height=2}}" ]
-  n60 -> n94
-  n59 -> n94
-  n58 -> n94
-  n57 -> n94
-  n56 -> n94
-  n1071 [shape=Mrecord label="{{n1071|Map|height=4}}" ]
-  n91 -> n1071
+  n1049 [shape=Mrecord label="{{n1049|Map|height=14}}" ]
+  n1048 -> n1049
+  n1048 [shape=Mrecord label="{{n1048|Array_fold|height=13}}" ]
+  n1047 -> n1048
+  n1046 -> n1048
+  n1045 -> n1048
+  n1044 -> n1048
+  n1043 -> n1048
+  n1042 -> n1048
+  n1041 -> n1048
+  n1040 -> n1048
+  n1047 [shape=Mrecord label="{{n1047|Map|height=12}}" ]
+  n1032 -> n1047
+  n1032 [shape=Mrecord label="{{n1032|Map|height=11}}" ]
+  n64 -> n1032
+  n1046 [shape=Mrecord label="{{n1046|Map|height=12}}" ]
+  n1033 -> n1046
+  n1033 [shape=Mrecord label="{{n1033|Map|height=11}}" ]
+  n61 -> n1033
+  n1045 [shape=Mrecord label="{{n1045|Map|height=12}}" ]
+  n1034 -> n1045
+  n1034 [shape=Mrecord label="{{n1034|Map|height=11}}" ]
+  n67 -> n1034
+  n1044 [shape=Mrecord label="{{n1044|Map|height=12}}" ]
+  n1035 -> n1044
+  n1035 [shape=Mrecord label="{{n1035|Map|height=11}}" ]
+  n68 -> n1035
+  n1043 [shape=Mrecord label="{{n1043|Map|height=12}}" ]
+  n1036 -> n1043
+  n1036 [shape=Mrecord label="{{n1036|Map|height=11}}" ]
+  n65 -> n1036
+  n1042 [shape=Mrecord label="{{n1042|Map|height=12}}" ]
+  n1037 -> n1042
+  n1037 [shape=Mrecord label="{{n1037|Map|height=11}}" ]
+  n66 -> n1037
+  n1041 [shape=Mrecord label="{{n1041|Map|height=12}}" ]
+  n1038 -> n1041
+  n1038 [shape=Mrecord label="{{n1038|Map|height=11}}" ]
+  n63 -> n1038
+  n1040 [shape=Mrecord label="{{n1040|Map|height=12}}" ]
+  n1039 -> n1040
+  n1039 [shape=Mrecord label="{{n1039|Map|height=11}}" ]
+  n62 -> n1039
+  n98 [shape=Mrecord label="{{n98|Bind_main|height=10}}" ]
+  n97 -> n98
+  n1080 -> n98
+  n97 [shape=Mrecord label="{{n97|Bind_lhs_change|height=6}}" ]
+  n74 -> n97
+  n1080 [shape=Mrecord label="{{n1080|Map|height=9}}" ]
+  n1079 -> n1080
+  n1079 [shape=Mrecord label="{{n1079|Array_fold|height=8}}" ]
+  n1078 -> n1079
+  n1077 -> n1079
+  n1076 -> n1079
+  n1075 -> n1079
+  n1074 -> n1079
+  n1073 -> n1079
+  n1078 [shape=Mrecord label="{{n1078|Map|height=7}}" ]
+  n91 -> n1078
   n91 [shape=Mrecord label="{{n91|Array_fold|height=2}}" ]
-  n55 -> n91
-  n54 -> n91
-  n53 -> n91
-  n52 -> n91
-  n51 -> n91
-  n1070 [shape=Mrecord label="{{n1070|Map|height=4}}" ]
-  n92 -> n1070
+  n35 -> n91
+  n34 -> n91
+  n33 -> n91
+  n32 -> n91
+  n31 -> n91
+  n1077 [shape=Mrecord label="{{n1077|Map|height=7}}" ]
+  n92 -> n1077
   n92 [shape=Mrecord label="{{n92|Array_fold|height=2}}" ]
-  n40 -> n92
-  n39 -> n92
-  n38 -> n92
-  n37 -> n92
-  n36 -> n92
-  n88 [shape=Mrecord label="{{n88|Bind_main|height=7}}" ]
-  n87 -> n88
-  n1069 -> n88
-  n87 [shape=Mrecord label="{{n87|Bind_lhs_change|height=3}}" ]
-  n72 -> n87
-  n1069 [shape=Mrecord label="{{n1069|Map|height=6}}" ]
-  n1068 -> n1069
-  n1068 [shape=Mrecord label="{{n1068|Map2|height=5}}" ]
-  n1066 -> n1068
-  n1067 -> n1068
-  n1066 [shape=Mrecord label="{{n1066|Map2|height=4}}" ]
-  n63 -> n1066
-  n64 -> n1066
-  n1067 [shape=Mrecord label="{{n1067|Map2|height=4}}" ]
-  n67 -> n1067
-  n68 -> n1067
-  n1064 [shape=Mrecord label="{{n1064|Map|height=11}}" ]
-  n1063 -> n1064
-  n1063 [shape=Mrecord label="{{n1063|Array_fold|height=10}}" ]
-  n1062 -> n1063
-  n1061 -> n1063
-  n1060 -> n1063
-  n1059 -> n1063
-  n1058 -> n1063
-  n1057 -> n1063
-  n1056 -> n1063
-  n1055 -> n1063
-  n1062 [shape=Mrecord label="{{n1062|Map|height=9}}" ]
-  n1047 -> n1062
-  n1047 [shape=Mrecord label="{{n1047|Map|height=8}}" ]
-  n64 -> n1047
-  n1061 [shape=Mrecord label="{{n1061|Map|height=9}}" ]
-  n1048 -> n1061
-  n1048 [shape=Mrecord label="{{n1048|Map|height=8}}" ]
-  n61 -> n1048
-  n1060 [shape=Mrecord label="{{n1060|Map|height=9}}" ]
-  n1049 -> n1060
-  n1049 [shape=Mrecord label="{{n1049|Map|height=8}}" ]
-  n67 -> n1049
-  n1059 [shape=Mrecord label="{{n1059|Map|height=9}}" ]
-  n1050 -> n1059
-  n1050 [shape=Mrecord label="{{n1050|Map|height=8}}" ]
-  n68 -> n1050
-  n1058 [shape=Mrecord label="{{n1058|Map|height=9}}" ]
-  n1051 -> n1058
-  n1051 [shape=Mrecord label="{{n1051|Map|height=8}}" ]
-  n65 -> n1051
-  n1057 [shape=Mrecord label="{{n1057|Map|height=9}}" ]
-  n1052 -> n1057
-  n1052 [shape=Mrecord label="{{n1052|Map|height=8}}" ]
-  n66 -> n1052
-  n1056 [shape=Mrecord label="{{n1056|Map|height=9}}" ]
-  n1053 -> n1056
-  n1053 [shape=Mrecord label="{{n1053|Map|height=8}}" ]
-  n63 -> n1053
-  n1055 [shape=Mrecord label="{{n1055|Map|height=9}}" ]
-  n1054 -> n1055
-  n1054 [shape=Mrecord label="{{n1054|Map|height=8}}" ]
-  n62 -> n1054
-  n101 [shape=Mrecord label="{{n101|Map|height=2}}" ]
-  n100 -> n101
-  n100 [shape=Mrecord label="{{n100|Array_fold|height=1}}" ]
-  n30 -> n100
-  n29 -> n100
-  n28 -> n100
-  n27 -> n100
-  n26 -> n100
-  n25 -> n100
-  n24 -> n100
-  n23 -> n100
-  n22 -> n100
-  n21 -> n100
-  n20 -> n100
-  n19 -> n100
-  n18 -> n100
-  n17 -> n100
-  n16 -> n100
-  n15 -> n100
-  n14 -> n100
-  n13 -> n100
-  n12 -> n100
-  n11 -> n100
-  n10 -> n100
-  n9 -> n100
-  n8 -> n100
-  n7 -> n100
-  n6 -> n100
-  n5 -> n100
-  n4 -> n100
-  n3 -> n100
-  n2 -> n100
-  n1 -> n100
-  n87 -> n1066 [style=dashed]
-  n87 -> n1067 [style=dashed]
-  n87 -> n1068 [style=dashed]
-  n87 -> n1069 [style=dashed]
-  n95 -> n1070 [style=dashed]
-  n95 -> n1071 [style=dashed]
-  n95 -> n1072 [style=dashed]
-  n95 -> n1073 [style=dashed]
-  n95 -> n1074 [style=dashed]
-  n95 -> n1075 [style=dashed]
-  n95 -> n1076 [style=dashed]
-  n95 -> n1077 [style=dashed]
-  n97 -> n1011 [style=dashed]
-  n97 -> n1012 [style=dashed]
-  n97 -> n1013 [style=dashed]
-  n97 -> n1014 [style=dashed]
-  n97 -> n1015 [style=dashed]
-  n97 -> n1016 [style=dashed]
-  n97 -> n1017 [style=dashed]
-  n97 -> n1018 [style=dashed]
-  n97 -> n1019 [style=dashed]
-  n97 -> n1020 [style=dashed]
-  n97 -> n1021 [style=dashed]
-  n97 -> n1022 [style=dashed]
-  n97 -> n1023 [style=dashed]
-  n97 -> n1024 [style=dashed]
-  n97 -> n1025 [style=dashed]
-  n97 -> n1026 [style=dashed]
-  n97 -> n1027 [style=dashed]
-  n97 -> n1028 [style=dashed]
-  n97 -> n1029 [style=dashed]
-  n97 -> n1030 [style=dashed]
-  n97 -> n1031 [style=dashed]
-  n97 -> n1032 [style=dashed]
-  n97 -> n1033 [style=dashed]
-  n97 -> n1034 [style=dashed]
-  n97 -> n1035 [style=dashed]
-  n97 -> n1036 [style=dashed]
-  n97 -> n1037 [style=dashed]
-  n97 -> n1038 [style=dashed]
-  n97 -> n1039 [style=dashed]
-  n97 -> n1040 [style=dashed]
-  n97 -> n1041 [style=dashed]
-  n97 -> n1042 [style=dashed]
-  n97 -> n1043 [style=dashed]
-  n97 -> n1044 [style=dashed]
-  n97 -> n1045 [style=dashed]
-  n97 -> n1046 [style=dashed]
-  n97 -> n1047 [style=dashed]
-  n97 -> n1048 [style=dashed]
-  n97 -> n1049 [style=dashed]
-  n97 -> n1050 [style=dashed]
-  n97 -> n1051 [style=dashed]
-  n97 -> n1052 [style=dashed]
-  n97 -> n1053 [style=dashed]
-  n97 -> n1054 [style=dashed]
-  n97 -> n1055 [style=dashed]
-  n97 -> n1056 [style=dashed]
-  n97 -> n1057 [style=dashed]
-  n97 -> n1058 [style=dashed]
-  n97 -> n1059 [style=dashed]
-  n97 -> n1060 [style=dashed]
-  n97 -> n1061 [style=dashed]
-  n97 -> n1062 [style=dashed]
-  n97 -> n1063 [style=dashed]
-  n97 -> n1064 [style=dashed]
-  n97 -> n1065 [style=dashed]
+  n45 -> n92
+  n44 -> n92
+  n43 -> n92
+  n42 -> n92
+  n41 -> n92
+  n1076 [shape=Mrecord label="{{n1076|Map|height=7}}" ]
+  n95 -> n1076
+  n95 [shape=Mrecord label="{{n95|Array_fold|height=2}}" ]
+  n50 -> n95
+  n49 -> n95
+  n48 -> n95
+  n47 -> n95
+  n46 -> n95
+  n1075 [shape=Mrecord label="{{n1075|Map|height=7}}" ]
+  n96 -> n1075
+  n96 [shape=Mrecord label="{{n96|Array_fold|height=2}}" ]
+  n60 -> n96
+  n59 -> n96
+  n58 -> n96
+  n57 -> n96
+  n56 -> n96
+  n1074 [shape=Mrecord label="{{n1074|Map|height=7}}" ]
+  n93 -> n1074
+  n93 [shape=Mrecord label="{{n93|Array_fold|height=2}}" ]
+  n55 -> n93
+  n54 -> n93
+  n53 -> n93
+  n52 -> n93
+  n51 -> n93
+  n1073 [shape=Mrecord label="{{n1073|Map|height=7}}" ]
+  n94 -> n1073
+  n94 [shape=Mrecord label="{{n94|Array_fold|height=2}}" ]
+  n40 -> n94
+  n39 -> n94
+  n38 -> n94
+  n37 -> n94
+  n36 -> n94
+  n90 [shape=Mrecord label="{{n90|Bind_main|height=10}}" ]
+  n89 -> n90
+  n1072 -> n90
+  n89 [shape=Mrecord label="{{n89|Bind_lhs_change|height=6}}" ]
+  n74 -> n89
+  n1072 [shape=Mrecord label="{{n1072|Map|height=9}}" ]
+  n1071 -> n1072
+  n1071 [shape=Mrecord label="{{n1071|Map2|height=8}}" ]
+  n1069 -> n1071
+  n1070 -> n1071
+  n1069 [shape=Mrecord label="{{n1069|Map2|height=7}}" ]
+  n63 -> n1069
+  n64 -> n1069
+  n1070 [shape=Mrecord label="{{n1070|Map2|height=7}}" ]
+  n67 -> n1070
+  n68 -> n1070
+  n1067 [shape=Mrecord label="{{n1067|Map|height=14}}" ]
+  n1066 -> n1067
+  n1066 [shape=Mrecord label="{{n1066|Array_fold|height=13}}" ]
+  n1065 -> n1066
+  n1064 -> n1066
+  n1063 -> n1066
+  n1062 -> n1066
+  n1061 -> n1066
+  n1060 -> n1066
+  n1059 -> n1066
+  n1058 -> n1066
+  n1065 [shape=Mrecord label="{{n1065|Map|height=12}}" ]
+  n1050 -> n1065
+  n1050 [shape=Mrecord label="{{n1050|Map|height=11}}" ]
+  n64 -> n1050
+  n1064 [shape=Mrecord label="{{n1064|Map|height=12}}" ]
+  n1051 -> n1064
+  n1051 [shape=Mrecord label="{{n1051|Map|height=11}}" ]
+  n61 -> n1051
+  n1063 [shape=Mrecord label="{{n1063|Map|height=12}}" ]
+  n1052 -> n1063
+  n1052 [shape=Mrecord label="{{n1052|Map|height=11}}" ]
+  n67 -> n1052
+  n1062 [shape=Mrecord label="{{n1062|Map|height=12}}" ]
+  n1053 -> n1062
+  n1053 [shape=Mrecord label="{{n1053|Map|height=11}}" ]
+  n68 -> n1053
+  n1061 [shape=Mrecord label="{{n1061|Map|height=12}}" ]
+  n1054 -> n1061
+  n1054 [shape=Mrecord label="{{n1054|Map|height=11}}" ]
+  n65 -> n1054
+  n1060 [shape=Mrecord label="{{n1060|Map|height=12}}" ]
+  n1055 -> n1060
+  n1055 [shape=Mrecord label="{{n1055|Map|height=11}}" ]
+  n66 -> n1055
+  n1059 [shape=Mrecord label="{{n1059|Map|height=12}}" ]
+  n1056 -> n1059
+  n1056 [shape=Mrecord label="{{n1056|Map|height=11}}" ]
+  n63 -> n1056
+  n1058 [shape=Mrecord label="{{n1058|Map|height=12}}" ]
+  n1057 -> n1058
+  n1057 [shape=Mrecord label="{{n1057|Map|height=11}}" ]
+  n62 -> n1057
+  n103 [shape=Mrecord label="{{n103|Map|height=2}}" ]
+  n102 -> n103
+  n102 [shape=Mrecord label="{{n102|Array_fold|height=1}}" ]
+  n30 -> n102
+  n29 -> n102
+  n28 -> n102
+  n27 -> n102
+  n26 -> n102
+  n25 -> n102
+  n24 -> n102
+  n23 -> n102
+  n22 -> n102
+  n21 -> n102
+  n20 -> n102
+  n19 -> n102
+  n18 -> n102
+  n17 -> n102
+  n16 -> n102
+  n15 -> n102
+  n14 -> n102
+  n13 -> n102
+  n12 -> n102
+  n11 -> n102
+  n10 -> n102
+  n9 -> n102
+  n8 -> n102
+  n7 -> n102
+  n6 -> n102
+  n5 -> n102
+  n4 -> n102
+  n3 -> n102
+  n2 -> n102
+  n1 -> n102
+  n89 -> n1069 [style=dashed]
+  n89 -> n1070 [style=dashed]
+  n89 -> n1071 [style=dashed]
+  n89 -> n1072 [style=dashed]
+  n97 -> n1073 [style=dashed]
+  n97 -> n1074 [style=dashed]
+  n97 -> n1075 [style=dashed]
+  n97 -> n1076 [style=dashed]
+  n97 -> n1077 [style=dashed]
+  n97 -> n1078 [style=dashed]
+  n97 -> n1079 [style=dashed]
+  n97 -> n1080 [style=dashed]
+  n70 -> n1013 [style=dashed]
+  n99 -> n1014 [style=dashed]
+  n99 -> n1015 [style=dashed]
+  n99 -> n1016 [style=dashed]
+  n99 -> n1017 [style=dashed]
+  n99 -> n1018 [style=dashed]
+  n99 -> n1019 [style=dashed]
+  n99 -> n1020 [style=dashed]
+  n99 -> n1021 [style=dashed]
+  n99 -> n1022 [style=dashed]
+  n99 -> n1023 [style=dashed]
+  n99 -> n1024 [style=dashed]
+  n99 -> n1025 [style=dashed]
+  n99 -> n1026 [style=dashed]
+  n99 -> n1027 [style=dashed]
+  n99 -> n1028 [style=dashed]
+  n99 -> n1029 [style=dashed]
+  n99 -> n1030 [style=dashed]
+  n99 -> n1031 [style=dashed]
+  n99 -> n1032 [style=dashed]
+  n99 -> n1033 [style=dashed]
+  n99 -> n1034 [style=dashed]
+  n99 -> n1035 [style=dashed]
+  n99 -> n1036 [style=dashed]
+  n99 -> n1037 [style=dashed]
+  n99 -> n1038 [style=dashed]
+  n99 -> n1039 [style=dashed]
+  n99 -> n1040 [style=dashed]
+  n99 -> n1041 [style=dashed]
+  n99 -> n1042 [style=dashed]
+  n99 -> n1043 [style=dashed]
+  n99 -> n1044 [style=dashed]
+  n99 -> n1045 [style=dashed]
+  n99 -> n1046 [style=dashed]
+  n99 -> n1047 [style=dashed]
+  n99 -> n1048 [style=dashed]
+  n99 -> n1049 [style=dashed]
+  n99 -> n1050 [style=dashed]
+  n99 -> n1051 [style=dashed]
+  n99 -> n1052 [style=dashed]
+  n99 -> n1053 [style=dashed]
+  n99 -> n1054 [style=dashed]
+  n99 -> n1055 [style=dashed]
+  n99 -> n1056 [style=dashed]
+  n99 -> n1057 [style=dashed]
+  n99 -> n1058 [style=dashed]
+  n99 -> n1059 [style=dashed]
+  n99 -> n1060 [style=dashed]
+  n99 -> n1061 [style=dashed]
+  n99 -> n1062 [style=dashed]
+  n99 -> n1063 [style=dashed]
+  n99 -> n1064 [style=dashed]
+  n99 -> n1065 [style=dashed]
+  n99 -> n1066 [style=dashed]
+  n99 -> n1067 [style=dashed]
+  n99 -> n1068 [style=dashed]
 }
