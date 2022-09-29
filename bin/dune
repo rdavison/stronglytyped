@@ -5,6 +5,6 @@
 
 (executable
  (name mainjs)
- (libraries ypou)
+ (libraries ypou js_of_ocaml js_of_ocaml-lwt)
  (modes js)
  (modules mainjs))

@@ -14,4 +14,5 @@ type t =
   ; triples : float String.Table.t
   }
 
+val set_data : string -> unit
 val incr : t Incr.t
