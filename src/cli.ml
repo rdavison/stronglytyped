@@ -39,7 +39,7 @@ let gen () =
         for k = 1 to kmax do
           let pct = Float.of_int k /. Float.of_int kmax in
           neighbour pct;
-          Config.set_progress pct;
+          Incr.Var.set Config.progress_v pct;
           stabilize ()
         done)
   in

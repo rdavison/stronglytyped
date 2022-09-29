@@ -24,11 +24,13 @@ let skipgrams =
       acc)
 ;;
 
-let w_sfb = return 1.
-let w_dsfb = return 2.
+let w_sfb_v = Incr.Var.create 1.
+let w_sfb = Incr.Var.watch w_sfb_v
+let w_dsfb_v = Incr.Var.create 2.
+let w_dsfb = Incr.Var.watch w_dsfb_v
 
-let w_keyfreq =
-  return
+let w_keyfreq_v =
+  Var.create
     (Finger.all
     |> List.map ~f:(fun finger ->
            ( finger
@@ -42,10 +44,18 @@ let w_keyfreq =
     |> Finger.Table.of_alist_exn)
 ;;
 
-let w_rolls = return 1.
-let w_lsbs = return 1.
-let neighbour = return (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3 ])))
-let kmax = return 1_000_000
+let w_keyfreq = Incr.Var.watch w_keyfreq_v
+let w_roll_v = Incr.Var.create 1.
+let w_roll = Incr.Var.watch w_roll_v
+let w_lsb_v = Incr.Var.create 1.
+let w_lsb = Incr.Var.watch w_lsb_v
+
+let neighbour_v =
+  Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3 ])))
+;;
+
+let neighbour = Incr.Var.watch neighbour_v
+let kmax_v = Incr.Var.create 1_000_000
+let kmax = Incr.Var.watch kmax_v
 let progress_v = Var.create 0.
 let progress = Var.watch progress_v
-let set_progress i = Var.set progress_v i
