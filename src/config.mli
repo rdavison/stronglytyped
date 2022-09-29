@@ -1,14 +1,21 @@
 open! Import
 
+val w_sfb_v : float Incr.Var.t
+val w_dsfb_v : float Incr.Var.t
+val w_keyfreq_v : float Finger.Table.t Incr.Var.t
+val w_roll_v : float Incr.Var.t
+val w_lsb_v : float Incr.Var.t
+val neighbour_v : Neighbour.t Incr.Var.t
+val kmax_v : int Incr.Var.t
+val progress_v : float Incr.Var.t
 val w_sfb : float Incr.t
 val w_dsfb : float Incr.t
 val w_keyfreq : float Finger.Table.t Incr.t
-val w_rolls : float Incr.t
-val w_lsbs : float Incr.t
+val w_roll : float Incr.t
+val w_lsb : float Incr.t
 val monograms : float Char.Table.t Incr.t
 val bigrams : float String.Table.t Incr.t
 val skipgrams : float String.Table.t Incr.t
 val neighbour : Neighbour.t Incr.t
 val kmax : int Incr.t
 val progress : float Incr.t
-val set_progress : float -> unit

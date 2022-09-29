@@ -1,5 +1,5 @@
 {
-  "checksum": "a40b732ed19b2926978c1dffd3330c6a",
+  "checksum": "0411d6caa6d81f7ebc483d1e6c62825e",
   "root": "ypounercds@link-dev:./package.json",
   "node": {
     "ypounercds@link-dev:./package.json": {
@@ -14,6 +14,7 @@
       "overrides": [],
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/ppx_jane@opam:v0.15.0@2bb5629a",
+        "@opam/lwt@opam:5.6.1@2a9902ab",
         "@opam/incremental@opam:v0.15.0@f153273d",
         "@opam/dune-site@opam:3.4.1@3b91fa5b",
         "@opam/dune@opam:3.4.1@84d54aea",

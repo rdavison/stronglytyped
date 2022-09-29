@@ -34,8 +34,8 @@ let incr : t Incr.t =
     Config.w_sfb
     Config.w_dsfb
     Config.w_keyfreq
-    Config.w_rolls
-    Config.w_lsbs
+    Config.w_roll
+    Config.w_lsb
     ~f:(fun sfb dsfb roll lsb keyfreq w_sfb w_dsfb w_keyfreq w_rolls w_lsbs ->
       make ~sfb ~dsfb ~roll ~lsb ~keyfreq ~w_sfb ~w_dsfb ~w_keyfreq ~w_rolls ~w_lsbs)
 ;;
