@@ -1,6 +1,6 @@
 (library
  (name ypou)
- (libraries core incremental jsonaf dune-site)
+ (libraries core incremental dune-site)
  (preprocess
   (pps ppx_jane))
  (flags :standard -open Core))
