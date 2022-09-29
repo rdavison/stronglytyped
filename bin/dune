@@ -1,10 +1,14 @@
 (executable
  (name main)
  (libraries core_unix core_unix.command_unix ypou)
- (modules main))
+ (modules main sites))
 
 (executable
  (name mainjs)
  (libraries ypou js_of_ocaml js_of_ocaml-lwt)
  (modes js)
  (modules mainjs))
+
+(generate_sites_module
+ (module sites)
+ (sites ypounercds))

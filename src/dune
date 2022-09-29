@@ -4,7 +4,3 @@
  (preprocess
   (pps ppx_jane))
  (flags :standard -open Core))
-
-(generate_sites_module
- (module sites)
- (sites ypounercds))
