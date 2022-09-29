@@ -3,7 +3,7 @@ open! Core
 let () =
   let data =
     In_channel.read_all
-      (match Ypou.Sites.Sites.corpus with
+      (match Sites.Sites.corpus with
       | [ path ] -> path ^/ "data.sexp"
       | _ -> failwith "No path to corpus")
   in
