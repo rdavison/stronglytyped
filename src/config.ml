@@ -27,7 +27,7 @@ let skipgrams =
 let w_sfb = return 1.
 let w_dsfb = return 2.
 
-let w_weight =
+let w_keyfreq =
   return
     (Finger.all
     |> List.map ~f:(fun finger ->

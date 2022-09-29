@@ -7,10 +7,10 @@ val make
   -> dsfb:Dsfb.t Hf.Table.t
   -> roll:Roll.t Hf.Table.t
   -> lsb:Lsb.t Hand.Table.t
-  -> weight:Weight.t Hf.Table.t
+  -> keyfreq:Keyfreq.t Hf.Table.t
   -> w_sfb:float
   -> w_dsfb:float
-  -> w_weight:float Finger.Table.t
+  -> w_keyfreq:float Finger.Table.t
   -> w_rolls:float
   -> w_lsbs:float
   -> t

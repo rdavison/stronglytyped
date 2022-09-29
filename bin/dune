@@ -6,6 +6,8 @@
 (executable
  (name mainjs)
  (libraries ypou js_of_ocaml js_of_ocaml-lwt)
+ (preprocess
+  (pps js_of_ocaml-ppx))
  (modes js)
  (modules mainjs))
 
