@@ -2,7 +2,7 @@ open! Import
 
 val w_sfb : float Incr.t
 val w_dsfb : float Incr.t
-val w_weight : float Finger.Table.t Incr.t
+val w_keyfreq : float Finger.Table.t Incr.t
 val w_rolls : float Incr.t
 val w_lsbs : float Incr.t
 val monograms : float Char.Table.t Incr.t

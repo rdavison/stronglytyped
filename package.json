@@ -10,9 +10,10 @@
   "dependencies": {
     "@opam/core": "v0.15.0",
     "@opam/core_unix": "*",
-    "@opam/incremental": "*",
     "@opam/dune": "*",
     "@opam/dune-site": "*",
+    "@opam/incremental": "*",
+    "@opam/lwt": "*",
     "@opam/ppx_jane": "*",
     "ocaml": "4.14.0"
   },

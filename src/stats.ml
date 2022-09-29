@@ -10,4 +10,4 @@ type t =
   }
 
 let make sfb dsfb rolls lsbs weight = { sfb; dsfb; rolls; lsbs; weight }
-let incr : t Incr.t = map5 Sfb.incr Dsfb.incr Roll.incr Lsb.incr Weight.incr ~f:make
+let incr : t Incr.t = map5 Sfb.incr Dsfb.incr Roll.incr Lsb.incr Keyfreq.incr ~f:make
