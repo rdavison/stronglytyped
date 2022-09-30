@@ -25,3 +25,13 @@ let make i c : t =
 ;;
 
 let all = Array.mapi Root.all ~f:(fun i v -> map (Var.watch v) ~f:(make i))
+
+let dist ?(stagger = Stagger.default) k1 k2 =
+  let pr, pc = k1.rc in
+  let qr, qc = k2.rc in
+  let px = Float.of_int pc +. Stagger.row_offset stagger pr in
+  let qx = Float.of_int qc +. Stagger.row_offset stagger qr in
+  let x = qx -. px in
+  let y = Float.of_int (qr - pr) in
+  Float.sqrt ((x *. x) +. (y *. y))
+;;

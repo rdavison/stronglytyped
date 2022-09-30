@@ -1,21 +1,35 @@
 open! Import
 
-val c_sfb_v : float Incr.Var.t
-val c_dsfb_v : float Incr.Var.t
-val c_keyfreq_v : float Finger.Table.t Incr.Var.t
-val w_roll_v : float Incr.Var.t
-val w_lsb_v : float Incr.Var.t
-val neighbour_v : Neighbour.t Incr.Var.t
-val kmax_v : int Incr.Var.t
-val progress_v : float Incr.Var.t
-val c_sfb : float Incr.t
-val c_dsfb : float Incr.t
-val c_keyfreq : float Finger.Table.t Incr.t
-val w_roll : float Incr.t
-val w_lsb : float Incr.t
-val monograms : float Char.Table.t Incr.t
-val bigrams : float String.Table.t Incr.t
-val skipgrams : float String.Table.t Incr.t
-val neighbour : Neighbour.t Incr.t
-val kmax : int Incr.t
-val progress : float Incr.t
+module Vars : sig
+  module C : sig
+    val sfb : float Incr.Var.t
+    val dsfb : float Incr.Var.t
+    val roll : float Incr.Var.t
+    val lsb : float Incr.Var.t
+    val shb : float Incr.Var.t
+    val shs : float Incr.Var.t
+    val speed : float Incr.Var.t
+    val keyfreq : float Finger.Table.t Incr.Var.t
+  end
+
+  val neighbour_v : Neighbour.t Incr.Var.t
+  val kmax_v : int Incr.Var.t
+  val progress : float Incr.Var.t
+end
+
+module Incr : sig
+  module C : sig
+    val sfb : float Incr.t
+    val dsfb : float Incr.t
+    val keyfreq : float Finger.Table.t Incr.t
+    val roll : float Incr.t
+    val lsb : float Incr.t
+    val speed : float Incr.t
+    val shb : float Incr.t
+    val shs : float Incr.t
+  end
+
+  val neighbour : Neighbour.t Incr.t
+  val kmax : int Incr.t
+  val progress : float Incr.t
+end

@@ -1,0 +1,11 @@
+open! Import
+
+type t = float
+
+val make
+  :  Key.t list
+  -> bigrams:float String.Table.t
+  -> skipgrams:float String.Table.t
+  -> t
+
+val incr : t Hf.Table.t Incr.t

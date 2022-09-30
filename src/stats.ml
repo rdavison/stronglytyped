@@ -8,6 +8,7 @@ type t =
   ; lsbs : Lsb.t Hand.Table.t
   ; weight : float Hf.Table.t
   }
+[@@deriving sexp]
 
 let make sfb dsfb rolls lsbs weight = { sfb; dsfb; rolls; lsbs; weight }
 let incr : t Incr.t = map5 Sfb.incr Dsfb.incr Roll.incr Lsb.incr Keyfreq.incr ~f:make

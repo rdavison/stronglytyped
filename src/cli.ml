@@ -19,7 +19,7 @@ let stabilize () =
 
 let gen () =
   let observations = ref 0 in
-  let observer = Incr.observe (Incr.both Config.kmax Config.neighbour) in
+  let observer = Incr.observe (Incr.both Config.Incr.kmax Config.Incr.neighbour) in
   stabilize ();
   let kmax, neighbour = Incr.Observer.value_exn observer in
   let () =
@@ -27,9 +27,13 @@ let gen () =
     |> Incr.Observer.on_update_exn ~f:(function
            | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
              incr observations;
-             let { Analysis.score; layout; pretty } = best in
+             let { Analysis.stats = _; totals; score; layout; pretty } = best in
              base := layout;
-             printf "Score: %.4f\n%s\n%!" score pretty
+             printf
+               "Score: %.4f\n%s\n%s\n%!"
+               score
+               (Totals.sexp_of_t totals |> Sexp.to_string_hum)
+               pretty
            | _ -> ())
   in
   stabilize ();
@@ -39,7 +43,7 @@ let gen () =
         for k = 1 to kmax do
           let pct = Float.of_int k /. Float.of_int kmax in
           neighbour pct;
-          Incr.Var.set Config.progress_v pct;
+          Incr.Var.set Config.Vars.progress pct;
           stabilize ()
         done)
   in

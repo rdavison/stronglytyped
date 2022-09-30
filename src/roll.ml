@@ -5,6 +5,7 @@ type t =
   { inward : float
   ; outward : float
   }
+[@@deriving sexp]
 
 let zero = { inward = 0.; outward = 0. }
 let ( + ) a b = { inward = a.inward +. b.inward; outward = a.outward +. b.outward }
@@ -53,7 +54,7 @@ let make keys ~bigrams =
 
 let incr : t Hf.Table.t Incr.t =
   let open Incr.Let_syntax in
-  let%bind bigrams = Config.bigrams in
+  let%bind bigrams = Corpus.bigrams in
   let%map foo =
     By_hr.table
     |> Hr.Table.data

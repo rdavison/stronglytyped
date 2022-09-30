@@ -7,8 +7,9 @@ let acceptance_curve ?(a = 3.) ?(b = 20.) x =
 let anneal =
   let true_best = ref [] in
   let accepted_best = ref [] in
-  let set_best ({ Analysis.score; layout = _; pretty } as analysis) =
-    printf "Score: %f\n%s\n" score pretty;
+  let set_best
+      ({ Analysis.stats = _; totals = _; score; layout = _; pretty = _ } as analysis)
+    =
     accepted_best := analysis :: !accepted_best;
     (match !true_best with
     | [] -> true_best := analysis :: !true_best
@@ -25,7 +26,7 @@ let anneal =
       let probability = acceptance_curve pct in
       if Float.( < ) (Random.float 1.0) probability then `Accept else `Reject
   in
-  Incr.map2 Config.progress Analysis.incr ~f:(fun progress s_new ->
+  Incr.map2 Config.Incr.progress Analysis.incr ~f:(fun progress s_new ->
       match !accepted_best with
       | [] -> set_best s_new
       | (s_old : Analysis.t) :: _ ->

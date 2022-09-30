@@ -12,7 +12,7 @@ let make keys ~monograms =
 ;;
 
 let incr =
-  let%bind.Incr monograms = Config.monograms in
+  let%bind.Incr monograms = Corpus.monograms in
   By_hf.table
   |> Hf.Table.map ~f:(map ~f:(make ~monograms))
   |> Hf.Table.to_alist

@@ -1,61 +1,50 @@
 open! Import
 open! Incr
 
-let n v =
-  let total = Hashtbl.data v |> List.sum (module Float) ~f:Fn.id in
-  Hashtbl.map v ~f:(fun x -> x /. total)
-;;
+module Vars = struct
+  module C = struct
+    let sfb = Incr.Var.create 0.
+    let dsfb = Incr.Var.create 0.05
+    let roll = Incr.Var.create 0.04
+    let lsb = Incr.Var.create 0.
+    let speed = Incr.Var.create 0.
+    let shb = Incr.Var.create 0.2
+    let shs = Incr.Var.create 0.2
 
-let monograms = map Corpus.incr ~f:(fun v -> n v.Corpus.singles)
-let bigrams = map Corpus.incr ~f:(fun v -> n v.Corpus.s1)
+    let keyfreq =
+      Var.create
+        (Finger.all
+        |> List.map ~f:(fun finger ->
+               ( finger
+               , 1.
+                 -.
+                 match finger with
+                 | `P -> 1.5 /. 5.5
+                 | `R -> 3.6 /. 5.5
+                 | `M -> 4.8 /. 5.5
+                 | `I -> 5.5 /. 5.5 ))
+        |> Finger.Table.of_alist_exn)
+    ;;
+  end
 
-let skipgrams =
-  map Corpus.incr ~f:(fun v ->
-      let acc = String.Table.create () in
-      [ v.Corpus.s2; v.s3; v.s4; v.s5; v.s6; v.s7; v.s8 ]
-      |> List.fold ~init:2 ~f:(fun denom s ->
-             String.Table.merge_into ~src:s ~dst:acc ~f:(fun ~key:_ a maybe_b ->
-                 let res =
-                   (a /. Float.of_int denom) +. Option.value maybe_b ~default:0.
-                 in
-                 Hashtbl.Merge_into_action.Set_to res);
-             denom + 1)
-      |> ignore;
-      acc)
-;;
+  let progress = Var.create 0.
+  let neighbour_v = Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Curved 4)))
+  let kmax_v = Incr.Var.create 1_000_000
+end
 
-let c_sfb_v = Incr.Var.create 1.
-let c_sfb = Incr.Var.watch c_sfb_v
-let c_dsfb_v = Incr.Var.create 2.
-let c_dsfb = Incr.Var.watch c_dsfb_v
+module Incr = struct
+  module C = struct
+    let sfb = Incr.Var.watch Vars.C.sfb
+    let dsfb = Incr.Var.watch Vars.C.dsfb
+    let shb = Incr.Var.watch Vars.C.shb
+    let shs = Incr.Var.watch Vars.C.shs
+    let keyfreq = Incr.Var.watch Vars.C.keyfreq
+    let roll = Incr.Var.watch Vars.C.roll
+    let lsb = Incr.Var.watch Vars.C.lsb
+    let speed = Incr.Var.watch Vars.C.speed
+  end
 
-let c_keyfreq_v =
-  Var.create
-    (Finger.all
-    |> List.map ~f:(fun finger ->
-           ( finger
-           , 1.
-             -.
-             match finger with
-             | `P -> 1.5 /. 5.5
-             | `R -> 3.6 /. 5.5
-             | `M -> 4.8 /. 5.5
-             | `I -> 5.5 /. 5.5 ))
-    |> Finger.Table.of_alist_exn)
-;;
-
-let c_keyfreq = Incr.Var.watch c_keyfreq_v
-let w_roll_v = Incr.Var.create 1.
-let w_roll = Incr.Var.watch w_roll_v
-let w_lsb_v = Incr.Var.create 1.
-let w_lsb = Incr.Var.watch w_lsb_v
-
-let neighbour_v =
-  Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3 ])))
-;;
-
-let neighbour = Incr.Var.watch neighbour_v
-let kmax_v = Incr.Var.create 1_000_000
-let kmax = Incr.Var.watch kmax_v
-let progress_v = Var.create 0.
-let progress = Var.watch progress_v
+  let neighbour = Incr.Var.watch Vars.neighbour_v
+  let kmax = Incr.Var.watch Vars.kmax_v
+  let progress = Var.watch Vars.progress
+end

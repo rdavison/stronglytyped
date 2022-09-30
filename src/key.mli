@@ -10,3 +10,4 @@ type t =
 
 val make : int -> char -> t
 val all : t Incr.t array
+val dist : ?stagger:Stagger.t -> t -> t -> float

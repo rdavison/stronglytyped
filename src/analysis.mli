@@ -1,7 +1,9 @@
 open! Import
 
 type t =
-  { score : Score.t
+  { stats : Stats.t
+  ; totals : Totals.t
+  ; score : Score.t
   ; layout : string
   ; pretty : Pretty.t
   }

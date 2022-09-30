@@ -42,22 +42,45 @@ module Parse = struct
   ;;
 end
 
+let n tbl =
+  let total = List.sum (module Float) (Hashtbl.data tbl) ~f:Fn.id in
+  Hashtbl.map tbl ~f:(fun v -> v /. total)
+;;
+
 let set_data = Parse.set_data
 
 let incr =
   Incr.map
     Parse.incr
     ~f:(fun { Parse.s1; s2; s3; s4; s5; s6; s7; s8; s9; singles; triples } ->
-      { s1 = Option.value_exn s1
-      ; s2 = Option.value_exn s2
-      ; s3 = Option.value_exn s3
-      ; s4 = Option.value_exn s4
-      ; s5 = Option.value_exn s5
-      ; s6 = Option.value_exn s6
-      ; s7 = Option.value_exn s7
-      ; s8 = Option.value_exn s8
-      ; s9 = Option.value_exn s9
-      ; singles = Option.value_exn singles
-      ; triples = Option.value_exn triples
+      { s1 = n (Option.value_exn s1)
+      ; s2 = n (Option.value_exn s2)
+      ; s3 = n (Option.value_exn s3)
+      ; s4 = n (Option.value_exn s4)
+      ; s5 = n (Option.value_exn s5)
+      ; s6 = n (Option.value_exn s6)
+      ; s7 = n (Option.value_exn s7)
+      ; s8 = n (Option.value_exn s8)
+      ; s9 = n (Option.value_exn s9)
+      ; singles = n (Option.value_exn singles)
+      ; triples = n (Option.value_exn triples)
       })
+;;
+
+let monograms = Incr.map incr ~f:(fun v -> n v.singles)
+let bigrams = Incr.map incr ~f:(fun v -> n v.s1)
+
+let skipgrams =
+  Incr.map incr ~f:(fun v ->
+      let acc = String.Table.create () in
+      [ v.s2; v.s3; v.s4; v.s5; v.s6; v.s7; v.s8 ]
+      |> List.fold ~init:2 ~f:(fun denom s ->
+             String.Table.merge_into ~src:s ~dst:acc ~f:(fun ~key:_ a maybe_b ->
+                 let res =
+                   (a /. Float.of_int denom) +. Option.value maybe_b ~default:0.
+                 in
+                 Hashtbl.Merge_into_action.Set_to res);
+             denom + 1)
+      |> ignore;
+      acc)
 ;;

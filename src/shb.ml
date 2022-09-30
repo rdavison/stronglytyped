@@ -4,11 +4,11 @@ open! Incr
 type t = float
 
 let make keys ~bigrams =
-  List.fold keys ~init:0. ~f:(fun init k1 ->
+  List.fold keys ~init:0. ~f:(fun init (k1 : Key.t) ->
       List.fold keys ~init ~f:(fun acc k2 ->
-          match Key.equal k1 k2 with
-          | true -> acc
-          | false ->
+          match Hand.equal k1.hand k2.hand with
+          | false -> acc
+          | true ->
             acc
             +.
             let c1, c2 = k1.Key.code, k2.Key.code in
@@ -22,10 +22,10 @@ let make keys ~bigrams =
 
 let incr =
   let%bind.Incr bigrams = Corpus.bigrams in
-  By_hf.table
-  |> Hf.Table.map ~f:(map ~f:(make ~bigrams))
-  |> Hf.Table.to_alist
+  By_hand.table
+  |> Hand.Table.map ~f:(map ~f:(make ~bigrams))
+  |> Hand.Table.to_alist
   |> List.map ~f:(fun (key, data) -> map data ~f:(fun data -> key, data))
   |> all
-  |> map ~f:Hf.Table.of_alist_exn
+  |> map ~f:Hand.Table.of_alist_exn
 ;;
