@@ -1,11 +1,11 @@
 open! Import
 open! Incr
 
-type t = float
+type t = float [@@deriving sexp]
 
 let incr : t Hand.Table.t Incr.t =
   let open Incr.Let_syntax in
-  let%bind bigrams = Config.bigrams in
+  let%bind bigrams = Corpus.bigrams in
   let get = Hf.Table.find_exn By_hf.table in
   let lm = get (`L, `M) in
   let li = get (`L, `I) in

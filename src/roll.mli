@@ -4,6 +4,7 @@ type t =
   { inward : float
   ; outward : float
   }
+[@@deriving sexp]
 
 include Container.Summable with type t := t
 

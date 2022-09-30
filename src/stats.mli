@@ -7,6 +7,7 @@ type t =
   ; lsbs : Lsb.t Hand.Table.t
   ; weight : float Hf.Table.t
   }
+[@@deriving sexp]
 
 val make
   :  float Hf.Table.t

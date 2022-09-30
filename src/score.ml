@@ -3,31 +3,33 @@ open! Incr
 
 type t = float
 
-let make ~sfb ~dsfb ~roll ~lsb ~c_sfb ~c_dsfb ~c_roll ~c_lsb =
+let make ~(totals : Totals.t) ~c_sfb ~c_dsfb ~c_roll ~c_lsb ~c_speed ~c_shb ~c_shs =
   let ( < ) = Float.( < ) in
   let ( > ) = Float.( > ) in
-  let total_sfb = List.sum (module Float) (Hf.Table.data sfb) ~f:Fn.id in
-  let total_dsfb = List.sum (module Float) (Hf.Table.data dsfb) ~f:Fn.id in
-  let total_rolls = List.sum (module Roll) (Hf.Table.data roll) ~f:Fn.id in
-  let total_rolls = total_rolls.inward +. total_rolls.outward in
-  let total_lsb = List.sum (module Float) (Hand.Table.data lsb) ~f:Fn.id in
-  let d_sfb = if total_sfb < c_sfb then 0. else Float.abs (total_sfb -. c_sfb) in
-  let d_dsfb = if total_dsfb < c_dsfb then 0. else Float.abs (total_dsfb -. c_dsfb) in
-  let d_rolls = if total_rolls > c_roll then 0. else Float.abs (total_rolls -. c_roll) in
-  let d_lsb = if total_lsb < c_lsb then 0. else Float.abs (total_lsb -. c_lsb) in
-  d_sfb +. d_dsfb +. d_rolls +. d_lsb
+  let d_sfb = if totals.sfb < c_sfb then 0. else Float.abs (totals.sfb -. c_sfb) in
+  let _d_dsfb = if totals.dsfb < c_dsfb then 0. else Float.abs (totals.dsfb -. c_dsfb) in
+  let _d_rolls =
+    if totals.rolls > c_roll then 0. else Float.abs (totals.rolls -. c_roll)
+  in
+  let _d_lsb = if totals.lsb < c_lsb then 0. else Float.abs (totals.lsb -. c_lsb) in
+  let _d_shb = if totals.shb > c_shb then 0. else Float.abs (totals.shb -. c_shb) in
+  let _d_shs = if totals.shs < c_shs then 0. else Float.abs (totals.shs -. c_shs) in
+  let _d_speed =
+    if totals.speed < c_speed then 0. else Float.abs (totals.speed -. c_speed)
+  in
+  d_sfb
 ;;
 
 let incr : t Incr.t =
   map8
-    Sfb.incr
-    Dsfb.incr
-    Roll.incr
-    Lsb.incr
-    Config.c_sfb
-    Config.c_dsfb
-    Config.w_roll
-    Config.w_lsb
-    ~f:(fun sfb dsfb roll lsb c_sfb c_dsfb c_roll c_lsb ->
-      make ~sfb ~dsfb ~roll ~lsb ~c_sfb ~c_dsfb ~c_roll ~c_lsb)
+    Totals.incr
+    Config.Incr.C.sfb
+    Config.Incr.C.dsfb
+    Config.Incr.C.roll
+    Config.Incr.C.lsb
+    Config.Incr.C.speed
+    Config.Incr.C.shb
+    Config.Incr.C.shs
+    ~f:(fun totals c_sfb c_dsfb c_roll c_lsb c_speed c_shb c_shs ->
+      make ~totals ~c_sfb ~c_dsfb ~c_roll ~c_lsb ~c_speed ~c_shb ~c_shs)
 ;;
