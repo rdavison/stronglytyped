@@ -61,11 +61,11 @@ let init () =
   Lwt.on_success (http_get "/static/corpus/data.sexp") Ypou.Corpus.set_data
 ;;
 
-(* val w_sfb : float Incr.t
-val w_dsfb : float Incr.t
-val w_keyfreq : float Finger.Table.t Incr.t
-val w_rolls : float Incr.t
-val w_lsbs : float Incr.t
+(* val c_sfb : float Incr.t
+val c_dsfb : float Incr.t
+val c_keyfreq : float Finger.Table.t Incr.t
+val c_roll : float Incr.t
+val c_lsb : float Incr.t
 val monograms : float Char.Table.t Incr.t
 val bigrams : float String.Table.t Incr.t
 val skipgrams : float String.Table.t Incr.t
@@ -78,9 +78,9 @@ let stabilize () = Lwt.wrap Incr.stabilize
 
 let onload _ =
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
-  Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.w_sfb_v);
+  Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.c_sfb_v);
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.w_dsfb_v);
+  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.c_dsfb_v);
   Dom.appendChild app (Html.createBr document);
   Dom.appendChild app (float_input "Roll Weight" Ypou.Config.w_roll_v);
   Dom.appendChild app (Html.createBr document);

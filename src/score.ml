@@ -3,39 +3,31 @@ open! Incr
 
 type t = float
 
-let make ~sfb ~dsfb ~roll ~lsb ~keyfreq ~w_sfb ~w_dsfb ~w_keyfreq ~w_rolls ~w_lsbs =
+let make ~sfb ~dsfb ~roll ~lsb ~c_sfb ~c_dsfb ~c_roll ~c_lsb =
+  let ( < ) = Float.( < ) in
+  let ( > ) = Float.( > ) in
   let total_sfb = List.sum (module Float) (Hf.Table.data sfb) ~f:Fn.id in
   let total_dsfb = List.sum (module Float) (Hf.Table.data dsfb) ~f:Fn.id in
   let total_rolls = List.sum (module Roll) (Hf.Table.data roll) ~f:Fn.id in
-  let total_w_weight =
-    let inea =
-      Hf.Table.mapi keyfreq ~f:(fun ~key ~data ->
-          let _, f = key in
-          Finger.Table.find_exn w_keyfreq f *. data)
-    in
-    List.sum (module Float) (Hf.Table.data inea) ~f:Fn.id
-    /. Float.of_int (Finger.Table.length w_keyfreq)
-  in
-  (w_sfb *. total_sfb)
-  +. (w_dsfb *. total_dsfb)
-  +. total_w_weight
-  +. (w_rolls *. (1. -. total_rolls.inward))
-  +. (w_rolls *. (1. -. total_rolls.outward))
-  +. (w_lsbs *. List.sum (module Float) (Hand.Table.data lsb) ~f:Fn.id)
+  let total_rolls = total_rolls.inward +. total_rolls.outward in
+  let total_lsb = List.sum (module Float) (Hand.Table.data lsb) ~f:Fn.id in
+  let d_sfb = if total_sfb < c_sfb then 0. else Float.abs (total_sfb -. c_sfb) in
+  let d_dsfb = if total_dsfb < c_dsfb then 0. else Float.abs (total_dsfb -. c_dsfb) in
+  let d_rolls = if total_rolls > c_roll then 0. else Float.abs (total_rolls -. c_roll) in
+  let d_lsb = if total_lsb < c_lsb then 0. else Float.abs (total_lsb -. c_lsb) in
+  d_sfb +. d_dsfb +. d_rolls +. d_lsb
 ;;
 
 let incr : t Incr.t =
-  map10
+  map8
     Sfb.incr
     Dsfb.incr
     Roll.incr
     Lsb.incr
-    Keyfreq.incr
-    Config.w_sfb
-    Config.w_dsfb
-    Config.w_keyfreq
+    Config.c_sfb
+    Config.c_dsfb
     Config.w_roll
     Config.w_lsb
-    ~f:(fun sfb dsfb roll lsb keyfreq w_sfb w_dsfb w_keyfreq w_rolls w_lsbs ->
-      make ~sfb ~dsfb ~roll ~lsb ~keyfreq ~w_sfb ~w_dsfb ~w_keyfreq ~w_rolls ~w_lsbs)
+    ~f:(fun sfb dsfb roll lsb c_sfb c_dsfb c_roll c_lsb ->
+      make ~sfb ~dsfb ~roll ~lsb ~c_sfb ~c_dsfb ~c_roll ~c_lsb)
 ;;
