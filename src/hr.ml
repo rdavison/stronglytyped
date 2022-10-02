@@ -9,8 +9,7 @@ include Comparable.Make (T)
 include Hashable.Make (T)
 
 let all =
-  let open List.Let_syntax in
-  let%map_open h = Hand.all
+  let%map_open.List h = Hand.all
   and r = [ 0; 1; 2 ] in
   h, r
 ;;

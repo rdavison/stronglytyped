@@ -3,11 +3,25 @@ open! Incr
 
 module Vars = struct
   module C = struct
-    let sfb = Incr.Var.create 0.
-    let dsfb = Incr.Var.create 0.05
-    let roll = Incr.Var.create 0.04
-    let lsb = Incr.Var.create 0.
-    let speed = Incr.Var.create 0.
+    let sf c =
+      let dexterity v =
+        match v with
+        | `P -> 0.2
+        | `R -> 0.3
+        | `M -> 0.5
+        | `I -> 0.8
+      in
+      Finger.all
+      |> List.map ~f:(fun v -> v, (c, 1. -. dexterity v))
+      |> Finger.Map.of_alist_exn
+      |> Incr.Var.create
+    ;;
+
+    let sfb = sf 0.
+    let dsfb = sf 0.
+    let speed = sf 0.
+    let roll = Incr.Var.create (0., 1., 1.)
+    let lsb = Incr.Var.create (0., 3.)
     let shb = Incr.Var.create 0.2
     let shs = Incr.Var.create 0.2
 

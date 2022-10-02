@@ -19,3 +19,4 @@ val incr : t Incr.t
 val monograms : float Char.Table.t Incr.t
 val bigrams : float String.Table.t Incr.t
 val skipgrams : float String.Table.t Incr.t
+val allgrams : float String.Table.t Incr.t
