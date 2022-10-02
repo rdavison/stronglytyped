@@ -15,60 +15,23 @@ type t =
   }
 [@@deriving sexp]
 
-module Parse = struct
-  type t =
-    { s1 : float String.Table.t option
-    ; s2 : float String.Table.t option
-    ; s3 : float String.Table.t option
-    ; s4 : float String.Table.t option
-    ; s5 : float String.Table.t option
-    ; s6 : float String.Table.t option
-    ; s7 : float String.Table.t option
-    ; s8 : float String.Table.t option
-    ; s9 : float String.Table.t option
-    ; singles : float Char.Table.t option
-    ; triples : float String.Table.t option
-    }
-  [@@deriving sexp]
-
-  let data_v = Incr.Var.create ""
-  let set_data = Incr.Var.set data_v
-  let data = Incr.Var.watch data_v
-
-  let incr =
-    let%bind.Incr data = data in
-    let v = t_of_sexp (Sexp.of_string data) in
-    Incr.return v
-  ;;
-end
-
-let n tbl =
-  let total = List.sum (module Float) (Hashtbl.data tbl) ~f:Fn.id in
-  Hashtbl.map tbl ~f:(fun v -> v /. total)
-;;
-
-let set_data = Parse.set_data
+let data_v = Incr.Var.create ""
+let data = Incr.Var.watch data_v
 
 let incr =
-  Incr.map
-    Parse.incr
-    ~f:(fun { Parse.s1; s2; s3; s4; s5; s6; s7; s8; s9; singles; triples } ->
-      { s1 = n (Option.value_exn s1)
-      ; s2 = n (Option.value_exn s2)
-      ; s3 = n (Option.value_exn s3)
-      ; s4 = n (Option.value_exn s4)
-      ; s5 = n (Option.value_exn s5)
-      ; s6 = n (Option.value_exn s6)
-      ; s7 = n (Option.value_exn s7)
-      ; s8 = n (Option.value_exn s8)
-      ; s9 = n (Option.value_exn s9)
-      ; singles = n (Option.value_exn singles)
-      ; triples = n (Option.value_exn triples)
-      })
+  let%map.Incr v = data in
+  Sexp.of_string v |> t_of_sexp
 ;;
 
-let monograms = Incr.map incr ~f:(fun v -> n v.singles)
-let bigrams = Incr.map incr ~f:(fun v -> n v.s1)
+let monograms =
+  let%map.Incr v = incr in
+  v.singles
+;;
+
+let bigrams =
+  let%map.Incr v = incr in
+  v.s1
+;;
 
 let skipgrams =
   Incr.map incr ~f:(fun v ->
@@ -91,4 +54,74 @@ let allgrams =
         | `Left a -> Some a
         | `Right b -> Some b
         | `Both (a, b) -> Some (a +. b)))
+;;
+
+let n tbl =
+  let total = List.sum (module Float) (Hashtbl.data tbl) ~f:Fn.id in
+  Hashtbl.map tbl ~f:(fun v -> v /. total)
+;;
+
+let of_string s =
+  let len = String.length s in
+  let singles = Char.Table.create () in
+  let triples = String.Table.create () in
+  let s1 = String.Table.create () in
+  let s2 = String.Table.create () in
+  let s3 = String.Table.create () in
+  let s4 = String.Table.create () in
+  let s5 = String.Table.create () in
+  let s6 = String.Table.create () in
+  let s7 = String.Table.create () in
+  let s8 = String.Table.create () in
+  let s9 = String.Table.create () in
+  let sn = [| s1; s2; s3; s4; s5; s6; s7; s8; s9 |] in
+  let sn_len = Array.length sn in
+  for i = 0 to len - 1 do
+    let c1 = Char.lowercase s.[i] in
+    Char.Table.update singles c1 ~f:(function
+        | Some v -> v +. 1.
+        | None -> 1.);
+    for j = 0 to sn_len - 1 do
+      if i + j + 1 < len
+      then (
+        let c2 = Char.lowercase s.[i + j + 1] in
+        if i + j + 2 < len
+        then (
+          let c3 = Char.lowercase s.[i + j + 2] in
+          String.Table.update
+            triples
+            (String.of_char_list [ c1; c2; c3 ])
+            ~f:(function
+              | Some v -> v +. 1.
+              | None -> 1.);
+          String.Table.update
+            sn.(j)
+            (String.of_char_list [ c1; c2 ])
+            ~f:(function
+              | Some v -> v +. 1.
+              | None -> 1.)))
+    done
+  done;
+  let res =
+    { s1 = n s1
+    ; s2 = n s2
+    ; s3 = n s3
+    ; s4 = n s4
+    ; s5 = n s5
+    ; s6 = n s6
+    ; s7 = n s7
+    ; s8 = n s8
+    ; s9 = n s9
+    ; singles = n singles
+    ; triples = n triples
+    }
+  in
+  let same =
+    let s = sexp_of_t res |> Sexp.to_string_mach in
+    let v = Sexp.of_string s |> t_of_sexp in
+    let s' = sexp_of_t v |> Sexp.to_string_mach in
+    String.equal s s'
+  in
+  if not same then failwith "not same";
+  res
 ;;

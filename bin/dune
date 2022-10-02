@@ -1,6 +1,8 @@
 (executable
  (name main)
- (libraries core_unix core_unix.command_unix ypou)
+ (libraries core_unix.command_unix core_unix.sys_unix ypou)
+ (preprocess
+  (pps ppx_jane))
  (modules main sites))
 
 (executable

@@ -17,3 +17,10 @@ module Random = struct
     if i <> j then i, j else int2 x
   ;;
 end
+
+let layouts =
+  [ "qwerty", "qwertyuiopasdfghjkl;zxcvbnm,./"
+  ; "mtvap", "ypoujkdlcwinea,mhtsrqz'.;bfvgx"
+  ; "alphabet", "abcdefghijklmnopqrstuvwxyz'.,;"
+  ]
+;;

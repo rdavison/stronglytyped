@@ -1,6 +1,7 @@
 (library
  (name ypou)
  (libraries core incremental incr_map dune-site)
+ (inline_tests)
  (preprocess
   (pps ppx_jane))
  (flags :standard -open Core))

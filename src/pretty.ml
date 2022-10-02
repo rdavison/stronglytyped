@@ -1,11 +1,10 @@
 open! Import
-open! Incr
 
 type t = string
 
 let incr =
-  all (Root.all |> Array.map ~f:Var.watch |> Array.to_list)
-  |> map ~f:(fun lst ->
+  Incr.all (Root.all |> Array.map ~f:Incr.Var.watch |> Array.to_list)
+  |> Incr.map ~f:(fun lst ->
          let buf = Buffer.create 128 in
          List.iteri lst ~f:(fun i v ->
              Buffer.add_char buf v;

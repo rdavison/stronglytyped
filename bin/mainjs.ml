@@ -1,6 +1,6 @@
 open! Js_of_ocaml
 open! Js_of_ocaml_lwt
-open Lwt.Syntax
+open! Lwt.Syntax
 module Html = Dom_html
 module Incr = Ypou.Incr
 open Core
@@ -51,15 +51,17 @@ let _float_input name value =
   res
 ;;
 
-let init () =
+(* let init () =
   let http_get url =
     let* r = XmlHttpRequest.get url in
     let cod = r.XmlHttpRequest.code in
     let msg = r.XmlHttpRequest.content in
     if cod = 0 || cod = 200 then Lwt.return msg else fst (Lwt.wait ())
   in
-  Lwt.on_success (http_get "/static/corpus/data.sexp") Ypou.Corpus.set_data
-;;
+  Lwt.on_success
+    (http_get "/static/corpus/data.sexp")
+    (Ypou.Incr.Var.set Ypou.Corpus.data_v)
+;; *)
 
 (* val c_sfb : float Incr.t
 val c_dsfb : float Incr.t
@@ -91,7 +93,7 @@ let onload _ =
     (button "Load Corpus" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         init ();
+         (* init (); *)
          Js._false));
   Dom.appendChild
     app

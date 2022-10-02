@@ -13,10 +13,12 @@ type t =
   ; singles : float Char.Table.t
   ; triples : float String.Table.t
   }
+[@@deriving sexp]
 
-val set_data : string -> unit
+val data_v : string Incr.Var.t
 val incr : t Incr.t
 val monograms : float Char.Table.t Incr.t
 val bigrams : float String.Table.t Incr.t
 val skipgrams : float String.Table.t Incr.t
 val allgrams : float String.Table.t Incr.t
+val of_string : string -> t

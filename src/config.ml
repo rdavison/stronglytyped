@@ -1,18 +1,17 @@
 open! Import
-open! Incr
 
 module Vars = struct
   module C = struct
     let sf c =
       let dexterity v =
         match v with
-        | `P -> 0.2
-        | `R -> 0.3
-        | `M -> 0.5
-        | `I -> 0.8
+        | `P -> 0.1
+        | `R -> 0.2
+        | `M -> 0.3
+        | `I -> 0.4
       in
       Finger.all
-      |> List.map ~f:(fun v -> v, (c, 1. -. dexterity v))
+      |> List.map ~f:(fun v -> v, (c, (1. -. dexterity v) *. 20.))
       |> Finger.Map.of_alist_exn
       |> Incr.Var.create
     ;;
@@ -21,12 +20,13 @@ module Vars = struct
     let dsfb = sf 0.
     let speed = sf 0.
     let roll = Incr.Var.create (0., 1., 1.)
-    let lsb = Incr.Var.create (0., 3.)
+    let lsb = Incr.Var.create (0., 1000.)
+    let brc = Incr.Var.create (0., 1.)
     let shb = Incr.Var.create 0.2
     let shs = Incr.Var.create 0.2
 
     let keyfreq =
-      Var.create
+      Incr.Var.create
         (Finger.all
         |> List.map ~f:(fun finger ->
                ( finger
@@ -41,8 +41,12 @@ module Vars = struct
     ;;
   end
 
-  let progress = Var.create 0.
-  let neighbour_v = Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Curved 4)))
+  let progress = Incr.Var.create 0.
+
+  let neighbour_v =
+    Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3; 4 ])))
+  ;;
+
   let kmax_v = Incr.Var.create 1_000_000
 end
 
@@ -55,10 +59,11 @@ module Incr = struct
     let keyfreq = Incr.Var.watch Vars.C.keyfreq
     let roll = Incr.Var.watch Vars.C.roll
     let lsb = Incr.Var.watch Vars.C.lsb
+    let brc = Incr.Var.watch Vars.C.brc
     let speed = Incr.Var.watch Vars.C.speed
   end
 
   let neighbour = Incr.Var.watch Vars.neighbour_v
   let kmax = Incr.Var.watch Vars.kmax_v
-  let progress = Var.watch Vars.progress
+  let progress = Incr.Var.watch Vars.progress
 end

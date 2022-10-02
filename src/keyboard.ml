@@ -1,15 +1,17 @@
 open! Import
-open! Incr
 
-type t = char Var.t
+type t = char Incr.Var.t
 
 let qwerty = "qwertyuiopasdfghjkl;zxcvbnm,./"
-let all = qwerty |> String.to_list |> List.map ~f:(fun c -> Var.create c) |> List.to_array
+
+let all =
+  qwerty |> String.to_list |> List.map ~f:(fun c -> Incr.Var.create c) |> List.to_array
+;;
 
 let swap a b =
-  let tmp = Var.value all.(a) in
-  Var.set all.(a) (Var.value all.(b));
-  Var.set all.(b) tmp
+  let tmp = Incr.Var.value all.(a) in
+  Incr.Var.set all.(a) (Incr.Var.value all.(b));
+  Incr.Var.set all.(b) tmp
 ;;
 
 let scramble i =
@@ -20,4 +22,4 @@ let scramble i =
 ;;
 
 let length = Array.length all
-let rebase s = String.iteri s ~f:(fun i c -> Var.set all.(i) c)
+let rebase s = String.iteri s ~f:(fun i c -> Incr.Var.set all.(i) c)

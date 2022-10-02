@@ -1,7 +1,8 @@
 open! Import
 
-let acceptance_curve ?(a = 3.) ?(b = 20.) x =
-  (1. -. (x ** (1. /. a))) *. (Float.cos (x *. Float.pi *. b) +. 1.) /. 2.
+let acceptance_curve ?(oscillate = true) ?(a = 1.5) ?(b = 200.) x =
+  (1. -. (x ** (1. /. a)))
+  *. if oscillate then (Float.cos (x *. Float.pi *. b) +. 1.) /. 2. else 1.
 ;;
 
 let anneal =
@@ -21,7 +22,7 @@ let anneal =
     match Float.( < ) s_new s_old with
     | true -> `Accept
     | false ->
-      let probability = acceptance_curve pct in
+      let probability = acceptance_curve ~oscillate:true pct in
       if Float.( < ) (Random.float 1.0) probability then `Accept else `Reject
   in
   Incr.map2 Config.Incr.progress Analysis.incr ~f:(fun progress s_new ->
