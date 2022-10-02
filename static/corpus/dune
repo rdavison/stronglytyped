@@ -3,4 +3,4 @@
   (site
    (ypounercds corpus)))
  (files
-  (data.sexp as data.sexp)))
+  (corpus.sexp as corpus.sexp)))

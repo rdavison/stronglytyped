@@ -23,7 +23,8 @@
     "@opam/ocamlformat": "*",
     "@opam/ocamlformat-rpc": "*",
     "@opam/js_of_ocaml-compiler": "*",
-    "@opam/js_of_ocaml-lwt": "*"
+    "@opam/js_of_ocaml-lwt": "*",
+    "@opam/utop": "*"
   },
   "resolutions": {
     "@opam/js_of_ocaml": {
