@@ -3,33 +3,67 @@ open! Incr
 
 type t = float
 
-let make ~(totals : Totals.t) ~c_sfb ~c_dsfb ~c_roll ~c_lsb ~c_speed ~c_shb ~c_shs =
-  let ( < ) = Float.( < ) in
-  let ( > ) = Float.( > ) in
-  let d_sfb = if totals.sfb < c_sfb then 0. else Float.abs (totals.sfb -. c_sfb) in
-  let _d_dsfb = if totals.dsfb < c_dsfb then 0. else Float.abs (totals.dsfb -. c_dsfb) in
-  let _d_rolls =
-    if totals.rolls > c_roll then 0. else Float.abs (totals.rolls -. c_roll)
+let ( < ) = Float.( < )
+(* let ( > ) = Float.( > ) *)
+
+let sfb =
+  let%bind.Incr conf = Config.Incr.C.sfb in
+  Imap.mapi Sf.B.incr ~f:(fun ~key ~data ->
+      let _, finger = key in
+      let c, w = Finger.Map.find_exn conf finger in
+      let wv = data *. w in
+      if wv < c then 0. else Float.abs (c -. wv))
+;;
+
+let sfb_total = Imap.sum sfb (module Float) ~f:Fn.id
+
+let dsfb =
+  let%bind.Incr conf = Config.Incr.C.dsfb in
+  Imap.mapi Sf.S.incr ~f:(fun ~key ~data ->
+      let _, finger = key in
+      let c, w = Finger.Map.find_exn conf finger in
+      let wv = data *. w in
+      if wv < c then 0. else Float.abs (c -. wv))
+;;
+
+let dsfb_total = Imap.sum dsfb (module Float) ~f:Fn.id
+
+let speed =
+  let%bind.Incr conf = Config.Incr.C.speed in
+  Imap.mapi Sf.Speed.incr ~f:(fun ~key ~data ->
+      let _, finger = key in
+      let c, w = Finger.Map.find_exn conf finger in
+      let wv = data *. w in
+      if wv < c then 0. else Float.abs (c -. wv))
+;;
+
+let speed_total = Imap.sum speed (module Float) ~f:Fn.id
+
+let lsb =
+  let%bind.Incr c, w = Config.Incr.C.lsb in
+  Imap.mapi Sf.Lsb.incr ~f:(fun ~key:_ ~data ->
+      let wv = data *. w in
+      if wv < c then 0. else Float.abs (c -. wv))
+;;
+
+let lsb_total = Imap.sum lsb (module Float) ~f:Fn.id
+
+let roll =
+  let%bind.Incr c, w_in, w_out = Config.Incr.C.roll in
+  let%map.Incr res =
+    Imap.mapi Sf.Roll.incr ~f:(fun ~key:_ ~data:{ inward; outward } ->
+        let wv = 1. -. ((inward *. w_in) +. (outward *. w_out)) in
+        let res = if wv < c then 0. else Float.abs (c -. wv) in
+        res)
   in
-  let _d_lsb = if totals.lsb < c_lsb then 0. else Float.abs (totals.lsb -. c_lsb) in
-  let _d_shb = if totals.shb > c_shb then 0. else Float.abs (totals.shb -. c_shb) in
-  let _d_shs = if totals.shs < c_shs then 0. else Float.abs (totals.shs -. c_shs) in
-  let _d_speed =
-    if totals.speed < c_speed then 0. else Float.abs (totals.speed -. c_speed)
-  in
-  d_sfb
+  res
+;;
+
+let roll_total =
+  let%map.Incr sum = Imap.sum roll (module Float) ~f:(fun i -> 1. -. i) in
+  1. -. sum
 ;;
 
 let incr : t Incr.t =
-  map8
-    Totals.incr
-    Config.Incr.C.sfb
-    Config.Incr.C.dsfb
-    Config.Incr.C.roll
-    Config.Incr.C.lsb
-    Config.Incr.C.speed
-    Config.Incr.C.shb
-    Config.Incr.C.shs
-    ~f:(fun totals c_sfb c_dsfb c_roll c_lsb c_speed c_shb c_shs ->
-      make ~totals ~c_sfb ~c_dsfb ~c_roll ~c_lsb ~c_speed ~c_shb ~c_shs)
+  [| sfb_total; dsfb_total; speed_total; lsb_total; roll_total |] |> Incr.sum_float
 ;;

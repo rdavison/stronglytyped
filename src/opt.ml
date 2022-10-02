@@ -7,9 +7,7 @@ let acceptance_curve ?(a = 3.) ?(b = 20.) x =
 let anneal =
   let true_best = ref [] in
   let accepted_best = ref [] in
-  let set_best
-      ({ Analysis.stats = _; totals = _; score; layout = _; pretty = _ } as analysis)
-    =
+  let set_best ({ Analysis.score; layout = _; pretty = _ } as analysis) =
     accepted_best := analysis :: !accepted_best;
     (match !true_best with
     | [] -> true_best := analysis :: !true_best

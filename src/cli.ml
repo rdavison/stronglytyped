@@ -27,13 +27,9 @@ let gen () =
     |> Incr.Observer.on_update_exn ~f:(function
            | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
              incr observations;
-             let { Analysis.stats = _; totals; score; layout; pretty } = best in
+             let { Analysis.score; layout; pretty } = best in
              base := layout;
-             printf
-               "Score: %.4f\n%s\n%s\n%!"
-               score
-               (Totals.sexp_of_t totals |> Sexp.to_string_hum)
-               pretty
+             printf "Score: %.4f\n%s\n%!" score pretty
            | _ -> ())
   in
   stabilize ();

@@ -26,7 +26,7 @@ let text data =
   res, setText
 ;;
 
-let float_input name value =
+let _float_input name value =
   let res = document##createDocumentFragment in
   Dom.appendChild res (document##createTextNode (js name));
   let input = Html.createInput ~_type:(js "text") document in
@@ -78,14 +78,14 @@ let stabilize () = Lwt.wrap Incr.stabilize
 
 let onload _ =
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
-  Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.Vars.C.sfb);
+  (* Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.Vars.C.sfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.Vars.C.dsfb);
-  Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Roll Weight" Ypou.Config.Vars.C.roll);
+  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.Vars.C.dsfb (fun _ -> ""));
+  Dom.appendChild app (Html.createBr document); *)
+  (* Dom.appendChild app (float_input "Roll Weight" Ypou.Config.Vars.C.roll);
   Dom.appendChild app (Html.createBr document);
   Dom.appendChild app (float_input "Lsb Weight" Ypou.Config.Vars.C.lsb);
-  Dom.appendChild app (Html.createBr document);
+  Dom.appendChild app (Html.createBr document); *)
   Dom.appendChild
     app
     (button "Load Corpus" (fun _ ->

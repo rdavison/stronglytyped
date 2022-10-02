@@ -8,6 +8,11 @@ type t =
   }
 [@@deriving sexp, compare, hash, equal]
 
+include Comparable.S with type t := t
+include Hashable.S with type t := t
+
 val make : int -> char -> t
-val all : t Incr.t array
+val all_arr_incr : t Incr.t array
+val all_incr_set : Set.t Incr.t
+val all_incr_map : unit Map.t Incr.t
 val dist : ?stagger:Stagger.t -> t -> t -> float

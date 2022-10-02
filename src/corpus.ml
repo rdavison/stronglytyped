@@ -84,3 +84,11 @@ let skipgrams =
       |> ignore;
       acc)
 ;;
+
+let allgrams =
+  Incr.map2 bigrams skipgrams ~f:(fun bigrams skipgrams ->
+      Hashtbl.merge bigrams skipgrams ~f:(fun ~key:_ -> function
+        | `Left a -> Some a
+        | `Right b -> Some b
+        | `Both (a, b) -> Some (a +. b)))
+;;
