@@ -80,13 +80,13 @@ let stabilize () = Lwt.wrap Incr.stabilize
 
 let onload _ =
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
-  (* Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.Vars.C.sfb (fun _ -> ""));
+  (* Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.Var.C.sfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.Vars.C.dsfb (fun _ -> ""));
+  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.Var.C.dsfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document); *)
-  (* Dom.appendChild app (float_input "Roll Weight" Ypou.Config.Vars.C.roll);
+  (* Dom.appendChild app (float_input "Roll Weight" Ypou.Config.Var.C.roll);
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Lsb Weight" Ypou.Config.Vars.C.lsb);
+  Dom.appendChild app (float_input "Lsb Weight" Ypou.Config.Var.C.lsb);
   Dom.appendChild app (Html.createBr document); *)
   Dom.appendChild
     app
