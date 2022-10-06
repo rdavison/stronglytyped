@@ -37,7 +37,7 @@ let all_list_incr = all_arr_incr |> Array.to_list
 let all_incr_set = all_arr_incr |> Array.to_list |> Incr.all |> Incr.map ~f:Set.of_list
 let all_incr_map = all_incr_set |> Imap.of_set
 
-let dist ?(stagger = Stagger.default) k1 k2 =
+let dist k1 k2 ~stagger =
   let pr, pc = k1.rc in
   let qr, qc = k2.rc in
   let px = Float.of_int pc +. Stagger.row_offset stagger pr in
@@ -64,7 +64,7 @@ let xy rc ~stagger =
   x, y
 ;;
 
-let slope ?(stagger = Stagger.default) rc1 rc2 =
+let slope rc1 rc2 ~stagger =
   let px, py = xy rc1 ~stagger in
   let qx, qy = xy rc2 ~stagger in
   let dx = qx -. px in
@@ -74,7 +74,7 @@ let slope ?(stagger = Stagger.default) rc1 rc2 =
 
 let%expect_test "slope" =
   let test rc1 rc2 expect =
-    let slope = slope rc1 rc2 in
+    let slope = slope rc1 rc2 ~stagger:Stagger.default in
     let actual = Float.compare slope 0. in
     let prefix = if Int.equal actual expect then "Pass" else "Fail" in
     let info =
@@ -95,7 +95,7 @@ let%expect_test "slope" =
     (Pass ((1 3) (0 2) -0.8 -1 -1)) |}]
 ;;
 
-let slope ?stagger (k1 : t) (k2 : t) = slope ?stagger k1.rc k2.rc
+let slope (k1 : t) (k2 : t) ~stagger = slope k1.rc k2.rc ~stagger
 
 module T2 = struct
   module T = struct

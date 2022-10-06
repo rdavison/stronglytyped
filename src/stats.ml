@@ -3,7 +3,8 @@ open! Import
 module Internal = struct
   let same_finger ?(dist = false) data =
     let keyset x = Keyset.(x |> hf |> pairs |> dedup2 |> incr2) in
-    let%bind.Incr data = data in
+    let%bind_open.Incr data = data
+    and stagger = Stagger.incr in
     let%map.Incr assoc =
       Incr.all
       @@ let%map.List hf = Hf.all in
@@ -13,7 +14,7 @@ module Internal = struct
              (module Float)
              keyset
              ~f:(fun (k1, k2) ->
-               let dist = if dist then Key.dist k1 k2 else 1. in
+               let dist = if dist then Key.dist k1 k2 ~stagger else 1. in
                let freq = Ngrams.freq2 (k1, k2) ~data in
                dist *. freq) )
     in
@@ -48,7 +49,8 @@ module Internal = struct
         in
         Keyset.(columns cols |> pairs |> incr2)
       in
-      let%bind.Incr data = Corpus.bigrams in
+      let%bind_open.Incr data = Corpus.bigrams
+      and stagger = Stagger.incr in
       let%map.Incr assoc =
         Incr.all
         @@ let%map.List hand = Hand.all in
@@ -58,7 +60,7 @@ module Internal = struct
                (module Float)
                keyset
                ~f:(fun (k1, k2) ->
-                 let dist = Key.dist k1 k2 in
+                 let dist = Key.dist k1 k2 ~stagger in
                  let freq = Ngrams.freq2 (k1, k2) ~data in
                  dist *. freq) )
       in
@@ -169,8 +171,8 @@ module Internal = struct
     let good_or_bad =
       let good = T.good in
       let bad = T.bad in
-      fun k1 k2 ->
-        let slope = Float.compare (Key.slope k1 k2) 0. in
+      fun k1 k2 ~stagger ->
+        let slope = Float.compare (Key.slope k1 k2 ~stagger) 0. in
         if slope = 0
         then good
         else if slope < 0
@@ -212,7 +214,8 @@ module Internal = struct
       let keyset x =
         Keyset.(x |> hand |> pairs |> dedup2 |> unique_fingers2 |> symmetric2 |> incr2)
       in
-      let%bind.Incr data = data in
+      let%bind_open.Incr data = data
+      and stagger = Stagger.incr in
       let%map.Incr assoc =
         let l =
           let%map.List hand = Hand.all in
@@ -223,11 +226,11 @@ module Internal = struct
               keyset
               ~f:(fun (k1, k2) ->
                 let freq = Ngrams.freq2 (k1, k2) ~data in
-                let dist = Key.dist k1 k2 in
+                let dist = Key.dist k1 k2 ~stagger in
                 let freq_per_dist = freq /. dist in
                 let k12 = good_or_bad k1 k2 in
                 let k21 = good_or_bad k2 k1 in
-                T.(k12 freq_per_dist + k21 freq_per_dist))
+                T.(k12 freq_per_dist ~stagger + k21 freq_per_dist ~stagger))
           in
           hand, sum
         in
