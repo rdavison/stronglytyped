@@ -107,7 +107,7 @@ let onload _ =
     (button "Start" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         let f = Lwt.wrap (fun () -> Ypou.Cli.gen ()) in
+         let f = Lwt.wrap (fun () -> Ypou.Cli.main ()) in
          Lwt.dont_wait (fun () -> f) ignore;
          Js._false));
   Dom.appendChild

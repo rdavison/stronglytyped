@@ -23,6 +23,6 @@ A library for pretty-printing s-expressions, using better indentation rules than
 the default pretty printer in Sexplib.
 "
 url {
-src: "https://ocaml.janestreet.com/ocaml-core/v0.15/files/sexp_pretty-v0.15.0.tar.gz"
-checksum: "sha256=99e8643bc2bf9d0201702b165acccc9195bbb481093dc16ccb95c9fdfe015df1"
+src: "https://github.com/janestreet/sexp_pretty/archive/refs/tags/v0.15.1.tar.gz"
+checksum: "sha256=7e150c26068948fab42b2e9a1c2aec7032e204c02b77cf5ef14c0fab7b87e7e8"
 }

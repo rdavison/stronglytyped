@@ -17,7 +17,7 @@ build-watch:
 build:
 	$(DUNE) build @all
 
-.PHONY: build
+.PHONY: test
 test:
 	$(DUNE) build @runtest
 

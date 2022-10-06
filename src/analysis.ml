@@ -5,6 +5,7 @@ type t =
   ; layout : string
   ; layout_pretty : string
   }
+[@@deriving sexp]
 
 let incr =
   let%map_open.Incr score = Score.incr

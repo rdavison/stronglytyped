@@ -17,7 +17,7 @@ let stabilize () =
   Root.rebase !base
 ;;
 
-let gen () =
+let main () =
   let observations = ref 0 in
   let observer = Incr.observe (Incr.both Config.Incr.kmax Config.Incr.neighbor) in
   stabilize ();
@@ -54,5 +54,5 @@ let command =
   Command.basic
     ~summary:"Ypou Nercds"
     (let%map_open.Command () = return () in
-     fun () -> gen ())
+     fun () -> main ())
 ;;

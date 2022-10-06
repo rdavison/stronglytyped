@@ -8,6 +8,8 @@
     "buildsInSource": "_build"
   },
   "dependencies": {
+    "@opam/async": "*",
+    "@opam/async_unix": "*",
     "@opam/core": "v0.15.0",
     "@opam/core_unix": "*",
     "@opam/dune": "*",
@@ -15,6 +17,8 @@
     "@opam/incremental": "*",
     "@opam/incr_map": "*",
     "@opam/lwt": "*",
+    "@opam/notty": "*",
+    "@opam/notty_async": "*",
     "@opam/ppx_jane": "*",
     "ocaml": "4.14.0"
   },

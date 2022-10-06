@@ -46,6 +46,7 @@ module Var = struct
   ;;
 
   let kmax_v = Incr.Var.create 1_000_000
+  let gen = Incr.Var.create false
 end
 
 module Incr = struct
@@ -62,4 +63,5 @@ module Incr = struct
   let neighbor = Incr.Var.watch Var.neighbor_v
   let kmax = Incr.Var.watch Var.kmax_v
   let progress = Incr.Var.watch Var.progress
+  let gen = Incr.Var.watch Var.gen
 end
