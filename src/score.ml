@@ -1,7 +1,5 @@
 open! Import
 
-type t = float
-
 let ( < ) = Float.( < )
 
 let sfb =
@@ -74,4 +72,4 @@ let uf =
 ;;
 
 let uf_total = Imap.sum uf (module Float) ~f:Fn.id
-let incr : t Incr.t = [| uf_total; roll_total; lsb_total; speed_total |] |> Incr.sum_float
+let incr = Incr.sum_float [| uf_total; roll_total; lsb_total; speed_total |]

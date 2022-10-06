@@ -1,17 +1,17 @@
 open! Import
 
-module Vars = struct
+module Var = struct
   module C = struct
     let sf c =
       let dexterity v =
         match v with
-        | `P -> 0.1
-        | `R -> 0.2
-        | `M -> 0.3
-        | `I -> 0.4
+        | `P -> 0.2
+        | `R -> 0.3
+        | `M -> 0.5
+        | `I -> 0.8
       in
       Finger.all
-      |> List.map ~f:(fun v -> v, (c, (1. -. dexterity v) *. 20.))
+      |> List.map ~f:(fun v -> v, (c, 1. -. dexterity v))
       |> Finger.Map.of_alist_exn
       |> Incr.Var.create
     ;;
@@ -21,9 +21,7 @@ module Vars = struct
     let speed = sf 0.
     let roll = Incr.Var.create (0., 1., 1.)
     let lsb = Incr.Var.create (0., 1000.)
-    let brc = Incr.Var.create (0., 1.)
-    let shb = Incr.Var.create 0.2
-    let shs = Incr.Var.create 0.2
+    let uf = Incr.Var.create (0., 1.)
 
     let keyfreq =
       Incr.Var.create
@@ -52,18 +50,16 @@ end
 
 module Incr = struct
   module C = struct
-    let sfb = Incr.Var.watch Vars.C.sfb
-    let dsfb = Incr.Var.watch Vars.C.dsfb
-    let shb = Incr.Var.watch Vars.C.shb
-    let shs = Incr.Var.watch Vars.C.shs
-    let keyfreq = Incr.Var.watch Vars.C.keyfreq
-    let roll = Incr.Var.watch Vars.C.roll
-    let lsb = Incr.Var.watch Vars.C.lsb
-    let brc = Incr.Var.watch Vars.C.brc
-    let speed = Incr.Var.watch Vars.C.speed
+    let sfb = Incr.Var.watch Var.C.sfb
+    let dsfb = Incr.Var.watch Var.C.dsfb
+    let keyfreq = Incr.Var.watch Var.C.keyfreq
+    let roll = Incr.Var.watch Var.C.roll
+    let lsb = Incr.Var.watch Var.C.lsb
+    let uf = Incr.Var.watch Var.C.uf
+    let speed = Incr.Var.watch Var.C.speed
   end
 
-  let neighbor = Incr.Var.watch Vars.neighbor_v
-  let kmax = Incr.Var.watch Vars.kmax_v
-  let progress = Incr.Var.watch Vars.progress
+  let neighbor = Incr.Var.watch Var.neighbor_v
+  let kmax = Incr.Var.watch Var.kmax_v
+  let progress = Incr.Var.watch Var.progress
 end
