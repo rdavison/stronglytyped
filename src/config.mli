@@ -14,6 +14,7 @@ module Var : sig
   val neighbor_v : Neighbor.t Incr.Var.t
   val kmax_v : int Incr.Var.t
   val progress : float Incr.Var.t
+  val gen : bool Incr.Var.t
 end
 
 module Incr : sig
@@ -30,4 +31,5 @@ module Incr : sig
   val neighbor : Neighbor.t Incr.t
   val kmax : int Incr.t
   val progress : float Incr.t
+  val gen : bool Incr.t
 end

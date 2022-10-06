@@ -1,0 +1,11 @@
+(library
+ (name ypou_test)
+ (libraries core_unix.sys_unix ypou)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane))
+ (flags :standard -open Core -open Ypou))
+
+(generate_sites_module
+ (module sites)
+ (sites ypounercds))
