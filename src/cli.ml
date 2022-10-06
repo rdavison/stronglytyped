@@ -27,9 +27,9 @@ let gen () =
     |> Incr.Observer.on_update_exn ~f:(function
            | Initialized (_, best :: _) | Changed (_, (_ :: _, best :: _)) ->
              incr observations;
-             let { Analysis.score; layout; pretty } = best in
+             let { Analysis.score; layout; layout_pretty } = best in
              base := layout;
-             printf "Score: %.4f\n%s\n%!" score pretty
+             printf "Score: %.4f\n%s\n%!" score layout_pretty
            | _ -> ())
   in
   stabilize ();

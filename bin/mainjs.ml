@@ -122,7 +122,7 @@ let onload _ =
   Incr.Observer.on_update_exn (Incr.observe Ypou.Opt.anneal) ~f:(fun obs ->
       match obs with
       | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
-        set_text best.Ypou.Analysis.pretty
+        set_text best.Ypou.Analysis.layout_pretty
       | _ -> ());
   Js._false
 ;;

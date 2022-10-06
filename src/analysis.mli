@@ -3,7 +3,7 @@ open! Import
 type t =
   { score : float
   ; layout : string
-  ; pretty : Pretty.t
+  ; layout_pretty : string
   }
 
 val incr : t Incr.t

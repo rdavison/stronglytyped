@@ -3,16 +3,12 @@ open! Import
 type t =
   { score : float
   ; layout : string
-  ; pretty : Pretty.t
+  ; layout_pretty : string
   }
 
 let incr =
-  Incr.map2 Score.incr Pretty.incr ~f:(fun score pretty ->
-      let layout =
-        Root.all
-        |> Array.map ~f:Incr.Var.latest_value
-        |> Array.to_list
-        |> String.of_char_list
-      in
-      { score; layout; pretty })
+  let%map_open.Incr score = Score.incr
+  and layout = Root.layout
+  and layout_pretty = Root.layout_pretty in
+  { score; layout; layout_pretty }
 ;;
