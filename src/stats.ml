@@ -2,7 +2,7 @@ open! Import
 
 module Internal = struct
   let same_finger ?(dist = false) data =
-    let keyset x = Keyset.(x |> hf |> pairs |> dedup' |> incr') in
+    let keyset x = Keyset.(x |> hf |> pairs |> dedup2 |> incr2) in
     let%bind.Incr data = data in
     let%map.Incr assoc =
       Incr.all
@@ -46,7 +46,7 @@ module Internal = struct
           | `L -> [ 2; 4 ]
           | `R -> [ 5; 7 ]
         in
-        Keyset.(columns cols |> pairs |> incr')
+        Keyset.(columns cols |> pairs |> incr2)
       in
       let%bind.Incr data = Corpus.bigrams in
       let%map.Incr assoc =
@@ -128,7 +128,7 @@ module Internal = struct
     [@@deriving sexp]
 
     let incr =
-      let keyset x = Keyset.(x |> hr |> pairs |> unique_fingers' |> incr') in
+      let keyset x = Keyset.(x |> hr |> pairs |> unique_fingers2 |> incr2) in
       let%bind.Incr data = Corpus.bigrams in
       let%map.Incr assoc =
         Incr.all
@@ -210,7 +210,7 @@ module Internal = struct
 
     let calc data =
       let keyset x =
-        Keyset.(x |> hand |> pairs |> dedup' |> unique_fingers' |> symmetric' |> incr')
+        Keyset.(x |> hand |> pairs |> dedup2 |> unique_fingers2 |> symmetric2 |> incr2)
       in
       let%bind.Incr data = data in
       let%map.Incr assoc =
