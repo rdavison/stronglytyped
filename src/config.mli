@@ -13,7 +13,7 @@ module Vars : sig
     val keyfreq : float Finger.Table.t Incr.Var.t
   end
 
-  val neighbour_v : Neighbour.t Incr.Var.t
+  val neighbor_v : Neighbor.t Incr.Var.t
   val kmax_v : int Incr.Var.t
   val progress : float Incr.Var.t
 end
@@ -31,7 +31,7 @@ module Incr : sig
     val shs : float Incr.t
   end
 
-  val neighbour : Neighbour.t Incr.t
+  val neighbor : Neighbor.t Incr.t
   val kmax : int Incr.t
   val progress : float Incr.t
 end

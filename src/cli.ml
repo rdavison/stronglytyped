@@ -19,9 +19,9 @@ let stabilize () =
 
 let gen () =
   let observations = ref 0 in
-  let observer = Incr.observe (Incr.both Config.Incr.kmax Config.Incr.neighbour) in
+  let observer = Incr.observe (Incr.both Config.Incr.kmax Config.Incr.neighbor) in
   stabilize ();
-  let kmax, neighbour = Incr.Observer.value_exn observer in
+  let kmax, neighbor = Incr.Observer.value_exn observer in
   let () =
     Incr.observe Opt.anneal
     |> Incr.Observer.on_update_exn ~f:(function
@@ -38,7 +38,7 @@ let gen () =
     time_it (fun () ->
         for k = 1 to kmax do
           let pct = Float.of_int k /. Float.of_int kmax in
-          neighbour pct;
+          neighbor pct;
           Incr.Var.set Config.Vars.progress pct;
           stabilize ()
         done)

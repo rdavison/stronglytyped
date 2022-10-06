@@ -43,8 +43,8 @@ module Vars = struct
 
   let progress = Incr.Var.create 0.
 
-  let neighbour_v =
-    Incr.Var.create (Neighbour.make (Neighbour.Config.make (`Random [ 1; 2; 3; 4 ])))
+  let neighbor_v =
+    Incr.Var.create (Neighbor.make (Neighbor.Config.make (`Random [ 1; 2; 3; 4 ])))
   ;;
 
   let kmax_v = Incr.Var.create 1_000_000
@@ -63,7 +63,7 @@ module Incr = struct
     let speed = Incr.Var.watch Vars.C.speed
   end
 
-  let neighbour = Incr.Var.watch Vars.neighbour_v
+  let neighbor = Incr.Var.watch Vars.neighbor_v
   let kmax = Incr.Var.watch Vars.kmax_v
   let progress = Incr.Var.watch Vars.progress
 end
