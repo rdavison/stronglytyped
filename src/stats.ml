@@ -14,7 +14,7 @@ module Internal = struct
              keyset
              ~f:(fun (k1, k2) ->
                let dist = if dist then Key.dist k1 k2 else 1. in
-               let freq = Ngrams.T2.freq (k1, k2) ~data in
+               let freq = Ngrams.freq2 (k1, k2) ~data in
                dist *. freq) )
     in
     Hf.Map.of_alist_exn assoc
@@ -59,7 +59,7 @@ module Internal = struct
                keyset
                ~f:(fun (k1, k2) ->
                  let dist = Key.dist k1 k2 in
-                 let freq = Ngrams.T2.freq (k1, k2) ~data in
+                 let freq = Ngrams.freq2 (k1, k2) ~data in
                  dist *. freq) )
       in
       Hand.Map.of_alist_exn assoc
@@ -138,7 +138,7 @@ module Internal = struct
            , List.sum
                (module Float)
                keyset
-               ~f:(fun (k1, k2) -> Ngrams.T2.freq (k1, k2) ~data) )
+               ~f:(fun (k1, k2) -> Ngrams.freq2 (k1, k2) ~data) )
       in
       Hr.Map.of_alist_exn assoc
     ;;
@@ -222,7 +222,7 @@ module Internal = struct
               (module T)
               keyset
               ~f:(fun (k1, k2) ->
-                let freq = Ngrams.T2.freq (k1, k2) ~data in
+                let freq = Ngrams.freq2 (k1, k2) ~data in
                 let dist = Key.dist k1 k2 in
                 let freq_per_dist = freq /. dist in
                 let k12 = good_or_bad k1 k2 in
