@@ -4,7 +4,7 @@ type t = (int * int) * Key.t Incr.t
 
 val make : rows:int list -> cols:int list -> t list
 val hf : Hf.t -> t list
-val hr : Hr.t -> t list
+val hr : Hand.t * int -> t list
 val hand : Hand.t -> t list
 val finger : Finger.t -> t list
 val rows : int list -> t list
