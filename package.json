@@ -20,6 +20,7 @@
     "@opam/notty": "*",
     "@opam/notty_async": "*",
     "@opam/ppx_jane": "*",
+    "@opam/textutils_kernel": "*",
     "ocaml": "4.14.0"
   },
   "devDependencies": {

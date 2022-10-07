@@ -1,6 +1,6 @@
 (library
  (name ypou)
- (libraries core incremental incr_map dune-site)
+ (libraries core incremental textutils_kernel.text_block incr_map dune-site)
  (inline_tests)
  (preprocess
   (pps ppx_jane))

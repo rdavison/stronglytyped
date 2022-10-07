@@ -32,4 +32,5 @@ let of_int = function
   | _ -> assert false
 ;;
 
-let all = List.concat_map Hand.all ~f:(fun h -> List.map Finger.all ~f:(fun f -> h, f))
+let to_string (h, f) = sprintf "%s%s" (Hand.to_string h) (Finger.to_string f)
+let all = [ `L, `P; `L, `R; `L, `M; `L, `I; `R, `I; `R, `M; `R, `R; `R, `P ]

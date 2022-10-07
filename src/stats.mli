@@ -1,5 +1,24 @@
 open! Import
 
+type t =
+  { sfb : float Hf.Map.t
+  ; sfb_total : float
+  ; dsfb : float Hf.Map.t
+  ; dsfb_total : float
+  ; speed : float Hf.Map.t
+  ; speed_total : float
+  ; keyfreq : float Hf.Map.t
+  ; keyfreq_total : float
+  ; roll : float Hr.Map.t
+  ; roll_total : float
+  ; uf : (float * float) Hand.Map.t
+  ; uf_total : float * float
+  }
+[@@deriving sexp]
+
+val to_string : t -> string
+val incr : t Incr.t
+
 (** same finger bigram *)
 val sfb : float Hf.Map.t Incr.t
 
