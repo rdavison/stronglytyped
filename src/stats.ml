@@ -146,10 +146,11 @@ module Internal = struct
     ;;
 
     let total = Imap.sum incr (module Float) ~f:Fn.id
+    let () = ignore total
   end
 
-  (* Unique finger *)
-  module Uf = struct
+  (* Disjoint Same Hand Row Change *)
+  module Dshrc = struct
     module T : sig
       type t = float * float [@@deriving sexp, compare, hash]
 
@@ -240,6 +241,7 @@ module Internal = struct
 
     let incr = calc Corpus.bigrams
     let total = Imap.sum incr (module T) ~f:Fn.id
+    let () = ignore total
   end
 end
 
@@ -255,10 +257,51 @@ let lsb = Lsb.incr
 let lsb_total = Lsb.total
 let keyfreq = Keyfreq.incr
 let keyfreq_total = Keyfreq.total
-let roll = Roll.incr
-let roll_total = Roll.total
-let uf = Uf.incr
-let uf_total = Uf.total
+let hr_roll = Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
+
+let hr_roll_in =
+  Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
+;;
+
+let hr_roll_out =
+  Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
+;;
+
+let hr_roll_total = Incr.return 0.
+let hr_roll_in_total = Incr.return 0.
+let hr_roll_out_total = Incr.return 0.
+
+let hand_roll =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let hand_roll_in =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let hand_roll_out =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let hand_roll_total = Incr.return 0.
+let hand_roll_in_total = Incr.return 0.
+let hand_roll_out_total = Incr.return 0.
+
+let dshrc =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let dshrc_good =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let dshrc_bad =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let dshrc_total = Incr.return 0.
+let dshrc_good_total = Incr.return 0.
+let dshrc_bad_total = Incr.return 0.
 
 type t =
   { sfb : float Hf.Map.t
@@ -271,10 +314,24 @@ type t =
   ; lsb_total : float
   ; keyfreq : float Hf.Map.t
   ; keyfreq_total : float
-  ; roll : float Hr.Map.t
-  ; roll_total : float
-  ; uf : Uf.t Hand.Map.t
-  ; uf_total : Uf.t
+  ; hr_roll : float Hr.Map.t
+  ; hr_roll_in : float Hr.Map.t
+  ; hr_roll_out : float Hr.Map.t
+  ; hr_roll_total : float
+  ; hr_roll_in_total : float
+  ; hr_roll_out_total : float
+  ; hand_roll : float Hand.Map.t
+  ; hand_roll_in : float Hand.Map.t
+  ; hand_roll_out : float Hand.Map.t
+  ; hand_roll_total : float
+  ; hand_roll_in_total : float
+  ; hand_roll_out_total : float
+  ; dshrc : float Hand.Map.t
+  ; dshrc_good : float Hand.Map.t
+  ; dshrc_bad : float Hand.Map.t
+  ; dshrc_total : float
+  ; dshrc_good_total : float
+  ; dshrc_bad_total : float
   }
 [@@deriving sexp]
 
@@ -289,10 +346,24 @@ let to_string
     ; lsb_total
     ; keyfreq
     ; keyfreq_total
-    ; roll = _
-    ; roll_total = _
-    ; uf
-    ; uf_total
+    ; hr_roll
+    ; hr_roll_in = _
+    ; hr_roll_out = _
+    ; hr_roll_total = _
+    ; hr_roll_in_total = _
+    ; hr_roll_out_total = _
+    ; hand_roll
+    ; hand_roll_in
+    ; hand_roll_out
+    ; hand_roll_total
+    ; hand_roll_in_total
+    ; hand_roll_out_total
+    ; dshrc
+    ; dshrc_good
+    ; dshrc_bad
+    ; dshrc_total
+    ; dshrc_good_total
+    ; dshrc_bad_total
     }
   =
   let module T = Text_block in
@@ -304,13 +375,17 @@ let to_string
                data
                |> List.map ~f:snd
                |> List.map ~f:(fun map ->
-                      Map.find_exn (fst map) hf |> sprintf "%.4f" |> T.text)
+                      Map.find_exn (fst map) hf
+                      |> Float.( * ) 100.
+                      |> sprintf "%.2f"
+                      |> T.text)
              in
-             T.text (to_string hf) :: data, `Center)
+             T.text (to_string hf) :: data, `Right)
       |> List.cons
            ( T.text "(total)"
-             :: List.map data ~f:(fun x -> x |> snd |> snd |> sprintf "%.4f" |> T.text)
-           , `Center )
+             :: List.map data ~f:(fun x ->
+                    x |> snd |> snd |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
+           , `Right )
       |> List.cons (T.nil :: List.map data ~f:(Fn.compose T.text fst), `Right)
     in
     let (`Rows rows) = T.table (`Cols cols) in
@@ -323,7 +398,7 @@ let to_string
       [ "sfb", (sfb, sfb_total)
       ; "dsfb", (dsfb, dsfb_total)
       ; "speed", (speed, speed_total)
-      ; "keyfreq", (keyfreq, keyfreq_total)
+      ; "weight", (keyfreq, keyfreq_total)
       ]
   in
   let hand_table =
@@ -331,15 +406,34 @@ let to_string
       ~all:Hand.all
       ~to_string:Hand.to_string
       [ "lsb", (lsb, lsb_total)
-      ; "dshrc-good", (Map.map uf ~f:fst, fst uf_total)
-      ; "dshrc-bad", (Map.map uf ~f:snd, snd uf_total)
-      ; ( "dshrc-both"
-        , ( Map.map uf ~f:(fun (a, b) -> a +. b)
-          , let a, b = uf_total in
-            a +. b ) )
+      ; "dshrc", (dshrc, dshrc_total)
+      ; "(good) dshrc", (dshrc_good, dshrc_good_total)
+      ; "(bad) dshrc", (dshrc_bad, dshrc_bad_total)
+      ; "roll", (hand_roll, hand_roll_total)
+      ; "(in) roll", (hand_roll_in, hand_roll_in_total)
+      ; "(out) roll", (hand_roll_out, hand_roll_out_total)
       ]
   in
-  let sections = [ "hand-finger", hf_table; "hand", hand_table ] in
+  let hr_table =
+    let data =
+      List.map [ 0; 1; 2 ] ~f:(fun r ->
+          let title =
+            match r with
+            | 0 -> "top"
+            | 1 -> "middle"
+            | 2 -> "bottom"
+            | _ -> assert false
+          in
+          let lr =
+            Hand.Map.of_alist_exn
+              (List.map Hand.all ~f:(fun h -> h, Map.find_exn hr_roll (h, r)))
+          in
+          let total = Map.data lr |> List.sum (module Float) ~f:Fn.id in
+          title, (lr, total))
+    in
+    table ~all:Hand.all ~to_string:Hand.to_string data
+  in
+  let sections = [ "hand-finger", hf_table; "hand", hand_table; "hand-row", hr_table ] in
   let t =
     sections
     |> List.map ~f:(fun (title, table) ->
@@ -362,10 +456,24 @@ let incr =
   and lsb_total = lsb_total
   and keyfreq = keyfreq
   and keyfreq_total = keyfreq_total
-  and roll = roll
-  and roll_total = roll_total
-  and uf = uf
-  and uf_total = uf_total in
+  and hr_roll = hr_roll
+  and hr_roll_in = hr_roll_in
+  and hr_roll_out = hr_roll_out
+  and hr_roll_total = hr_roll_total
+  and hr_roll_in_total = hr_roll_in_total
+  and hr_roll_out_total = hr_roll_out_total
+  and hand_roll = hand_roll
+  and hand_roll_in = hand_roll_in
+  and hand_roll_out = hand_roll_out
+  and hand_roll_total = hand_roll_total
+  and hand_roll_in_total = hand_roll_in_total
+  and hand_roll_out_total = hand_roll_out_total
+  and dshrc = dshrc
+  and dshrc_good = dshrc_good
+  and dshrc_bad = dshrc_bad
+  and dshrc_total = dshrc_total
+  and dshrc_good_total = dshrc_good_total
+  and dshrc_bad_total = dshrc_bad_total in
   { sfb
   ; sfb_total
   ; dsfb
@@ -376,9 +484,23 @@ let incr =
   ; lsb_total
   ; keyfreq
   ; keyfreq_total
-  ; roll
-  ; roll_total
-  ; uf
-  ; uf_total
+  ; hr_roll
+  ; hr_roll_in
+  ; hr_roll_out
+  ; hr_roll_total
+  ; hr_roll_in_total
+  ; hr_roll_out_total
+  ; hand_roll
+  ; hand_roll_in
+  ; hand_roll_out
+  ; hand_roll_total
+  ; hand_roll_in_total
+  ; hand_roll_out_total
+  ; dshrc
+  ; dshrc_good
+  ; dshrc_bad
+  ; dshrc_total
+  ; dshrc_good_total
+  ; dshrc_bad_total
   }
 ;;

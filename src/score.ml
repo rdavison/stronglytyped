@@ -48,7 +48,7 @@ let roll =
   let%bind.Incr c, w_in, w_out = Config.Incr.C.roll in
   let w = (w_in +. w_out) /. 2. in
   let%map.Incr res =
-    Imap.mapi Stats.roll ~f:(fun ~key:_ ~data ->
+    Imap.mapi Stats.hr_roll ~f:(fun ~key:_ ~data ->
         let wv = 1. -. (w *. data) in
         if wv < c then 0. else Float.abs (c -. wv))
   in
@@ -60,10 +60,18 @@ let roll_total =
   1. -. sum
 ;;
 
-let uf =
+let dshrc =
   let%bind.Incr c, w = Incr.return (0., 2.) in
   let%map.Incr res =
-    Imap.mapi Stats.uf ~f:(fun ~key:_ ~data ->
+    let dshrc =
+      let%map_open.Incr dshrc_good = Stats.dshrc_good
+      and dshrc_bad = Stats.dshrc_bad in
+      List.fold Hand.all ~init:Hand.Map.empty ~f:(fun map h ->
+          let good = Map.find_exn dshrc_good h in
+          let bad = Map.find_exn dshrc_bad h in
+          Map.add_exn map ~key:h ~data:(good, bad))
+    in
+    Imap.mapi dshrc ~f:(fun ~key:_ ~data ->
         let good, bad = data in
         let wv = good +. (w *. bad) in
         if wv < c then 0. else Float.abs (c -. wv))
@@ -71,5 +79,5 @@ let uf =
   res
 ;;
 
-let uf_total = Imap.sum uf (module Float) ~f:Fn.id
-let incr = Incr.sum_float [| uf_total; roll_total; lsb_total; speed_total |]
+let dshrc_total = Imap.sum dshrc (module Float) ~f:Fn.id
+let incr = Incr.sum_float [| dshrc_total; roll_total; lsb_total; speed_total |]
