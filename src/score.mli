@@ -10,6 +10,6 @@ val lsb : float Hand.Map.t Incr.t
 val lsb_total : float Incr.t
 val roll : float Hr.Map.t Incr.t
 val roll_total : float Incr.t
-val uf : float Hand.Map.t Incr.t
-val uf_total : float Incr.t
+val dshrc : float Hand.Map.t Incr.t
+val dshrc_total : float Incr.t
 val incr : float Incr.t

@@ -13,3 +13,5 @@ let all =
   and r = [ 0; 1; 2 ] in
   h, r
 ;;
+
+let to_string (h, r) = sprintf "%s%d" (Hand.to_string h) r
