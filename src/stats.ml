@@ -122,57 +122,94 @@ module Internal = struct
     let total = Imap.sum incr (module Float) ~f:Fn.id
   end
 
-  (* module Roll = struct
-    type t =
-      { inward : float
-      ; outward : float
-      }
-    [@@deriving sexp]
+  module Float2 : sig
+    type t = float * float [@@deriving sexp, compare, hash]
 
-    let incr =
+    val combine : t -> float
+
+    include Container.Summable with type t := t
+    include Abstract_algebra.Commutative_group.S with type t := t
+  end = struct
+    type t = float * float [@@deriving sexp, compare, hash]
+
+    let combine (x, y) = x +. y
+    let ( + ) (a1, b1) (a2, b2) = a1 +. a2, b1 +. b2
+    let ( - ) (a1, b1) (a2, b2) = a1 -. a2, b1 -. b2
+    let zero = 0., 0.
+  end
+
+  module Roll = struct
+    let make_incr row =
       let keyset x = Keyset.(x |> hr |> pairs |> unique_fingers2 |> incr2) in
       let%bind.Incr data = Corpus.bigrams in
       let%map.Incr assoc =
         Incr.all
-        @@ let%map.List hr = Hr.all in
-           let%map.Incr keyset = keyset hr in
-           ( hr
+        @@ let%map.List hand = Hand.all in
+           let%map.Incr keyset = keyset (hand, row) in
+           ( hand
            , List.sum
-               (module Float)
+               (module Float2)
                keyset
-               ~f:(fun (k1, k2) -> Ngrams.freq2 (k1, k2) ~data) )
+               ~f:(fun (k1, k2) ->
+                 let freq = Ngrams.freq2 (k1, k2) ~data in
+                 let dir = Key.direction k1 k2 in
+                 match dir with
+                 | `I -> freq, 0.
+                 | `O -> 0., freq) )
       in
-      Hr.Map.of_alist_exn assoc
+      Hand.Map.of_alist_exn assoc
     ;;
 
-    let total = Imap.sum incr (module Float) ~f:Fn.id
-    let () = ignore total
-  end *)
+    let make_total2 incr = Imap.sum incr (module Float) ~f:Float2.combine
+    let make_total incr = Imap.sum incr (module Float) ~f:Fn.id
+    let roll_top2 = make_incr 0
+    let roll_top_total = make_total2 roll_top2
+    let roll_in_top = Imap.map roll_top2 ~f:fst
+    let roll_in_top_total = make_total roll_in_top
+    let roll_out_top = Imap.map roll_top2 ~f:snd
+    let roll_out_top_total = make_total roll_out_top
+    let roll_middle2 = make_incr 1
+    let roll_middle_total = make_total2 roll_middle2
+    let roll_in_middle = Imap.map roll_middle2 ~f:fst
+    let roll_in_middle_total = make_total roll_in_middle
+    let roll_out_middle = Imap.map roll_middle2 ~f:snd
+    let roll_out_middle_total = make_total roll_out_middle
+    let roll_bottom2 = make_incr 2
+    let roll_bottom_total = make_total2 roll_bottom2
+    let roll_in_bottom = Imap.map roll_bottom2 ~f:fst
+    let roll_in_bottom_total = make_total roll_in_bottom
+    let roll_out_bottom = Imap.map roll_bottom2 ~f:snd
+    let roll_out_bottom_total = make_total roll_out_bottom
+
+    let merge a b =
+      Imap.merge a b ~f:(fun ~key:_ merge_elem ->
+          let left, right =
+            Map.Merge_element.values
+              merge_elem
+              ~left_default:(0., 0.)
+              ~right_default:(0., 0.)
+          in
+          Some (Float2.( + ) left right))
+    ;;
+
+    let roll2 = merge roll_top2 roll_middle2 |> merge roll_bottom2
+    let roll = Imap.map roll2 ~f:Float2.combine
+    let roll_top = Imap.map roll_top2 ~f:Float2.combine
+    let roll_middle = Imap.map roll_middle2 ~f:Float2.combine
+    let roll_bottom = Imap.map roll_bottom2 ~f:Float2.combine
+    let roll_total = make_total2 roll2
+    let roll_in = Imap.map roll2 ~f:fst
+    let roll_in_total = make_total roll_in
+    let roll_out = Imap.map roll2 ~f:snd
+    let roll_out_total = make_total roll_out
+  end
 
   (* Disjoint Same Hand Row Change *)
   module Dshrc = struct
-    module T : sig
-      type t = float * float [@@deriving sexp, compare, hash]
-
-      val good : float -> t
-      val bad : float -> t
-
-      include Container.Summable with type t := t
-      include Abstract_algebra.Commutative_group.S with type t := t
-    end = struct
-      type t = float * float [@@deriving sexp, compare, hash]
-
-      let ( + ) (a1, b1) (a2, b2) = a1 +. a2, b1 +. b2
-      let ( - ) (a1, b1) (a2, b2) = a1 -. a2, b1 -. b2
-      let zero = 0., 0.
-      let good x = x, 0.
-      let bad x = 0., x
-    end
-
-    include T
-
     let good_or_bad k1 k2 ~stagger =
       let slope = Float.compare (Key.slope k1 k2 ~stagger) 0. in
+      let good x = x, 0. in
+      let bad x = 0., x in
       if slope = 0
       then good
       else if slope < 0
@@ -222,7 +259,7 @@ module Internal = struct
           let%map.Incr keyset = keyset hand in
           let sum =
             List.sum
-              (module T)
+              (module Float2)
               keyset
               ~f:(fun (k1, k2) ->
                 let freq = Ngrams.freq2 (k1, k2) ~data in
@@ -230,7 +267,7 @@ module Internal = struct
                 let freq_per_dist = freq /. dist in
                 let k12 = good_or_bad k1 k2 in
                 let k21 = good_or_bad k2 k1 in
-                T.(k12 freq_per_dist ~stagger + k21 freq_per_dist ~stagger))
+                Float2.(k12 freq_per_dist ~stagger + k21 freq_per_dist ~stagger))
           in
           hand, sum
         in
@@ -239,9 +276,14 @@ module Internal = struct
       Hand.Map.of_alist_exn assoc
     ;;
 
-    let incr = calc Corpus.bigrams
-    let total = Imap.sum incr (module T) ~f:Fn.id
-    let () = ignore total
+    let make_total incr = Imap.sum incr (module Float) ~f:Fn.id
+    let dshrc2 = calc Corpus.bigrams
+    let dshrc = Imap.map dshrc2 ~f:Float2.combine
+    let dshrc_total = make_total dshrc
+    let dshrc_good = Imap.map dshrc2 ~f:fst
+    let dshrc_good_total = make_total dshrc_good
+    let dshrc_bad = Imap.map dshrc2 ~f:snd
+    let dshrc_bad_total = make_total dshrc_bad
   end
 end
 
@@ -257,96 +299,36 @@ let lsb = Lsb.incr
 let lsb_total = Lsb.total
 let keyfreq = Keyfreq.incr
 let keyfreq_total = Keyfreq.total
-
-let roll =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_total = Incr.return 0.
-
-let roll_top =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_top_total = Incr.return 0.
-
-let roll_middle =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_middle_total = Incr.return 0.
-
-let roll_bottom =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_bottom_total = Incr.return 0.
-
-let roll_in =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_in_total = Incr.return 0.
-
-let roll_in_top =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_in_top_total = Incr.return 0.
-
-let roll_in_middle =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_in_middle_total = Incr.return 0.
-
-let roll_in_bottom =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_in_bottom_total = Incr.return 0.
-
-let roll_out =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_out_total = Incr.return 0.
-
-let roll_out_top =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_out_top_total = Incr.return 0.
-
-let roll_out_middle =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_out_middle_total = Incr.return 0.
-
-let roll_out_bottom =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let roll_out_bottom_total = Incr.return 0.
-
-let dshrc =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let dshrc_total = Incr.return 0.
-
-let dshrc_good =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let dshrc_good_total = Incr.return 0.
-
-let dshrc_bad =
-  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
-;;
-
-let dshrc_bad_total = Incr.return 0.
+let roll = Roll.roll
+let roll_total = Roll.roll_total
+let roll_top = Roll.roll_top
+let roll_top_total = Roll.roll_top_total
+let roll_middle = Roll.roll_middle
+let roll_middle_total = Roll.roll_middle_total
+let roll_bottom = Roll.roll_bottom
+let roll_bottom_total = Roll.roll_bottom_total
+let roll_in = Roll.roll_in
+let roll_in_total = Roll.roll_in_total
+let roll_in_top = Roll.roll_in_top
+let roll_in_top_total = Roll.roll_in_top_total
+let roll_in_middle = Roll.roll_in_middle
+let roll_in_middle_total = Roll.roll_in_middle_total
+let roll_in_bottom = Roll.roll_in_bottom
+let roll_in_bottom_total = Roll.roll_in_bottom_total
+let roll_out = Roll.roll_out
+let roll_out_total = Roll.roll_out_total
+let roll_out_top = Roll.roll_out_top
+let roll_out_top_total = Roll.roll_out_top_total
+let roll_out_middle = Roll.roll_out_middle
+let roll_out_middle_total = Roll.roll_out_middle_total
+let roll_out_bottom = Roll.roll_out_bottom
+let roll_out_bottom_total = Roll.roll_out_bottom_total
+let dshrc = Dshrc.dshrc
+let dshrc_total = Dshrc.dshrc_total
+let dshrc_good = Dshrc.dshrc_good
+let dshrc_good_total = Dshrc.dshrc_good_total
+let dshrc_bad = Dshrc.dshrc_bad
+let dshrc_bad_total = Dshrc.dshrc_bad_total
 
 type t =
   { sfb : float Hf.Map.t
