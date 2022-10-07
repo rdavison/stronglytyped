@@ -267,6 +267,8 @@ type t =
   ; dsfb_total : float
   ; speed : float Hf.Map.t
   ; speed_total : float
+  ; lsb : float Hand.Map.t
+  ; lsb_total : float
   ; keyfreq : float Hf.Map.t
   ; keyfreq_total : float
   ; roll : float Hr.Map.t
@@ -283,41 +285,70 @@ let to_string
     ; dsfb_total
     ; speed
     ; speed_total
+    ; lsb
+    ; lsb_total
     ; keyfreq
     ; keyfreq_total
     ; roll = _
     ; roll_total = _
-    ; uf = _
-    ; uf_total = _
+    ; uf
+    ; uf_total
     }
   =
   let module T = Text_block in
-  let cols =
-    let diti =
+  let table data ~to_string ~all =
+    let cols =
+      all
+      |> List.map ~f:(fun hf ->
+             let data =
+               data
+               |> List.map ~f:snd
+               |> List.map ~f:(fun map ->
+                      Map.find_exn (fst map) hf |> sprintf "%.4f" |> T.text)
+             in
+             T.text (to_string hf) :: data, `Center)
+      |> List.cons
+           ( T.text "(total)"
+             :: List.map data ~f:(fun x -> x |> snd |> snd |> sprintf "%.4f" |> T.text)
+           , `Center )
+      |> List.cons (T.nil :: List.map data ~f:(Fn.compose T.text fst), `Right)
+    in
+    let (`Rows rows) = T.table (`Cols cols) in
+    T.vcat rows
+  in
+  let hf_table =
+    table
+      ~all:Hf.all
+      ~to_string:Hf.to_string
       [ "sfb", (sfb, sfb_total)
       ; "dsfb", (dsfb, dsfb_total)
       ; "speed", (speed, speed_total)
       ; "keyfreq", (keyfreq, keyfreq_total)
       ]
-    in
-    Hf.all
-    |> List.map ~f:(fun hf ->
-           let data =
-             diti
-             |> List.map ~f:snd
-             |> List.map ~f:(fun map ->
-                    Map.find_exn (fst map) hf |> sprintf "%.4f" |> T.text)
-           in
-           T.text (Hf.to_string hf) :: data, `Center)
-    |> List.cons
-         ( T.text "(total)"
-           :: List.map diti ~f:(fun x -> x |> snd |> snd |> sprintf "%.4f" |> T.text)
-         , `Center )
-    |> List.cons (T.nil :: List.map diti ~f:(Fn.compose T.text fst), `Right)
   in
-  let (`Rows rows) = T.table (`Cols cols) in
-  let table = T.vcat rows in
-  T.render table
+  let hand_table =
+    table
+      ~all:Hand.all
+      ~to_string:Hand.to_string
+      [ "lsb", (lsb, lsb_total)
+      ; "dshrc-good", (Map.map uf ~f:fst, fst uf_total)
+      ; "dshrc-bad", (Map.map uf ~f:snd, snd uf_total)
+      ; ( "dshrc-both"
+        , ( Map.map uf ~f:(fun (a, b) -> a +. b)
+          , let a, b = uf_total in
+            a +. b ) )
+      ]
+  in
+  let sections = [ "hand-finger", hf_table; "hand", hand_table ] in
+  let t =
+    sections
+    |> List.map ~f:(fun (title, table) ->
+           let title = title |> T.text in
+           let table = table |> T.Boxed.cell |> T.boxed in
+           T.vcat [ title; table ])
+    |> T.vcat
+  in
+  T.render t
 ;;
 
 let incr =
@@ -327,6 +358,8 @@ let incr =
   and dsfb_total = dsfb_total
   and speed = speed
   and speed_total = speed_total
+  and lsb = lsb
+  and lsb_total = lsb_total
   and keyfreq = keyfreq
   and keyfreq_total = keyfreq_total
   and roll = roll
@@ -339,6 +372,8 @@ let incr =
   ; dsfb_total
   ; speed
   ; speed_total
+  ; lsb
+  ; lsb_total
   ; keyfreq
   ; keyfreq_total
   ; roll

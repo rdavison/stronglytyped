@@ -7,6 +7,8 @@ type t =
   ; dsfb_total : float
   ; speed : float Hf.Map.t
   ; speed_total : float
+  ; lsb : float Hand.Map.t
+  ; lsb_total : float
   ; keyfreq : float Hf.Map.t
   ; keyfreq_total : float
   ; roll : float Hr.Map.t
