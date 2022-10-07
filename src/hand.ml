@@ -23,4 +23,9 @@ let of_int : int -> t = function
   | _ -> assert false
 ;;
 
+let to_string = function
+  | `L -> "L"
+  | `R -> "R"
+;;
+
 let all : t list = [ `L; `R ]

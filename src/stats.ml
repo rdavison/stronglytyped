@@ -168,46 +168,45 @@ module Internal = struct
       let bad x = 0., x
     end
 
-    let good_or_bad =
-      let good = T.good in
-      let bad = T.bad in
-      fun k1 k2 ~stagger ->
-        let slope = Float.compare (Key.slope k1 k2 ~stagger) 0. in
-        if slope = 0
-        then good
-        else if slope < 0
-        then (
-          match k1.hand, k1.finger, k2.finger with
-          | `L, `P, (`R | `M) -> bad
-          | `L, `P, _ -> good
-          | `L, `R, (`P | `M) -> bad
-          | `L, `R, _ -> good
-          | `L, `M, (`P | `R) -> bad
-          | `L, `M, _ -> good
-          | `L, `I, _ -> good
-          | `R, `I, _ -> bad
-          | `R, `M, (`P | `R) -> good
-          | `R, `M, _ -> bad
-          | `R, `R, (`P | `M) -> good
-          | `R, `R, _ -> bad
-          | `R, `P, (`R | `M) -> good
-          | `R, `P, _ -> bad)
-        else (
-          match k1.hand, k1.finger, k2.finger with
-          | `L, `P, (`R | `M) -> good
-          | `L, `P, _ -> bad
-          | `L, `R, (`P | `M) -> good
-          | `L, `R, _ -> bad
-          | `L, `M, (`P | `R) -> good
-          | `L, `M, _ -> bad
-          | `L, `I, _ -> bad
-          | `R, `I, _ -> good
-          | `R, `M, (`P | `R) -> bad
-          | `R, `M, _ -> good
-          | `R, `R, (`P | `M) -> bad
-          | `R, `R, _ -> good
-          | `R, `P, (`R | `M) -> bad
-          | `R, `P, _ -> good)
+    include T
+
+    let good_or_bad k1 k2 ~stagger =
+      let slope = Float.compare (Key.slope k1 k2 ~stagger) 0. in
+      if slope = 0
+      then good
+      else if slope < 0
+      then (
+        match k1.hand, k1.finger, k2.finger with
+        | `L, `P, (`R | `M) -> bad
+        | `L, `P, _ -> good
+        | `L, `R, (`P | `M) -> bad
+        | `L, `R, _ -> good
+        | `L, `M, (`P | `R) -> bad
+        | `L, `M, _ -> good
+        | `L, `I, _ -> good
+        | `R, `I, _ -> bad
+        | `R, `M, (`P | `R) -> good
+        | `R, `M, _ -> bad
+        | `R, `R, (`P | `M) -> good
+        | `R, `R, _ -> bad
+        | `R, `P, (`R | `M) -> good
+        | `R, `P, _ -> bad)
+      else (
+        match k1.hand, k1.finger, k2.finger with
+        | `L, `P, (`R | `M) -> good
+        | `L, `P, _ -> bad
+        | `L, `R, (`P | `M) -> good
+        | `L, `R, _ -> bad
+        | `L, `M, (`P | `R) -> good
+        | `L, `M, _ -> bad
+        | `L, `I, _ -> bad
+        | `R, `I, _ -> good
+        | `R, `M, (`P | `R) -> bad
+        | `R, `M, _ -> good
+        | `R, `R, (`P | `M) -> bad
+        | `R, `R, _ -> good
+        | `R, `P, (`R | `M) -> bad
+        | `R, `P, _ -> good)
     ;;
 
     let calc data =
@@ -260,3 +259,91 @@ let roll = Roll.incr
 let roll_total = Roll.total
 let uf = Uf.incr
 let uf_total = Uf.total
+
+type t =
+  { sfb : float Hf.Map.t
+  ; sfb_total : float
+  ; dsfb : float Hf.Map.t
+  ; dsfb_total : float
+  ; speed : float Hf.Map.t
+  ; speed_total : float
+  ; keyfreq : float Hf.Map.t
+  ; keyfreq_total : float
+  ; roll : float Hr.Map.t
+  ; roll_total : float
+  ; uf : Uf.t Hand.Map.t
+  ; uf_total : Uf.t
+  }
+[@@deriving sexp]
+
+let to_string
+    { sfb
+    ; sfb_total
+    ; dsfb
+    ; dsfb_total
+    ; speed
+    ; speed_total
+    ; keyfreq
+    ; keyfreq_total
+    ; roll = _
+    ; roll_total = _
+    ; uf = _
+    ; uf_total = _
+    }
+  =
+  let module T = Text_block in
+  let cols =
+    let diti =
+      [ "sfb", (sfb, sfb_total)
+      ; "dsfb", (dsfb, dsfb_total)
+      ; "speed", (speed, speed_total)
+      ; "keyfreq", (keyfreq, keyfreq_total)
+      ]
+    in
+    Hf.all
+    |> List.map ~f:(fun hf ->
+           let data =
+             diti
+             |> List.map ~f:snd
+             |> List.map ~f:(fun map ->
+                    Map.find_exn (fst map) hf |> sprintf "%.4f" |> T.text)
+           in
+           T.text (Hf.to_string hf) :: data, `Center)
+    |> List.cons
+         ( T.text "(total)"
+           :: List.map diti ~f:(fun x -> x |> snd |> snd |> sprintf "%.4f" |> T.text)
+         , `Center )
+    |> List.cons (T.nil :: List.map diti ~f:(Fn.compose T.text fst), `Right)
+  in
+  let (`Rows rows) = T.table (`Cols cols) in
+  let table = T.vcat rows in
+  T.render table
+;;
+
+let incr =
+  let%map_open.Incr sfb = sfb
+  and sfb_total = sfb_total
+  and dsfb = dsfb
+  and dsfb_total = dsfb_total
+  and speed = speed
+  and speed_total = speed_total
+  and keyfreq = keyfreq
+  and keyfreq_total = keyfreq_total
+  and roll = roll
+  and roll_total = roll_total
+  and uf = uf
+  and uf_total = uf_total in
+  { sfb
+  ; sfb_total
+  ; dsfb
+  ; dsfb_total
+  ; speed
+  ; speed_total
+  ; keyfreq
+  ; keyfreq_total
+  ; roll
+  ; roll_total
+  ; uf
+  ; uf_total
+  }
+;;

@@ -29,4 +29,11 @@ let of_int : int -> t = function
   | _ -> assert false
 ;;
 
+let to_string = function
+  | `P -> "P"
+  | `R -> "R"
+  | `M -> "M"
+  | `I -> "I"
+;;
+
 let all : t list = [ `P; `R; `M; `I ]
