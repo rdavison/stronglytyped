@@ -11,23 +11,35 @@ type t =
   ; lsb_total : float
   ; keyfreq : float Hf.Map.t
   ; keyfreq_total : float
-  ; hr_roll : float Hr.Map.t
-  ; hr_roll_in : float Hr.Map.t
-  ; hr_roll_out : float Hr.Map.t
-  ; hr_roll_total : float
-  ; hr_roll_in_total : float
-  ; hr_roll_out_total : float
-  ; hand_roll : float Hand.Map.t
-  ; hand_roll_in : float Hand.Map.t
-  ; hand_roll_out : float Hand.Map.t
-  ; hand_roll_total : float
-  ; hand_roll_in_total : float
-  ; hand_roll_out_total : float
+  ; roll : float Hand.Map.t
+  ; roll_total : float
+  ; roll_top : float Hand.Map.t
+  ; roll_top_total : float
+  ; roll_middle : float Hand.Map.t
+  ; roll_middle_total : float
+  ; roll_bottom : float Hand.Map.t
+  ; roll_bottom_total : float
+  ; roll_in : float Hand.Map.t
+  ; roll_in_total : float
+  ; roll_in_top : float Hand.Map.t
+  ; roll_in_top_total : float
+  ; roll_in_middle : float Hand.Map.t
+  ; roll_in_middle_total : float
+  ; roll_in_bottom : float Hand.Map.t
+  ; roll_in_bottom_total : float
+  ; roll_out : float Hand.Map.t
+  ; roll_out_total : float
+  ; roll_out_top : float Hand.Map.t
+  ; roll_out_top_total : float
+  ; roll_out_middle : float Hand.Map.t
+  ; roll_out_middle_total : float
+  ; roll_out_bottom : float Hand.Map.t
+  ; roll_out_bottom_total : float
   ; dshrc : float Hand.Map.t
-  ; dshrc_good : float Hand.Map.t
-  ; dshrc_bad : float Hand.Map.t
   ; dshrc_total : float
+  ; dshrc_good : float Hand.Map.t
   ; dshrc_good_total : float
+  ; dshrc_bad : float Hand.Map.t
   ; dshrc_bad_total : float
   }
 [@@deriving sexp]
@@ -62,24 +74,36 @@ val keyfreq_total : float Incr.t
 
 (* rolls *)
 
-val hr_roll : float Hr.Map.t Incr.t
-val hr_roll_in : float Hr.Map.t Incr.t
-val hr_roll_out : float Hr.Map.t Incr.t
-val hr_roll_total : float Incr.t
-val hr_roll_in_total : float Incr.t
-val hr_roll_out_total : float Incr.t
-val hand_roll : float Hand.Map.t Incr.t
-val hand_roll_in : float Hand.Map.t Incr.t
-val hand_roll_out : float Hand.Map.t Incr.t
-val hand_roll_total : float Incr.t
-val hand_roll_in_total : float Incr.t
-val hand_roll_out_total : float Incr.t
+val roll : float Hand.Map.t Incr.t
+val roll_total : float Incr.t
+val roll_top : float Hand.Map.t Incr.t
+val roll_top_total : float Incr.t
+val roll_middle : float Hand.Map.t Incr.t
+val roll_middle_total : float Incr.t
+val roll_bottom : float Hand.Map.t Incr.t
+val roll_bottom_total : float Incr.t
+val roll_in : float Hand.Map.t Incr.t
+val roll_in_total : float Incr.t
+val roll_in_top : float Hand.Map.t Incr.t
+val roll_in_top_total : float Incr.t
+val roll_in_middle : float Hand.Map.t Incr.t
+val roll_in_middle_total : float Incr.t
+val roll_in_bottom : float Hand.Map.t Incr.t
+val roll_in_bottom_total : float Incr.t
+val roll_out : float Hand.Map.t Incr.t
+val roll_out_total : float Incr.t
+val roll_out_top : float Hand.Map.t Incr.t
+val roll_out_top_total : float Incr.t
+val roll_out_middle : float Hand.Map.t Incr.t
+val roll_out_middle_total : float Incr.t
+val roll_out_bottom : float Hand.Map.t Incr.t
+val roll_out_bottom_total : float Incr.t
 
 (* unique finger *)
 
 val dshrc : float Hand.Map.t Incr.t
-val dshrc_good : float Hand.Map.t Incr.t
-val dshrc_bad : float Hand.Map.t Incr.t
 val dshrc_total : float Incr.t
+val dshrc_good : float Hand.Map.t Incr.t
 val dshrc_good_total : float Incr.t
+val dshrc_bad : float Hand.Map.t Incr.t
 val dshrc_bad_total : float Incr.t

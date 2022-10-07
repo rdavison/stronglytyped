@@ -48,7 +48,7 @@ let roll =
   let%bind.Incr c, w_in, w_out = Config.Incr.C.roll in
   let w = (w_in +. w_out) /. 2. in
   let%map.Incr res =
-    Imap.mapi Stats.hr_roll ~f:(fun ~key:_ ~data ->
+    Imap.mapi Stats.roll ~f:(fun ~key:_ ~data ->
         let wv = 1. -. (w *. data) in
         if wv < c then 0. else Float.abs (c -. wv))
   in

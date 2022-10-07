@@ -122,7 +122,7 @@ module Internal = struct
     let total = Imap.sum incr (module Float) ~f:Fn.id
   end
 
-  module Roll = struct
+  (* module Roll = struct
     type t =
       { inward : float
       ; outward : float
@@ -147,7 +147,7 @@ module Internal = struct
 
     let total = Imap.sum incr (module Float) ~f:Fn.id
     let () = ignore total
-  end
+  end *)
 
   (* Disjoint Same Hand Row Change *)
   module Dshrc = struct
@@ -257,50 +257,95 @@ let lsb = Lsb.incr
 let lsb_total = Lsb.total
 let keyfreq = Keyfreq.incr
 let keyfreq_total = Keyfreq.total
-let hr_roll = Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
 
-let hr_roll_in =
-  Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
-;;
-
-let hr_roll_out =
-  Incr.return (Hr.Map.of_alist_exn (Hr.all |> List.map ~f:(fun hr -> hr, 0.)))
-;;
-
-let hr_roll_total = Incr.return 0.
-let hr_roll_in_total = Incr.return 0.
-let hr_roll_out_total = Incr.return 0.
-
-let hand_roll =
+let roll =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
 
-let hand_roll_in =
+let roll_total = Incr.return 0.
+
+let roll_top =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
 
-let hand_roll_out =
+let roll_top_total = Incr.return 0.
+
+let roll_middle =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
 
-let hand_roll_total = Incr.return 0.
-let hand_roll_in_total = Incr.return 0.
-let hand_roll_out_total = Incr.return 0.
+let roll_middle_total = Incr.return 0.
+
+let roll_bottom =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_bottom_total = Incr.return 0.
+
+let roll_in =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_in_total = Incr.return 0.
+
+let roll_in_top =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_in_top_total = Incr.return 0.
+
+let roll_in_middle =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_in_middle_total = Incr.return 0.
+
+let roll_in_bottom =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_in_bottom_total = Incr.return 0.
+
+let roll_out =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_out_total = Incr.return 0.
+
+let roll_out_top =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_out_top_total = Incr.return 0.
+
+let roll_out_middle =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_out_middle_total = Incr.return 0.
+
+let roll_out_bottom =
+  Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
+;;
+
+let roll_out_bottom_total = Incr.return 0.
 
 let dshrc =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
 
+let dshrc_total = Incr.return 0.
+
 let dshrc_good =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
+
+let dshrc_good_total = Incr.return 0.
 
 let dshrc_bad =
   Incr.return (Hand.Map.of_alist_exn (Hand.all |> List.map ~f:(fun hand -> hand, 0.)))
 ;;
 
-let dshrc_total = Incr.return 0.
-let dshrc_good_total = Incr.return 0.
 let dshrc_bad_total = Incr.return 0.
 
 type t =
@@ -314,23 +359,35 @@ type t =
   ; lsb_total : float
   ; keyfreq : float Hf.Map.t
   ; keyfreq_total : float
-  ; hr_roll : float Hr.Map.t
-  ; hr_roll_in : float Hr.Map.t
-  ; hr_roll_out : float Hr.Map.t
-  ; hr_roll_total : float
-  ; hr_roll_in_total : float
-  ; hr_roll_out_total : float
-  ; hand_roll : float Hand.Map.t
-  ; hand_roll_in : float Hand.Map.t
-  ; hand_roll_out : float Hand.Map.t
-  ; hand_roll_total : float
-  ; hand_roll_in_total : float
-  ; hand_roll_out_total : float
+  ; roll : float Hand.Map.t
+  ; roll_total : float
+  ; roll_top : float Hand.Map.t
+  ; roll_top_total : float
+  ; roll_middle : float Hand.Map.t
+  ; roll_middle_total : float
+  ; roll_bottom : float Hand.Map.t
+  ; roll_bottom_total : float
+  ; roll_in : float Hand.Map.t
+  ; roll_in_total : float
+  ; roll_in_top : float Hand.Map.t
+  ; roll_in_top_total : float
+  ; roll_in_middle : float Hand.Map.t
+  ; roll_in_middle_total : float
+  ; roll_in_bottom : float Hand.Map.t
+  ; roll_in_bottom_total : float
+  ; roll_out : float Hand.Map.t
+  ; roll_out_total : float
+  ; roll_out_top : float Hand.Map.t
+  ; roll_out_top_total : float
+  ; roll_out_middle : float Hand.Map.t
+  ; roll_out_middle_total : float
+  ; roll_out_bottom : float Hand.Map.t
+  ; roll_out_bottom_total : float
   ; dshrc : float Hand.Map.t
-  ; dshrc_good : float Hand.Map.t
-  ; dshrc_bad : float Hand.Map.t
   ; dshrc_total : float
+  ; dshrc_good : float Hand.Map.t
   ; dshrc_good_total : float
+  ; dshrc_bad : float Hand.Map.t
   ; dshrc_bad_total : float
   }
 [@@deriving sexp]
@@ -346,18 +403,30 @@ let to_string
     ; lsb_total
     ; keyfreq
     ; keyfreq_total
-    ; hr_roll
-    ; hr_roll_in = _
-    ; hr_roll_out = _
-    ; hr_roll_total = _
-    ; hr_roll_in_total = _
-    ; hr_roll_out_total = _
-    ; hand_roll
-    ; hand_roll_in
-    ; hand_roll_out
-    ; hand_roll_total
-    ; hand_roll_in_total
-    ; hand_roll_out_total
+    ; roll
+    ; roll_total
+    ; roll_top
+    ; roll_top_total
+    ; roll_middle
+    ; roll_middle_total
+    ; roll_bottom
+    ; roll_bottom_total
+    ; roll_in
+    ; roll_in_total
+    ; roll_in_top
+    ; roll_in_top_total
+    ; roll_in_middle
+    ; roll_in_middle_total
+    ; roll_in_bottom
+    ; roll_in_bottom_total
+    ; roll_out
+    ; roll_out_total
+    ; roll_out_top
+    ; roll_out_top_total
+    ; roll_out_middle
+    ; roll_out_middle_total
+    ; roll_out_bottom
+    ; roll_out_bottom_total
     ; dshrc
     ; dshrc_good
     ; dshrc_bad
@@ -409,31 +478,21 @@ let to_string
       ; "dshrc", (dshrc, dshrc_total)
       ; "(good) dshrc", (dshrc_good, dshrc_good_total)
       ; "(bad) dshrc", (dshrc_bad, dshrc_bad_total)
-      ; "roll", (hand_roll, hand_roll_total)
-      ; "(in) roll", (hand_roll_in, hand_roll_in_total)
-      ; "(out) roll", (hand_roll_out, hand_roll_out_total)
+      ; "roll", (roll, roll_total)
+      ; " (in) roll", (roll_in, roll_in_total)
+      ; "(out) roll", (roll_out, roll_out_total)
+      ; "(top)       roll", (roll_top, roll_top_total)
+      ; "(middle)       roll", (roll_middle, roll_middle_total)
+      ; "(bottom)       roll", (roll_bottom, roll_bottom_total)
+      ; "(top)  (in) roll", (roll_in_top, roll_in_top_total)
+      ; "(middle)  (in) roll", (roll_in_middle, roll_in_middle_total)
+      ; "(bottom)  (in) roll", (roll_in_bottom, roll_in_bottom_total)
+      ; "(top) (out) roll", (roll_out_top, roll_out_top_total)
+      ; "(middle) (out) roll", (roll_out_middle, roll_out_middle_total)
+      ; "(bottom) (out) roll", (roll_out_bottom, roll_out_bottom_total)
       ]
   in
-  let hr_table =
-    let data =
-      List.map [ 0; 1; 2 ] ~f:(fun r ->
-          let title =
-            match r with
-            | 0 -> "top"
-            | 1 -> "middle"
-            | 2 -> "bottom"
-            | _ -> assert false
-          in
-          let lr =
-            Hand.Map.of_alist_exn
-              (List.map Hand.all ~f:(fun h -> h, Map.find_exn hr_roll (h, r)))
-          in
-          let total = Map.data lr |> List.sum (module Float) ~f:Fn.id in
-          title, (lr, total))
-    in
-    table ~all:Hand.all ~to_string:Hand.to_string data
-  in
-  let sections = [ "hand-finger", hf_table; "hand", hand_table; "hand-row", hr_table ] in
+  let sections = [ "hand-finger", hf_table; "hand", hand_table ] in
   let t =
     sections
     |> List.map ~f:(fun (title, table) ->
@@ -456,23 +515,35 @@ let incr =
   and lsb_total = lsb_total
   and keyfreq = keyfreq
   and keyfreq_total = keyfreq_total
-  and hr_roll = hr_roll
-  and hr_roll_in = hr_roll_in
-  and hr_roll_out = hr_roll_out
-  and hr_roll_total = hr_roll_total
-  and hr_roll_in_total = hr_roll_in_total
-  and hr_roll_out_total = hr_roll_out_total
-  and hand_roll = hand_roll
-  and hand_roll_in = hand_roll_in
-  and hand_roll_out = hand_roll_out
-  and hand_roll_total = hand_roll_total
-  and hand_roll_in_total = hand_roll_in_total
-  and hand_roll_out_total = hand_roll_out_total
+  and roll = roll
+  and roll_total = roll_total
+  and roll_top = roll_top
+  and roll_top_total = roll_top_total
+  and roll_middle = roll_middle
+  and roll_middle_total = roll_middle_total
+  and roll_bottom = roll_bottom
+  and roll_bottom_total = roll_bottom_total
+  and roll_in = roll_in
+  and roll_in_total = roll_in_total
+  and roll_in_top = roll_in_top
+  and roll_in_top_total = roll_in_top_total
+  and roll_in_middle = roll_in_middle
+  and roll_in_middle_total = roll_in_middle_total
+  and roll_in_bottom = roll_in_bottom
+  and roll_in_bottom_total = roll_in_bottom_total
+  and roll_out = roll_out
+  and roll_out_total = roll_out_total
+  and roll_out_top = roll_out_top
+  and roll_out_top_total = roll_out_top_total
+  and roll_out_middle = roll_out_middle
+  and roll_out_middle_total = roll_out_middle_total
+  and roll_out_bottom = roll_out_bottom
+  and roll_out_bottom_total = roll_out_bottom_total
   and dshrc = dshrc
-  and dshrc_good = dshrc_good
-  and dshrc_bad = dshrc_bad
   and dshrc_total = dshrc_total
+  and dshrc_good = dshrc_good
   and dshrc_good_total = dshrc_good_total
+  and dshrc_bad = dshrc_bad
   and dshrc_bad_total = dshrc_bad_total in
   { sfb
   ; sfb_total
@@ -484,18 +555,30 @@ let incr =
   ; lsb_total
   ; keyfreq
   ; keyfreq_total
-  ; hr_roll
-  ; hr_roll_in
-  ; hr_roll_out
-  ; hr_roll_total
-  ; hr_roll_in_total
-  ; hr_roll_out_total
-  ; hand_roll
-  ; hand_roll_in
-  ; hand_roll_out
-  ; hand_roll_total
-  ; hand_roll_in_total
-  ; hand_roll_out_total
+  ; roll
+  ; roll_total
+  ; roll_top
+  ; roll_top_total
+  ; roll_middle
+  ; roll_middle_total
+  ; roll_bottom
+  ; roll_bottom_total
+  ; roll_in
+  ; roll_in_total
+  ; roll_in_top
+  ; roll_in_top_total
+  ; roll_in_middle
+  ; roll_in_middle_total
+  ; roll_in_bottom
+  ; roll_in_bottom_total
+  ; roll_out
+  ; roll_out_total
+  ; roll_out_top
+  ; roll_out_top_total
+  ; roll_out_middle
+  ; roll_out_middle_total
+  ; roll_out_bottom
+  ; roll_out_bottom_total
   ; dshrc
   ; dshrc_good
   ; dshrc_bad
