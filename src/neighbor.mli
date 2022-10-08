@@ -8,6 +8,7 @@ module Config : sig
     | `Curved of int
     | `Random of int list
     ]
+  [@@deriving sexp]
 
   type t
 
