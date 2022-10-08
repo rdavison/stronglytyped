@@ -1,6 +1,6 @@
 (library
  (name ypou_test)
- (libraries core_unix.sys_unix ypou)
+ (libraries core_unix.sys_unix sexp_pretty ypou)
  (inline_tests)
  (preprocess
   (pps ppx_jane))

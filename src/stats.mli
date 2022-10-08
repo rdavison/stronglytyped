@@ -44,6 +44,32 @@ type t =
   }
 [@@deriving sexp]
 
+module Internal : sig
+  module Sfb : sig
+    val keyset : Hf.t -> (Key.t * Key.t) list Incr.t
+  end
+
+  module Dsfb : sig
+    val keyset : Hf.t -> (Key.t * Key.t) list Incr.t
+  end
+
+  module Speed : sig
+    val keyset : Hf.t -> (Key.t * Key.t) list Incr.t
+  end
+
+  module Lsb : sig
+    val keyset : Hand.t -> (Key.t * Key.t) list Incr.t
+  end
+
+  module Roll : sig
+    val keyset : Hand.t * int -> (Key.t * Key.t) list Incr.t
+  end
+
+  module Dshrc : sig
+    val keyset : Hand.t -> (Key.t * Key.t) list Incr.t
+  end
+end
+
 val to_string : t -> string
 val incr : t Incr.t
 
