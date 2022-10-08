@@ -1,7 +1,7 @@
 open! Import
 
 let%expect_test "check qwerty stats" =
-  Root.apply_layout (`Name "qwerty");
+  Layout.set (`Name "qwerty");
   let layout_pretty = Incr.observe Root.layout_pretty in
   let stats = Incr.observe Stats.incr in
   Incr.stabilize ();

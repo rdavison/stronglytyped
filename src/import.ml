@@ -18,9 +18,7 @@ module Random = struct
   ;;
 end
 
-let layouts =
-  [ "qwerty", "qwertyuiopasdfghjkl;zxcvbnm,./"
-  ; "mtvap", "ypoujkdlcwinea,mhtsrqz'.;bfvgx"
-  ; "alphabet", "abcdefghijklmnopqrstuvwxyz'.,;"
-  ]
+let acceptance_curve ?(oscillate = true) ?(a = 1.5) ?(b = 200.) x =
+  (1. -. (x ** (1. /. a)))
+  *. if oscillate then (Float.cos (x *. Float.pi *. b) +. 1.) /. 2. else 1.
 ;;

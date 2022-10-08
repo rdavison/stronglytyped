@@ -47,6 +47,8 @@ module Var = struct
 
   let kmax_v = Incr.Var.create 1_000_000
   let gen = Incr.Var.create false
+  let temperature = Incr.Var.create 100_000.
+  let cooling_factor = Incr.Var.create 0.99993
 end
 
 module Incr = struct
@@ -64,4 +66,6 @@ module Incr = struct
   let kmax = Incr.Var.watch Var.kmax_v
   let progress = Incr.Var.watch Var.progress
   let gen = Incr.Var.watch Var.gen
+  let temperature = Incr.Var.watch Var.temperature
+  let cooling_factor = Incr.Var.watch Var.cooling_factor
 end

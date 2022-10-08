@@ -15,6 +15,8 @@ module Var : sig
   val kmax_v : int Incr.Var.t
   val progress : float Incr.Var.t
   val gen : bool Incr.Var.t
+  val temperature : float Incr.Var.t
+  val cooling_factor : float Incr.Var.t
 end
 
 module Incr : sig
@@ -32,4 +34,6 @@ module Incr : sig
   val kmax : int Incr.t
   val progress : float Incr.t
   val gen : bool Incr.t
+  val temperature : float Incr.t
+  val cooling_factor : float Incr.t
 end

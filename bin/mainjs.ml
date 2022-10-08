@@ -117,13 +117,15 @@ let onload _ =
          Dom.appendChild app div;
          Lwt.dont_wait stabilize ignore;
          Js._false));
-  let text, set_text = text "" in
+  let text, _set_text = text "" in
   Dom.appendChild app text;
+  (*
   Incr.Observer.on_update_exn (Incr.observe Ypou.Opt.anneal) ~f:(fun obs ->
-      match obs with
-      | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
-        set_text best.Ypou.Analysis.layout_pretty
+    match obs with
+    | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
+      set_text best.Ypou.Analysis.layout_pretty
       | _ -> ());
+  *)
   Js._false
 ;;
 

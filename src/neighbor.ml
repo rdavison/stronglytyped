@@ -7,11 +7,13 @@ module Config = struct
     | `Curved of int
     | `Random of int list
     ]
+  [@@deriving sexp]
 
   type t =
     { max_swaps_at_once : int
     ; kind : kind
     }
+  [@@deriving sexp]
 
   let make ?(max_swaps_at_once = 10) kind =
     let () =

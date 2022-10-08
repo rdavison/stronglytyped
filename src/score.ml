@@ -80,4 +80,5 @@ let dshrc =
 ;;
 
 let dshrc_total = Imap.sum dshrc (module Float) ~f:Fn.id
-let incr = Incr.sum_float [| dshrc_total; roll_total; lsb_total; speed_total |]
+let _incr = Incr.sum_float [| dshrc_total; roll_total; lsb_total; speed_total |]
+let incr = Incr.sum_float [| speed_total |]
