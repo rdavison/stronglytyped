@@ -1,5 +1,5 @@
 {
-  "checksum": "776445d6ea419c4965bd605101027411",
+  "checksum": "9b8612526f2faf3a97c1b8eeccf37345",
   "root": "ypounercds@link-dev:./package.json",
   "node": {
     "ypounercds@link-dev:./package.json": {
@@ -15,6 +15,7 @@
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9",
         "@opam/textutils_kernel@opam:v0.15.0@b42c8e40",
+        "@opam/sexp_pretty@opam:v0.15.1@95a0e056",
         "@opam/ppx_jane@opam:v0.15.0@2bb5629a",
         "@opam/notty_async@opam:v0.15.0@a9d959eb",
         "@opam/notty@opam:0.2.3@8599d7f1", "@opam/lwt@opam:5.6.1@2a9902ab",

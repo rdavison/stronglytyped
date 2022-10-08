@@ -23,9 +23,24 @@ let dedup (t : t list) : t list =
   List.dedup_and_sort t ~compare:(fun (a1, _) (b1, _) -> [%compare: int * int] a1 b1)
 ;;
 
+let no_repeats2 (t : (t * t) list) : (t * t) list =
+  List.filter t ~f:(fun ((a1, _), (a2, _)) -> not ([%compare.equal: int * int] a1 a2))
+;;
+
 let dedup2 (t : (t * t) list) : (t * t) list =
-  List.dedup_and_sort t ~compare:(fun ((a1, _), (a2, _)) ((b1, _), (b2, _)) ->
-      [%compare: (int * int) * (int * int)] (a1, b1) (a2, b2))
+  t
+  |> List.dedup_and_sort ~compare:(fun ((a1, _), (a2, _)) ((b1, _), (b2, _)) ->
+         let a12 = a1, a2 in
+         let b12 = b1, b2 in
+         [%compare: (int * int) * (int * int)] a12 b12)
+  |> List.dedup_and_sort ~compare:(fun ((a1, _), (a2, _)) ((b1, _), (b2, _)) ->
+         let a12 = a1, a2 in
+         let b21 = b2, b1 in
+         [%compare: (int * int) * (int * int)] a12 b21)
+  |> List.dedup_and_sort ~compare:(fun ((a1, _), (a2, _)) ((b1, _), (b2, _)) ->
+         let a12 = a1, a2 in
+         let b21 = b2, b1 in
+         [%compare: (int * int) * (int * int)] a12 b21)
 ;;
 
 let unique_fingers2 (t : (t * t) list) : (t * t) list =

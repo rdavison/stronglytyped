@@ -12,6 +12,7 @@ val columns : int list -> t list
 val pairs : t list -> (t * t) list
 val dedup : t list -> t list
 val dedup2 : (t * t) list -> (t * t) list
+val no_repeats2 : (t * t) list -> (t * t) list
 val unique_fingers2 : (t * t) list -> (t * t) list
 val symmetric2 : (t * t) list -> (t * t) list
 val incr : t list -> Key.t list Incr.t

@@ -1,54 +1,61 @@
 open! Import
 
 module Internal = struct
-  let same_finger ?(dist = false) data =
-    let keyset x = Keyset.(x |> hf |> pairs |> dedup2 |> incr2) in
-    let%bind_open.Incr data = data
-    and stagger = Stagger.incr in
-    let%map.Incr assoc =
-      Incr.all
-      @@ let%map.List hf = Hf.all in
-         let%map.Incr keyset = keyset hf in
-         ( hf
-         , List.sum
-             (module Float)
-             keyset
-             ~f:(fun (k1, k2) ->
-               let dist = if dist then Key.dist k1 k2 ~stagger else 1. in
-               let freq = Ngrams.freq2 (k1, k2) ~data in
-               dist *. freq) )
-    in
-    Hf.Map.of_alist_exn assoc
-  ;;
+  module Sf = struct
+    let keyset x = Keyset.(x |> hf |> pairs |> no_repeats2 |> incr2)
+
+    let make ?(dist = false) data =
+      let%bind_open.Incr data = data
+      and stagger = Stagger.incr in
+      let%map.Incr assoc =
+        Incr.all
+        @@ let%map.List hf = Hf.all in
+           let%map.Incr keyset = keyset hf in
+           ( hf
+           , List.sum
+               (module Float)
+               keyset
+               ~f:(fun (k1, k2) ->
+                 let dist = if dist then Key.dist k1 k2 ~stagger else 1. in
+                 let freq = Ngrams.freq2 (k1, k2) ~data in
+                 dist *. freq) )
+      in
+      Hf.Map.of_alist_exn assoc
+    ;;
+  end
 
   (* Same Finger Bigram *)
   module Sfb = struct
-    let incr = same_finger Corpus.bigrams
+    let keyset = Sf.keyset
+    let incr = Sf.make Corpus.bigrams
     let total = Imap.sum incr (module Float) ~f:Fn.id
   end
 
   (* Disjoint Same Finger Bigram *)
   module Dsfb = struct
-    let incr = same_finger Corpus.skipgrams
+    let keyset = Sf.keyset
+    let incr = Sf.make Corpus.skipgrams
     let total = Imap.sum incr (module Float) ~f:Fn.id
   end
 
   module Speed = struct
-    let incr = same_finger Corpus.allgrams ~dist:true
+    let keyset = Sf.keyset
+    let incr = Sf.make Corpus.allgrams ~dist:true
     let total = Imap.sum incr (module Float) ~f:Fn.id
   end
 
   (* Lateral Stretch Bigram *)
   module Lsb = struct
-    let incr =
-      let keyset x =
-        let cols =
-          match x with
-          | `L -> [ 2; 4 ]
-          | `R -> [ 5; 7 ]
-        in
-        Keyset.(columns cols |> pairs |> incr2)
+    let keyset x =
+      let cols =
+        match x with
+        | `L -> [ 2; 4 ]
+        | `R -> [ 5; 7 ]
       in
+      Keyset.(columns cols |> pairs |> no_repeats2 |> unique_fingers2 |> incr2)
+    ;;
+
+    let incr =
       let%bind_open.Incr data = Corpus.bigrams
       and stagger = Stagger.incr in
       let%map.Incr assoc =
@@ -139,8 +146,9 @@ module Internal = struct
   end
 
   module Roll = struct
+    let keyset x = Keyset.(x |> hr |> pairs |> unique_fingers2 |> incr2)
+
     let make_incr row =
-      let keyset x = Keyset.(x |> hr |> pairs |> unique_fingers2 |> incr2) in
       let%bind.Incr data = Corpus.bigrams in
       let%map.Incr assoc =
         Incr.all
@@ -247,10 +255,11 @@ module Internal = struct
         | `R, `P, _ -> good)
     ;;
 
+    let keyset x =
+      Keyset.(x |> hand |> pairs |> dedup2 |> unique_fingers2 |> symmetric2 |> incr2)
+    ;;
+
     let calc data =
-      let keyset x =
-        Keyset.(x |> hand |> pairs |> dedup2 |> unique_fingers2 |> symmetric2 |> incr2)
-      in
       let%bind_open.Incr data = data
       and stagger = Stagger.incr in
       let%map.Incr assoc =
