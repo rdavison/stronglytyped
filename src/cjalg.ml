@@ -33,7 +33,6 @@ module Default = struct
   let algorithm_rounds = 16
   let chanceToUsePreviousLayout = 0.2
   let num_swaps_between_rounds = ksize / 15
-  let numThreads = 1
   let runsBeforeChanceInc = 1
   let runsBeforeSwapsInc = 1
   let gtbRounds = 4
@@ -43,16 +42,14 @@ module Default = struct
   let gtbRoundsBeforeSwapInc = 32
 end
 
-module Thread_arg = struct
+module Arg = struct
   type t =
     { bestk : Keyboard.t
     ; numRounds : int
     ; chanceToUsePreviousLayout : float
     ; numberOfSwaps : int
     ; startTime : Time.t
-    ; numThreads : int
           (* indicates that the subroutine should keep creating new threads until this reaches 0. *)
-    ; isFinished : bool (* indicates whether the current thread is done running. *)
     }
 
   let empty =
@@ -61,15 +58,10 @@ module Thread_arg = struct
     ; chanceToUsePreviousLayout = 0.
     ; numberOfSwaps = 0
     ; startTime = Time.now ()
-    ; numThreads =
-        0
-        (* indicates that the subroutine should keep creating new threads until this reaches 0. *)
-    ; isFinished = false (* indicates whether the current thread is done running. *)
     }
   ;;
 end
 
-let runThreadsRec arg = arg
 let printPercentages _ = ()
 let printTime _ = ()
 
@@ -80,9 +72,9 @@ let monLen = Array.length monographs
 let isSwappable _ = true
 let locWithShifted _ _ = 0
 let isLegalSwap _ _ _ = true
-let swap _ _ _ = ()
+let swap k _ _ = k
 
-let smartMutate k numberOfSwaps =
+let smartMutate (k : Keyboard.t) numberOfSwaps =
   let q = monLen / 4 in
   let swapslen = 2 * numberOfSwaps in
   let charsToSwap =
@@ -99,15 +91,20 @@ let smartMutate k numberOfSwaps =
         in
         loop (monLen - 1) monographs.(0).key)
   in
-  let i = ref 0 in
-  let lockins = ref [] in
-  while !i < swapslen do
-    let lc1 = locWithShifted k charsToSwap.(!i) in
-    let lc2 = locWithShifted k charsToSwap.(!i + 1) in
-    lockins := (lc1, lc2) :: !lockins;
-    if isLegalSwap k lc1 lc2 then swap k lc1 lc2
-  done;
-  k, Array.of_list_rev !lockins
+  let k, lockins =
+    let rec loop i k lockins =
+      if i < swapslen
+      then k, lockins
+      else (
+        let lc1 = locWithShifted k charsToSwap.(i) in
+        let lc2 = locWithShifted k charsToSwap.(i + 1) in
+        let lockins = (lc1, lc2) :: lockins in
+        let k = if isLegalSwap k lc1 lc2 then swap k lc1 lc2 else k in
+        loop (i + 1) k lockins)
+    in
+    loop 0 k []
+  in
+  k, Array.of_list_rev lockins
 ;;
 
 let calcFitness (k : Keyboard.t) = k
@@ -126,11 +123,13 @@ exception Return of float
 
 let improveLayout evaluationToBeat (k : Keyboard.t) lockins lockin_length =
   let indices = buildShuffledIndices (2 * Default.trueksize) in
-  try
-    for i = 0 to (2 * Default.trueksize) - 1 do
-      for j = i + 1 to (2 * Default.trueksize) - 1 do
-        match isLegalSwap k indices.(i) indices.(j) with
-        | false -> ()
+  let rec loop_i i =
+    let rec loop_j j =
+      match j < 2 * Default.trueksize with
+      | false -> `Continue
+      | true ->
+        (match isLegalSwap k indices.(i) indices.(j) with
+        | false -> loop_j (j + 1)
         | true ->
           let skipRound =
             let rec loop inx acc =
@@ -147,17 +146,22 @@ let improveLayout evaluationToBeat (k : Keyboard.t) lockins lockin_length =
             loop 0 false
           in
           (match skipRound with
-          | true -> ()
+          | true -> loop_j (j + 1)
           | false ->
-            swap k indices.(i) indices.(j);
-            let k = calcFitness k in
+            let k = calcFitness (swap k indices.(i) indices.(j)) in
             let evaluation = k.score in
-            if Float.(evaluation < evaluationToBeat) then raise (Return evaluation))
-      done
-    done;
-    evaluationToBeat
-  with
-  | Return ev -> ev
+            if Float.(evaluation < evaluationToBeat)
+            then `Stop evaluation
+            else loop_j (j + 1)))
+    in
+    match i < 2 * Default.trueksize with
+    | false -> evaluationToBeat
+    | true ->
+      (match loop_j (i + 1) with
+      | `Stop x -> x
+      | `Continue -> loop_i (i + 1))
+  in
+  loop_i 0
 ;;
 
 let anneal (k : Keyboard.t) lockins lockin_length =
@@ -176,14 +180,46 @@ let anneal (k : Keyboard.t) lockins lockin_length =
   k, loop k.score k.score
 ;;
 
-let greatToBestThreadRec (arg : Thread_arg.t) =
-  let innerArg = { arg with numThreads = arg.numThreads - 1; isFinished = false } in
-  let numberOfSwaps = Default.gtbNumberOfSwaps in
-  let loop_cond i =
-    if arg.numThreads <= 1 then i < arg.numRounds else not innerArg.isFinished
+let runThreadsRec (arg : Arg.t) =
+  let innerArg = arg in
+  let k = Keyboard.nilKeyboard in
+  let prevk = Keyboard.nilKeyboard in
+  let rec loop ~i ~(arg : Arg.t) ~prevk =
+    match i < arg.numRounds with
+    | false -> arg
+    | true ->
+      let k =
+        if i > 0 && Float.(Random.float 1. < arg.chanceToUsePreviousLayout)
+        then fst (smartMutate prevk arg.numberOfSwaps)
+        else k
+      in
+      let k, score = anneal k [||] 0 in
+      let prevk = k in
+      let arg =
+        if Float.(score < arg.bestk.score)
+        then (
+          let arg = { arg with bestk = k } in
+          printPercentages arg.bestk;
+          printTime arg.startTime;
+          arg)
+        else arg
+      in
+      loop ~i:(i + 1) ~arg ~prevk
   in
-  let rec loop ~i ~(arg : Thread_arg.t) =
-    match loop_cond i with
+  let arg = loop ~i:0 ~arg ~prevk in
+  let arg =
+    if Float.(innerArg.bestk.score < arg.bestk.score)
+    then { arg with bestk = innerArg.bestk }
+    else arg
+  in
+  arg
+;;
+
+let greatToBestThreadRec (arg : Arg.t) =
+  let innerArg = arg in
+  let numberOfSwaps = Default.gtbNumberOfSwaps in
+  let rec loop ~i ~(arg : Arg.t) =
+    match i < arg.numRounds with
     | true ->
       let numberOfSwaps =
         if i mod Default.gtbRoundsBeforeSwapInc = Default.gtbRoundsBeforeSwapInc - 1
@@ -210,24 +246,17 @@ let greatToBestThreadRec (arg : Thread_arg.t) =
     then { arg with bestk = innerArg.bestk }
     else arg
   in
-  { arg with isFinished = true }
+  arg
 ;;
 
 let greatToBest (k : Keyboard.t) numRounds =
-  let arg =
-    { Thread_arg.empty with
-      bestk = k
-    ; numRounds
-    ; numThreads = Default.numThreads
-    ; isFinished = false
-    }
-  in
+  let arg = { Arg.empty with bestk = k; numRounds } in
   let arg = greatToBestThreadRec arg in
   arg.bestk
 ;;
 
 let rec loop
-    ~(arg : Thread_arg.t)
+    ~(arg : Arg.t)
     ~runNum
     ~runsBeforeChanceInc
     ~runsBeforeSwapsInc
@@ -239,37 +268,31 @@ let rec loop
   match runNum = Default.maxRuns with
   | true -> ()
   | false ->
-    let arg, runsBeforeChanceInc =
+    let chanceToUsePreviousLayout, runsBeforeChanceInc =
       match runNum mod runsBeforeChanceInc = 0 with
-      | false -> arg, runsBeforeChanceInc
+      | false -> arg.chanceToUsePreviousLayout, runsBeforeChanceInc
       | true ->
-        let arg =
-          { arg with
-            chanceToUsePreviousLayout =
-              arg.chanceToUsePreviousLayout ** Default.chanceExponentiator
-          }
+        let chanceToUsePreviousLayout =
+          arg.chanceToUsePreviousLayout ** Default.chanceExponentiator
         in
         let runsBeforeChanceInc =
           Int.of_float (Float.of_int runsBeforeChanceInc *. 1.2) + 1
         in
         if Default.detailedOutput
-        then
-          printf
-            "Chance to use previous layout is now %f.\n"
-            arg.chanceToUsePreviousLayout;
-        arg, runsBeforeChanceInc
+        then printf "Chance to use previous layout is now %f.\n" chanceToUsePreviousLayout;
+        chanceToUsePreviousLayout, runsBeforeChanceInc
     in
-    let arg, runsBeforeSwapsInc =
+    let numberOfSwaps, runsBeforeSwapsInc =
       match runNum mod runsBeforeSwapsInc = 0 with
-      | false -> arg, runsBeforeSwapsInc
+      | false -> arg.numberOfSwaps, runsBeforeSwapsInc
       | true ->
-        let arg = { arg with numberOfSwaps = arg.numberOfSwaps + 1 } in
+        let numberOfSwaps = arg.numberOfSwaps + 1 in
         let runsBeforeSwapsInc =
           Int.of_float (Float.of_int runsBeforeSwapsInc *. 1.2) + 1
         in
         if Default.detailedOutput
-        then printf "Number of swaps between rounds is now %d.\n" arg.numberOfSwaps;
-        arg, runsBeforeSwapsInc
+        then printf "Number of swaps between rounds is now %d.\n" numberOfSwaps;
+        numberOfSwaps, runsBeforeSwapsInc
     in
     let gtbRounds =
       match runNum mod Default.runsBeforeGtbRoundsInc = 0 with
@@ -280,7 +303,8 @@ let rec loop
         then printf "Number of rounds in greatToBest() is now %d.\n" gtbRounds;
         gtbRounds
     in
-    let (arg : Thread_arg.t) = runThreadsRec arg in
+    let arg = { arg with chanceToUsePreviousLayout; numberOfSwaps } in
+    let (arg : Arg.t) = runThreadsRec arg in
     let prevBestFitness, timeOnPrint, printTimeInterval =
       if Float.(arg.bestk.score < prevBestFitness)
       then (
@@ -307,7 +331,7 @@ let rec loop
     in
     let bestBeforeGTB = arg.bestk.score in
     let bestk = greatToBest arg.bestk gtbRounds in
-    let arg = Thread_arg.{ arg with bestk } in
+    let arg = Arg.{ arg with bestk } in
     let prevBestFitness =
       if Float.( < ) arg.bestk.score bestBeforeGTB
       then (
@@ -330,12 +354,11 @@ let rec loop
 ;;
 
 let runAlgorithm () =
-  let arg = { Thread_arg.empty with bestk = Keyboard.nilKeyboard } in
+  let arg = { Arg.empty with bestk = Keyboard.nilKeyboard } in
   let arg =
     { arg with
       numRounds = Default.algorithm_rounds
     ; startTime = Time.now ()
-    ; numThreads = Default.numThreads
     ; chanceToUsePreviousLayout = Default.chanceToUsePreviousLayout
     ; numberOfSwaps = Default.num_swaps_between_rounds
     }
