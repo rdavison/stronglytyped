@@ -7,11 +7,11 @@ module Var = struct
         match v with
         | `P -> 0.2
         | `R -> 0.3
-        | `M -> 0.5
-        | `I -> 0.8
+        | `M -> 0.4
+        | `I -> 0.5
       in
       Finger.all
-      |> List.map ~f:(fun v -> v, (c, 1. -. dexterity v))
+      |> List.map ~f:(fun v -> v, (c, 1. -. (dexterity v *. 100.)))
       |> Finger.Map.of_alist_exn
       |> Incr.Var.create
     ;;
@@ -48,7 +48,7 @@ module Var = struct
   let kmax_v = Incr.Var.create 1_000_000
   let gen = Incr.Var.create false
   let temperature = Incr.Var.create 100_000.
-  let cooling_factor = Incr.Var.create 0.99993
+  let cooling_factor = Incr.Var.create 0.9991
 end
 
 module Incr = struct

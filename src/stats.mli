@@ -44,6 +44,8 @@ type t =
   }
 [@@deriving sexp]
 
+val empty : t
+
 module Internal : sig
   module Sfb : sig
     val keyset : Hf.t -> (Key.t * Key.t) list Incr.t

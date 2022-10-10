@@ -43,7 +43,7 @@ let generate_layouts () =
         if Float.(curr_score < best_score)
         then (
           Layout.set_best ((curr_score, curr.layout) :: curr.best);
-          printf "Score: %.4f\n%s\n%!" curr_score curr.layout_pretty)
+          printf "Score: %.4f\n%s\n%s\n%!" curr_score curr.layout curr.layout_pretty)
       in
       let () =
         if Float.(
@@ -75,7 +75,7 @@ let main () =
     | Analyze -> false
   in
   let counter = ref 1 in
-  let attempts = 60 in
+  let attempts = 100 in
   let span, _ =
     time_it (fun () ->
         for _ = 1 to attempts do
@@ -87,7 +87,11 @@ let main () =
           done
         done)
   in
-  printf "Stabilized %d times. Time elapsed: %s\n" !counter (Time.Span.to_string_hum span)
+  printf
+    "Stabilized %d times. Time elapsed: %s. Stabilized %d per second.\n"
+    !counter
+    (Time.Span.to_string_hum span)
+    (Float.of_int !counter /. Time.Span.to_sec span |> Float.to_int)
 ;;
 
 let command =
