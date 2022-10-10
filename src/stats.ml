@@ -383,6 +383,50 @@ type t =
   }
 [@@deriving sexp]
 
+let empty =
+  { sfb = Hf.Map.empty
+  ; sfb_total = 0.
+  ; dsfb = Hf.Map.empty
+  ; dsfb_total = 0.
+  ; speed = Hf.Map.empty
+  ; speed_total = 0.
+  ; lsb = Hand.Map.empty
+  ; lsb_total = 0.
+  ; keyfreq = Hf.Map.empty
+  ; keyfreq_total = 0.
+  ; roll = Hand.Map.empty
+  ; roll_total = 0.
+  ; roll_top = Hand.Map.empty
+  ; roll_top_total = 0.
+  ; roll_middle = Hand.Map.empty
+  ; roll_middle_total = 0.
+  ; roll_bottom = Hand.Map.empty
+  ; roll_bottom_total = 0.
+  ; roll_in = Hand.Map.empty
+  ; roll_in_total = 0.
+  ; roll_in_top = Hand.Map.empty
+  ; roll_in_top_total = 0.
+  ; roll_in_middle = Hand.Map.empty
+  ; roll_in_middle_total = 0.
+  ; roll_in_bottom = Hand.Map.empty
+  ; roll_in_bottom_total = 0.
+  ; roll_out = Hand.Map.empty
+  ; roll_out_total = 0.
+  ; roll_out_top = Hand.Map.empty
+  ; roll_out_top_total = 0.
+  ; roll_out_middle = Hand.Map.empty
+  ; roll_out_middle_total = 0.
+  ; roll_out_bottom = Hand.Map.empty
+  ; roll_out_bottom_total = 0.
+  ; dshrc = Hand.Map.empty
+  ; dshrc_total = 0.
+  ; dshrc_good = Hand.Map.empty
+  ; dshrc_good_total = 0.
+  ; dshrc_bad = Hand.Map.empty
+  ; dshrc_bad_total = 0.
+  }
+;;
+
 let to_string
     { sfb
     ; sfb_total
