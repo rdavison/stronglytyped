@@ -2,6 +2,7 @@ open! Import
 
 let all =
   [ "qwerty", "qwertyuiopasdfghjkl;zxcvbnm,./"
+  ; "dvorak", "',.pyfgcrlaoeuidhtns;qjkxbmwvz"
   ; "mtvap", "ypoujkdlcwinea,mhtsrqz'.;bfvgx"
   ; "alphabet", "abcdefghijklmnopqrstuvwxyz'.,;"
   ; "whorf", "flhdmvwou,srntkgyaeixjbzqpc';."

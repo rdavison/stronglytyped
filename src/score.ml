@@ -82,12 +82,21 @@ let dshrc =
 let dshrc_total = Imap.sum dshrc (module Float) ~f:Fn.id
 let _incr = Incr.sum_float [| dshrc_total; roll_total; lsb_total; speed_total |]
 
+let invert f =
+  let%map.Incr f = f in
+  1. -. f
+;;
+
+let w w f =
+  let%map.Incr f = f in
+  w *. f
+;;
+
 let incr =
   Incr.sum_float
-    [| (let%map.Incr roll_total = Stats.roll_in_total in
-        1. -. roll_total)
+    [| Stats.speed_total |> w 2.
+     ; Stats.lsb_total |> w 3.
      ; Stats.dshrc_bad_total
-     ; sfb_total
-     ; speed_total
+     ; Stats.roll_total |> invert
     |]
 ;;
