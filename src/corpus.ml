@@ -28,6 +28,14 @@ let monograms =
   v.singles
 ;;
 
+let monograms_arr =
+  let%map.Incr monograms = monograms in
+  monograms
+  |> Hashtbl.to_alist
+  |> List.sort ~compare:(fun (_, v1) (_, v2) -> Float.compare v1 v2)
+  |> Array.of_list
+;;
+
 let bigrams =
   let%map.Incr v = incr in
   v.s1

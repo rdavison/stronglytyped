@@ -24,7 +24,25 @@ let scramble i =
 
 let length = Array.length all
 let rebase s = String.iteri s ~f:(fun i c -> Incr.Var.set all.(i) c)
-let char_list = all |> Array.map ~f:Incr.Var.watch |> Array.to_list |> Incr.all
+
+let bijection =
+  all
+  |> Array.mapi ~f:(fun i k ->
+         let%map.Incr k = Incr.Var.watch k in
+         i, k)
+  |> Array.to_list
+  |> Incr.all
+;;
+
+let char_list =
+  let%map.Incr bijection = bijection in
+  List.map ~f:snd bijection
+;;
+
+let reverse_lookup_table =
+  let%map.Incr bijection = bijection in
+  bijection |> List.map ~f:(fun (a, b) -> b, a) |> Char.Map.of_alist_exn
+;;
 
 let layout =
   let%map.Incr char_list = char_list in
