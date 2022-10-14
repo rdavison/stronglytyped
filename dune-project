@@ -2,9 +2,9 @@
 
 (using dune_site 0.1)
 
-(name ypounercds)
+(name stronglytyped)
 
 (package
- (name ypounercds)
+ (name stronglytyped)
  (sites
   (share corpus)))
