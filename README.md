@@ -1,4 +1,4 @@
-# pspsps
+# StronglyTyped Keyboard Layout Analyzer and Generator
 
 ## Developer Setup
 
