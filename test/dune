@@ -1,11 +1,11 @@
 (library
- (name ypou_test)
- (libraries core_unix.sys_unix sexp_pretty ypou)
+ (name stronglytyped_test)
+ (libraries core_unix.sys_unix sexp_pretty stronglytyped.analyzer)
  (inline_tests)
  (preprocess
   (pps ppx_jane))
- (flags :standard -open Core -open Ypou))
+ (flags :standard -open Core -open Stronglytyped_analyzer))
 
 (generate_sites_module
  (module sites)
- (sites ypounercds))
+ (sites stronglytyped))

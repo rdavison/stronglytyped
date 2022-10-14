@@ -1,6 +1,6 @@
 (install
  (section
   (site
-   (ypounercds corpus)))
+   (stronglytyped corpus)))
  (files
   (corpus.sexp as corpus.sexp)))

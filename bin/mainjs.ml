@@ -2,7 +2,7 @@ open! Js_of_ocaml
 open! Js_of_ocaml_lwt
 open! Lwt.Syntax
 module Html = Dom_html
-module Incr = Ypou.Incr
+module Incr = Stronglytyped_analyzer.Incr
 open Core
 
 let js = Js.string
@@ -60,7 +60,7 @@ let _float_input name value =
   in
   Lwt.on_success
     (http_get "/static/corpus/data.sexp")
-    (Ypou.Incr.Var.set Ypou.Corpus.data_v)
+    (Stronglytyped_analyzer.Incr.Var.set Stronglytyped_analyzer.Corpus.data_v)
 ;; *)
 
 (* val c_sfb : float Incr.t
@@ -80,13 +80,13 @@ let stabilize () = Lwt.wrap Incr.stabilize
 
 let onload _ =
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
-  (* Dom.appendChild app (float_input "Sfb Weight" Ypou.Config.Var.C.sfb (fun _ -> ""));
+  (* Dom.appendChild app (float_input "Sfb Weight" Stronglytyped_analyzer.Config.Var.C.sfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Dsfb Weight" Ypou.Config.Var.C.dsfb (fun _ -> ""));
+  Dom.appendChild app (float_input "Dsfb Weight" Stronglytyped_analyzer.Config.Var.C.dsfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document); *)
-  (* Dom.appendChild app (float_input "Roll Weight" Ypou.Config.Var.C.roll);
+  (* Dom.appendChild app (float_input "Roll Weight" Stronglytyped_analyzer.Config.Var.C.roll);
   Dom.appendChild app (Html.createBr document);
-  Dom.appendChild app (float_input "Lsb Weight" Ypou.Config.Var.C.lsb);
+  Dom.appendChild app (float_input "Lsb Weight" Stronglytyped_analyzer.Config.Var.C.lsb);
   Dom.appendChild app (Html.createBr document); *)
   Dom.appendChild
     app
@@ -100,14 +100,14 @@ let onload _ =
     (button "Scramble" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         Ypou.Root.scramble 100;
+         Stronglytyped_analyzer.Root.scramble 100;
          Js._false));
   Dom.appendChild
     app
     (button "Start" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         let f = Lwt.wrap (fun () -> Ypou.Cli.main ()) in
+         let f = Lwt.wrap (fun () -> Stronglytyped_generator.Cjalgorithm.start ()) in
          Lwt.dont_wait (fun () -> f) ignore;
          Js._false));
   Dom.appendChild
@@ -120,10 +120,10 @@ let onload _ =
   let text, _set_text = text "" in
   Dom.appendChild app text;
   (*
-  Incr.Observer.on_update_exn (Incr.observe Ypou.Opt.anneal) ~f:(fun obs ->
+  Incr.Observer.on_update_exn (Incr.observe Stronglytyped_analyzer.Opt.anneal) ~f:(fun obs ->
     match obs with
     | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
-      set_text best.Ypou.Analysis.layout_pretty
+      set_text best.Stronglytyped_analyzer.Analysis.layout_pretty
       | _ -> ());
   *)
   Js._false

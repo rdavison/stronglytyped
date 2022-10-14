@@ -5,8 +5,8 @@ let () =
   then (
     let s =
       In_channel.read_all "corpus.txt"
-      |> Ypou.Corpus.of_string
-      |> [%sexp_of: Ypou.Corpus.t]
+      |> Stronglytyped_analyzer.Corpus.of_string
+      |> [%sexp_of: Stronglytyped_analyzer.Corpus.t]
       |> Sexp.to_string_mach
     in
     Out_channel.write_all "corpus.sexp" ~data:s)
@@ -19,6 +19,11 @@ let () =
       | [ path ] -> path ^/ "corpus.sexp"
       | _ -> failwith "No path to corpus")
   in
-  Ypou.Incr.Var.set Ypou.Corpus.data_v data;
-  Command_unix.run Ypou.Cli.command
+  Stronglytyped_analyzer.Incr.Var.set Stronglytyped_analyzer.Corpus.data_v data;
+  let group =
+    Command.group
+      ~summary:"StronglyTyped is a keyboard layout analyzer and generator."
+      [ "gen", Stronglytyped_generator.Cli.command ]
+  in
+  Command_unix.run group
 ;;
