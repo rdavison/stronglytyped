@@ -3,4 +3,4 @@
   (site
    (stronglytyped corpus)))
  (files
-  (corpus.sexp as corpus.sexp)))
+  (typeracer as typeracer)))

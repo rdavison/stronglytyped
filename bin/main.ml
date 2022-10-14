@@ -16,7 +16,7 @@ let () =
   let data =
     In_channel.read_all
       (match Sites.Sites.corpus with
-      | [ path ] -> path ^/ "corpus.sexp"
+      | [ path ] -> path ^/ "typeracer"
       | _ -> failwith "No path to corpus")
   in
   Stronglytyped_analyzer.Incr.Var.set Stronglytyped_analyzer.Corpus.data_v data;
