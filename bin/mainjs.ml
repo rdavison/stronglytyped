@@ -1,6 +1,4 @@
 open! Js_of_ocaml
-open! Js_of_ocaml_lwt
-open! Lwt.Syntax
 module Html = Dom_html
 module Incr = Stronglytyped_analyzer.Incr
 open Core
@@ -76,8 +74,6 @@ val kmax : int Incr.t
 val progress : float Incr.t 
 val set_progress : float -> unit *)
 
-let stabilize () = Lwt.wrap Incr.stabilize
-
 let onload _ =
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
   (* Dom.appendChild app (float_input "Sfb Weight" Stronglytyped_analyzer.Config.Var.C.sfb (fun _ -> ""));
@@ -107,15 +103,14 @@ let onload _ =
     (button "Start" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         let f = Lwt.wrap (fun () -> Stronglytyped_generator.Cjalgorithm.start ()) in
-         Lwt.dont_wait (fun () -> f) ignore;
+         Stronglytyped_generator.Cjalgorithm.start ();
          Js._false));
   Dom.appendChild
     app
     (button "Step" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         Lwt.dont_wait stabilize ignore;
+         Incr.stabilize();
          Js._false));
   let text, _set_text = text "" in
   Dom.appendChild app text;

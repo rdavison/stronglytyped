@@ -16,52 +16,22 @@
     "@opam/dune-site": "*",
     "@opam/incremental": "*",
     "@opam/incr_map": "*",
-    "@opam/lwt": "*",
+    "@opam/js_of_ocaml": "*",
+    "@opam/js_of_ocaml-ppx": "*",
     "@opam/notty": "*",
     "@opam/notty_async": "*",
     "@opam/ppx_jane": "*",
     "@opam/sexp_pretty": "*",
     "@opam/textutils_kernel": "*",
-    "ocaml": "4.14.0"
+    "ocaml": "4.13.1000"
   },
   "devDependencies": {
     "@opam/ocaml-lsp-server": "*",
     "@opam/ocamlformat": "*",
     "@opam/ocamlformat-rpc": "*",
-    "@opam/js_of_ocaml-compiler": "*",
-    "@opam/js_of_ocaml-lwt": "*",
     "@opam/utop": "*"
   },
   "resolutions": {
-    "@opam/js_of_ocaml": {
-      "source": "git+ssh://git@github.com:ocsigen/js_of_ocaml:js_of_ocaml.opam#efef21c6e6837a87d439ddb04e30f446b7772a03",
-      "override": {
-        "dependencies": {
-          "@opam/js_of_ocaml-compiler": "*"
-        }
-      }
-    },
-    "@opam/js_of_ocaml-compiler": {
-      "source": "git+ssh://git@github.com:ocsigen/js_of_ocaml:js_of_ocaml-compiler.opam#efef21c6e6837a87d439ddb04e30f446b7772a03",
-      "override": {}
-    },
-    "@opam/js_of_ocaml-ppx": {
-      "source": "git+ssh://git@github.com:ocsigen/js_of_ocaml:js_of_ocaml-ppx.opam#efef21c6e6837a87d439ddb04e30f446b7772a03",
-      "override": {
-        "dependencies": {
-          "@opam/js_of_ocaml": "*"
-        }
-      }
-    },
-    "@opam/js_of_ocaml-lwt": {
-      "source": "git+ssh://git@github.com:ocsigen/js_of_ocaml:js_of_ocaml-lwt.opam#efef21c6e6837a87d439ddb04e30f446b7772a03",
-      "override": {
-        "dependencies": {
-          "@opam/js_of_ocaml": "*",
-          "@opam/js_of_ocaml-ppx": "*",
-          "@opam/js_of_ocaml-compiler": "*"
-        }
-      }
-    }
+    "@opam/js_of_ocaml": "3.11.0"
   }
 }
