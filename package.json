@@ -10,6 +10,7 @@
   "dependencies": {
     "@opam/async": "*",
     "@opam/async_unix": "*",
+    "@opam/async_js": "*",
     "@opam/core": "v0.15.0",
     "@opam/core_unix": "*",
     "@opam/dune": "*",
