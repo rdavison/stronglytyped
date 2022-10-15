@@ -11,11 +11,7 @@
 
 (executable
  (name mainjs)
- (libraries
-  stronglytyped.analyzer
-  stronglytyped.generator
-  js_of_ocaml
-  js_of_ocaml-lwt)
+ (libraries stronglytyped.analyzer stronglytyped.generator js_of_ocaml)
  (preprocess
   (pps js_of_ocaml-ppx))
  (modes js)
