@@ -12,6 +12,10 @@ let () =
     Out_channel.write_all "corpus.sexp" ~data:s)
 ;;
 
+let generator =
+  Async_command.async ~summary:"Stronglytyped Generator" Stronglytyped_generator.Cli.param
+;;
+
 let () =
   let data =
     In_channel.read_all
@@ -23,7 +27,7 @@ let () =
   let group =
     Command.group
       ~summary:"StronglyTyped is a keyboard layout analyzer and generator."
-      [ "gen", Stronglytyped_generator.Cli.command ]
+      [ "gen", generator ]
   in
   Command_unix.run group
 ;;

@@ -110,7 +110,7 @@ let onload _ =
     (button "Start" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         Stronglytyped_generator.Cjalgorithm.start ();
+         (* Stronglytyped_generator.Cjalgorithm.start (); *)
          Js._false));
   Dom.appendChild
     app
@@ -121,13 +121,6 @@ let onload _ =
          Js._false));
   let text, _set_text = text "" in
   Dom.appendChild app text;
-  (*
-  Incr.Observer.on_update_exn (Incr.observe Stronglytyped_analyzer.Opt.anneal) ~f:(fun obs ->
-    match obs with
-    | Initialized (_, best :: _) | Changed (_, (_, best :: _)) ->
-      set_text best.Stronglytyped_analyzer.Analysis.layout_pretty
-      | _ -> ());
-  *)
   Js._false
 ;;
 
@@ -141,8 +134,7 @@ let () =
 let main () =
   let%bind corpus = Http.get "/static/corpus/typeracer" |> Deferred.Or_error.ok_exn in
   Incr.Var.set Stronglytyped_analyzer.Corpus.data_v corpus;
-  G.Cjalgorithm.start ();
-  Deferred.unit
+  G.Cjalgorithm.start 3
 ;;
 
 let () = Html.window##.onload := Html.handler onload
