@@ -1,6 +1,7 @@
 (executable
  (name main)
  (libraries
+  async.async_command
   core_unix.command_unix
   core_unix.sys_unix
   stronglytyped.analyzer
