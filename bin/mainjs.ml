@@ -1,8 +1,14 @@
 open! Js_of_ocaml
 module Html = Dom_html
 module Incr = Stronglytyped_analyzer.Incr
-open Core
+module A = Stronglytyped_analyzer
+module G = Stronglytyped_generator
+open! Core
+open! Async_kernel
+open! Async_js
+open Deferred.Let_syntax
 
+let _stabilize () = Deferred.create (fun ivar -> Incr.stabilize () |> Ivar.fill ivar)
 let js = Js.string
 let document = Html.window##.document
 
@@ -75,6 +81,7 @@ val progress : float Incr.t
 val set_progress : float -> unit *)
 
 let onload _ =
+  Async_js.init ();
   let app = Js.Opt.get (document##getElementById (js "app")) (fun () -> assert false) in
   (* Dom.appendChild app (float_input "Sfb Weight" Stronglytyped_analyzer.Config.Var.C.sfb (fun _ -> ""));
   Dom.appendChild app (Html.createBr document);
@@ -110,7 +117,7 @@ let onload _ =
     (button "Step" (fun _ ->
          let div = Html.createDiv document in
          Dom.appendChild app div;
-         Incr.stabilize();
+         Incr.stabilize ();
          Js._false));
   let text, _set_text = text "" in
   Dom.appendChild app text;
@@ -124,4 +131,23 @@ let onload _ =
   Js._false
 ;;
 
+let () =
+  Incr.Observer.on_update_exn (Incr.observe A.Analysis.incr) ~f:(function
+      | Initialized _ -> print_endline "initialized"
+      | Changed (_, _) -> print_endline "changed"
+      | Invalidated -> print_endline "invalidated")
+;;
+
+let main () =
+  let%bind corpus = Http.get "/static/corpus/typeracer" |> Deferred.Or_error.ok_exn in
+  Incr.Var.set Stronglytyped_analyzer.Corpus.data_v corpus;
+  G.Cjalgorithm.start ();
+  Deferred.unit
+;;
+
 let () = Html.window##.onload := Html.handler onload
+
+let () =
+  Async_js.init ();
+  don't_wait_for (Async_js.document_loaded () >>= main)
+;;

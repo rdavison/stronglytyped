@@ -11,9 +11,14 @@
 
 (executable
  (name mainjs)
- (libraries stronglytyped.analyzer stronglytyped.generator js_of_ocaml)
+ (libraries
+  stronglytyped.analyzer
+  stronglytyped.generator
+  js_of_ocaml
+  async_kernel
+  async_js)
  (preprocess
-  (pps js_of_ocaml-ppx))
+  (pps ppx_jane js_of_ocaml-ppx))
  (modes js)
  (modules mainjs))
 
