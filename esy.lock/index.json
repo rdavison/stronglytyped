@@ -1,7 +1,23 @@
 {
-  "checksum": "d7d91c3e4a18f2447087fcadbf84530c",
+  "checksum": "f5a7c6e59c54ce66ac89d9fe91311d0d",
   "root": "stronglytyped@link-dev:./package.json",
   "node": {
+    "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
+      "id":
+        "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9",
+      "name": "yarn-pkg-config",
+      "version":
+        "github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79",
+      "source": {
+        "type": "install",
+        "source": [
+          "github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
     "stronglytyped@link-dev:./package.json": {
       "id": "stronglytyped@link-dev:./package.json",
       "name": "stronglytyped",
@@ -28,6 +44,7 @@
         "@opam/core_unix@opam:v0.15.0@85551ea6",
         "@opam/core@opam:v0.15.0@33f4802b",
         "@opam/async_unix@opam:v0.15.0@2e608778",
+        "@opam/async_js@opam:v0.15.1@c2589c14",
         "@opam/async@opam:v0.15.0@7bd77667"
       ],
       "devDependencies": [
@@ -285,6 +302,65 @@
         "@opam/base-threads@opam:base@36803084"
       ]
     },
+    "@opam/uri-sexp@opam:4.2.0@a6664f29": {
+      "id": "@opam/uri-sexp@opam:4.2.0@a6664f29",
+      "name": "@opam/uri-sexp",
+      "version": "opam:4.2.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/sha256/c5/c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b#sha256:c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b",
+          "archive:https://github.com/mirage/ocaml-uri/releases/download/v4.2.0/uri-v4.2.0.tbz#sha256:c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b"
+        ],
+        "opam": {
+          "name": "uri-sexp",
+          "version": "4.2.0",
+          "path": "esy.lock/opam/uri-sexp.4.2.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/sexplib0@opam:v0.15.1@51111c0c",
+        "@opam/ppx_sexp_conv@opam:v0.15.1@0f138aac",
+        "@opam/dune@opam:3.4.1@84d54aea", "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/sexplib0@opam:v0.15.1@51111c0c",
+        "@opam/ppx_sexp_conv@opam:v0.15.1@0f138aac",
+        "@opam/dune@opam:3.4.1@84d54aea"
+      ]
+    },
+    "@opam/uri@opam:4.2.0@9c45eeb8": {
+      "id": "@opam/uri@opam:4.2.0@9c45eeb8",
+      "name": "@opam/uri",
+      "version": "opam:4.2.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/sha256/c5/c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b#sha256:c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b",
+          "archive:https://github.com/mirage/ocaml-uri/releases/download/v4.2.0/uri-v4.2.0.tbz#sha256:c5c013d940dbb6731ea2ee75c2bf991d3435149c3f3659ec2e55476f5473f16b"
+        ],
+        "opam": {
+          "name": "uri",
+          "version": "4.2.0",
+          "path": "esy.lock/opam/uri.4.2.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/stringext@opam:1.6.0@ac4f328b",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/angstrom@opam:0.15.0@105656d9",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/stringext@opam:1.6.0@ac4f328b",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/angstrom@opam:0.15.0@105656d9"
+      ]
+    },
     "@opam/uchar@opam:0.0.2@aedf91f9": {
       "id": "@opam/uchar@opam:0.0.2@aedf91f9",
       "name": "@opam/uchar",
@@ -517,6 +593,31 @@
         "@opam/core_unix@opam:v0.15.0@85551ea6",
         "@opam/core_kernel@opam:v0.15.0@3d84e738",
         "@opam/core@opam:v0.15.0@33f4802b"
+      ]
+    },
+    "@opam/stringext@opam:1.6.0@ac4f328b": {
+      "id": "@opam/stringext@opam:1.6.0@ac4f328b",
+      "name": "@opam/stringext",
+      "version": "opam:1.6.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/sha256/db/db41f5d52e9eab17615f110b899dfeb27dd7e7f89cd35ae43827c5119db206ea#sha256:db41f5d52e9eab17615f110b899dfeb27dd7e7f89cd35ae43827c5119db206ea",
+          "archive:https://github.com/rgrinberg/stringext/releases/download/1.6.0/stringext-1.6.0.tbz#sha256:db41f5d52e9eab17615f110b899dfeb27dd7e7f89cd35ae43827c5119db206ea"
+        ],
+        "opam": {
+          "name": "stringext",
+          "version": "1.6.0",
+          "path": "esy.lock/opam/stringext.1.6.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea"
       ]
     },
     "@opam/stdune@opam:3.4.1@7f6c026f": {
@@ -2350,6 +2451,31 @@
         "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea"
       ]
     },
+    "@opam/ocaml-syntax-shims@opam:1.0.0@9f361fbb": {
+      "id": "@opam/ocaml-syntax-shims@opam:1.0.0@9f361fbb",
+      "name": "@opam/ocaml-syntax-shims",
+      "version": "opam:1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/sha256/89/89b2e193e90a0c168b6ec5ddf6fef09033681bdcb64e11913c97440a2722e8c8#sha256:89b2e193e90a0c168b6ec5ddf6fef09033681bdcb64e11913c97440a2722e8c8",
+          "archive:https://github.com/ocaml-ppx/ocaml-syntax-shims/releases/download/1.0.0/ocaml-syntax-shims-1.0.0.tbz#sha256:89b2e193e90a0c168b6ec5ddf6fef09033681bdcb64e11913c97440a2722e8c8"
+        ],
+        "opam": {
+          "name": "ocaml-syntax-shims",
+          "version": "1.0.0",
+          "path": "esy.lock/opam/ocaml-syntax-shims.1.0.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea"
+      ]
+    },
     "@opam/ocaml-lsp-server@opam:1.10.5@e7db02d5": {
       "id": "@opam/ocaml-lsp-server@opam:1.10.5@e7db02d5",
       "name": "@opam/ocaml-lsp-server",
@@ -3563,6 +3689,31 @@
         "@opam/base@opam:v0.15.1@e8a71f35"
       ]
     },
+    "@opam/conf-pkg-config@opam:2@85f8644d": {
+      "id": "@opam/conf-pkg-config@opam:2@85f8644d",
+      "name": "@opam/conf-pkg-config",
+      "version": "opam:2",
+      "source": {
+        "type": "install",
+        "source": [ "no-source:" ],
+        "opam": {
+          "name": "conf-pkg-config",
+          "version": "2",
+          "path": "esy.lock/opam/conf-pkg-config.2"
+        }
+      },
+      "overrides": [
+        {
+          "opamoverride":
+            "esy.lock/overrides/opam__s__conf_pkg_config_opam__c__2_opam_override"
+        }
+      ],
+      "dependencies": [
+        "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
     "@opam/cmdliner@opam:1.1.1@03763729": {
       "id": "@opam/cmdliner@opam:1.1.1@03763729",
       "name": "@opam/cmdliner",
@@ -3647,6 +3798,32 @@
         "@opam/ppx_custom_printf@opam:v0.15.0@1b856b67",
         "@opam/ppx_compare@opam:v0.15.0@1b560134",
         "@opam/dune@opam:3.4.1@84d54aea", "@opam/base@opam:v0.15.1@e8a71f35"
+      ]
+    },
+    "@opam/bigstringaf@opam:0.9.0@5762d1bc": {
+      "id": "@opam/bigstringaf@opam:0.9.0@5762d1bc",
+      "name": "@opam/bigstringaf",
+      "version": "opam:0.9.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/md5/0d/0d8ceddeb7db821fd4e5235a75ae9752#md5:0d8ceddeb7db821fd4e5235a75ae9752",
+          "archive:https://github.com/inhabitedtype/bigstringaf/archive/0.9.0.tar.gz#md5:0d8ceddeb7db821fd4e5235a75ae9752"
+        ],
+        "opam": {
+          "name": "bigstringaf",
+          "version": "0.9.0",
+          "path": "esy.lock/opam/bigstringaf.0.9.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/conf-pkg-config@opam:2@85f8644d",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/dune@opam:3.4.1@84d54aea"
       ]
     },
     "@opam/base_quickcheck@opam:v0.15.0@9cce9798": {
@@ -3919,6 +4096,45 @@
         "@opam/core@opam:v0.15.0@33f4802b"
       ]
     },
+    "@opam/async_js@opam:v0.15.1@c2589c14": {
+      "id": "@opam/async_js@opam:v0.15.1@c2589c14",
+      "name": "@opam/async_js",
+      "version": "opam:v0.15.1",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/sha256/c6/c6759b7001edb47f384b390b74d97bfdab4a67b7037fba18352d7b020e9bea52#sha256:c6759b7001edb47f384b390b74d97bfdab4a67b7037fba18352d7b020e9bea52",
+          "archive:https://github.com/janestreet/async_js/archive/refs/tags/v0.15.1.tar.gz#sha256:c6759b7001edb47f384b390b74d97bfdab4a67b7037fba18352d7b020e9bea52"
+        ],
+        "opam": {
+          "name": "async_js",
+          "version": "v0.15.1",
+          "path": "esy.lock/opam/async_js.v0.15.1"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/uri-sexp@opam:4.2.0@a6664f29",
+        "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/ppx_jane@opam:v0.15.0@2bb5629a",
+        "@opam/js_of_ocaml-ppx@opam:3.11.0@4edaf441",
+        "@opam/js_of_ocaml@opam:3.11.0@93e18d4d",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/async_rpc_kernel@opam:v0.15.0@cab6f898",
+        "@opam/async_kernel@opam:v0.15.0@e3fd0cd4",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/uri-sexp@opam:4.2.0@a6664f29",
+        "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/ppx_jane@opam:v0.15.0@2bb5629a",
+        "@opam/js_of_ocaml-ppx@opam:3.11.0@4edaf441",
+        "@opam/js_of_ocaml@opam:3.11.0@93e18d4d",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/async_rpc_kernel@opam:v0.15.0@cab6f898",
+        "@opam/async_kernel@opam:v0.15.0@e3fd0cd4"
+      ]
+    },
     "@opam/async@opam:v0.15.0@7bd77667": {
       "id": "@opam/async@opam:v0.15.0@7bd77667",
       "name": "@opam/async",
@@ -3986,6 +4202,36 @@
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [ "ocaml@4.13.1000@d41d8cd9" ]
+    },
+    "@opam/angstrom@opam:0.15.0@105656d9": {
+      "id": "@opam/angstrom@opam:0.15.0@105656d9",
+      "name": "@opam/angstrom",
+      "version": "opam:0.15.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/md5/51/5104768c404ea92fd0a53a5b0f75cd50#md5:5104768c404ea92fd0a53a5b0f75cd50",
+          "archive:https://github.com/inhabitedtype/angstrom/archive/0.15.0.tar.gz#md5:5104768c404ea92fd0a53a5b0f75cd50"
+        ],
+        "opam": {
+          "name": "angstrom",
+          "version": "0.15.0",
+          "path": "esy.lock/opam/angstrom.0.15.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/result@opam:1.5@1c6a6533",
+        "@opam/ocaml-syntax-shims@opam:1.0.0@9f361fbb",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/bigstringaf@opam:0.9.0@5762d1bc",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.13.1000@d41d8cd9", "@opam/result@opam:1.5@1c6a6533",
+        "@opam/dune@opam:3.4.1@84d54aea",
+        "@opam/bigstringaf@opam:0.9.0@5762d1bc"
+      ]
     },
     "@opam/abstract_algebra@opam:v0.15.0@c249fd9c": {
       "id": "@opam/abstract_algebra@opam:v0.15.0@c249fd9c",
