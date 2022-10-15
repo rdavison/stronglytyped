@@ -1,5 +1,4 @@
 open! Import
-open! Stronglytyped_analyzer
 
 module Default = struct
   let ksize = 30

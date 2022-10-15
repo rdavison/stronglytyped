@@ -5,7 +5,6 @@
 *)
 
 open! Import
-open! Stronglytyped_analyzer
 
 let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table =
   let monograms_len = Array.length monograms_arr in
@@ -55,7 +54,7 @@ let improve_layout (score_to_beat : float) lockins =
   let rec loop_i i =
     let rec loop_j j =
       match j < ksize with
-      | false -> `Continue
+      | false -> return `Continue
       | true ->
         let skip_round =
           let rec loop inx acc =
@@ -74,23 +73,23 @@ let improve_layout (score_to_beat : float) lockins =
         (match skip_round with
         | true -> loop_j (j + 1)
         | false ->
-          let (k : Analysis.t) =
+          let%bind (k : Analysis.t) =
             Root.swap indices.(i) indices.(j);
             Keyboard.next ()
           in
           let score = k.score in
           if Float.(score < score_to_beat)
-          then `Stop k
+          then return (`Stop k)
           else (
             (* Undo swap*)
             Root.swap indices.(i) indices.(j);
             loop_j (j + 1)))
     in
     match i < ksize with
-    | false -> None
+    | false -> return None
     | true ->
-      (match loop_j (i + 1) with
-      | `Stop x -> Some x
+      (match%bind loop_j (i + 1) with
+      | `Stop x -> return (Some x)
       | `Continue -> loop_i (i + 1))
   in
   loop_i 0
@@ -105,11 +104,13 @@ let anneal (k : Analysis.t) lockins =
     in
     let last_score = score in
     let score_to_beat = last_score.score +. last_improvement in
-    let score' = improve_layout score_to_beat lockins in
+    let%bind score' = improve_layout score_to_beat lockins in
     match score' with
-    | None -> score
+    | None -> return score
     | Some score' ->
-      if Float.(score'.score < score_to_beat) then loop last_score score' else score
+      if Float.(score'.score < score_to_beat)
+      then loop last_score score'
+      else return score
   in
   loop k k
 ;;
@@ -147,14 +148,14 @@ let smart_mutate_and_anneal
   =
   let rec loop i (prevk, bestk) =
     match i < num_rounds with
-    | false -> bestk
+    | false -> return bestk
     | true ->
-      let prevk' =
+      let%bind prevk' =
         if i > 0 && Float.(Random.float 1. < chance_to_use_prev)
         then fst (smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table)
         else Keyboard.nil ()
       in
-      let k = anneal prevk [||] in
+      let%bind k = anneal prevk [||] in
       let bestk' =
         if Float.(k.score < bestk.Analysis.score)
         then (
@@ -165,7 +166,8 @@ let smart_mutate_and_anneal
       in
       loop (i + 1) (prevk', bestk')
   in
-  let bestk' = loop 0 (Keyboard.nil (), bestk) in
+  let%bind nil = Keyboard.nil () in
+  let%map bestk' = loop 0 (nil, bestk) in
   if Float.(bestk'.score < bestk.score) then bestk' else bestk
 ;;
 
@@ -226,7 +228,7 @@ let update_miscellaneous
 let great_to_best (bestk : Analysis.t) ~num_rounds ~monograms_arr ~reverse_lookup_table =
   let rec loop i ~(bestk : Analysis.t) ~swaps =
     match i < num_rounds with
-    | false -> bestk
+    | false -> return bestk
     | true ->
       let swaps =
         if i mod Vars.Default.gtb_rounds_before_swaps_increase
@@ -236,14 +238,15 @@ let great_to_best (bestk : Analysis.t) ~num_rounds ~monograms_arr ~reverse_looku
       in
       (* Any swaps made by smartMutate() are "locked in" and may not be undone by anneal() *)
       let mutated, lockins = smart_mutate ~swaps ~monograms_arr ~reverse_lookup_table in
-      let (k : Analysis.t) =
+      let%bind mutated = mutated in
+      let%bind (k : Analysis.t) =
         (* Use lockins only half the time *)
         if i mod 2 = 0 then anneal mutated lockins else anneal mutated [||]
       in
       let bestk = if Float.(k.score < bestk.score) then k else bestk in
       loop (i + 1) ~bestk ~swaps
   in
-  let (bestk' : Analysis.t) = loop 0 ~bestk ~swaps:Vars.Default.gtb_number_of_swaps in
+  let%map (bestk' : Analysis.t) = loop 0 ~bestk ~swaps:Vars.Default.gtb_number_of_swaps in
   if Float.(bestk'.score < bestk.score) then bestk' else bestk
 ;;
 
@@ -258,7 +261,7 @@ let run
     ~time_on_print
     ~num_rounds
   =
-  let bestk =
+  let%bind bestk =
     smart_mutate_and_anneal
       ~chance_to_use_prev
       ~swaps
@@ -277,7 +280,7 @@ let run
       ~time_on_print
   in
   let best_before_gtb = bestk.score in
-  let (bestk : Analysis.t) =
+  let%map (bestk : Analysis.t) =
     great_to_best bestk ~num_rounds:gtb_rounds ~monograms_arr ~reverse_lookup_table
   in
   let prev_best_fitness =
@@ -293,34 +296,35 @@ let run
   bestk, prev_best_fitness, time_on_print, print_time_interval
 ;;
 
-let start () =
+let start max_loops =
   reset ();
   let monograms_arr = Incr.observe Corpus.monograms_arr in
   let reverse_lookup_table = Incr.observe Root.reverse_lookup_table in
-  let rec loop () =
-    Incr.stabilize ();
+  let rec loop i =
+    if i = max_loops then Incr.Var.set Mode.var Stop;
+    let%bind () = Incr.stabilize () in
     let mode = Incr.Observer.value_exn Mode.observer in
     match mode with
-    | Mode.Stop -> ()
+    | Mode.Stop -> Deferred.unit
     | Reset ->
       reset ();
       Incr.Var.set Mode.var Ready;
-      loop ()
+      loop (i + 1)
     | Ready ->
       get_user_input ();
-      loop ()
+      loop (i + 1)
     | Run { n; bestk; prev_best_fitness; start_time; print_time_interval; time_on_print }
       ->
-      let bestk =
+      let%bind bestk =
         match bestk with
         | None -> Keyboard.nil ()
-        | Some bestk -> bestk
+        | Some bestk -> return bestk
       in
       let control = Incr.Observer.value_exn Control.observer in
       let monograms_arr = Incr.Observer.value_exn monograms_arr in
       let reverse_lookup_table = Incr.Observer.value_exn reverse_lookup_table in
       Incr.Var.set Vars.run_v n;
-      let bestk, prev_best_fitness, time_on_print, print_time_interval =
+      let%bind bestk, prev_best_fitness, time_on_print, print_time_interval =
         run
           control
           monograms_arr
@@ -346,7 +350,7 @@ let start () =
             }
       in
       Incr.Var.set Mode.var mode';
-      loop ()
+      loop (i + 1)
   in
-  loop ()
+  loop 1
 ;;

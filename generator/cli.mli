@@ -1,3 +1,3 @@
 open! Import
 
-val command : Command.t
+val param : (unit -> unit Deferred.t) Command.Param.t
