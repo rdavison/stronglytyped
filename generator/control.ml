@@ -1,5 +1,4 @@
 open! Import
-open! Stronglytyped_analyzer
 
 type t =
   { chance_to_use_prev : float

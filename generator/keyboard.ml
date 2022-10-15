@@ -1,10 +1,9 @@
 open! Import
-open! Stronglytyped_analyzer
 
 let observer = Incr.observe Analysis.incr
 
 let next () =
-  Incr.stabilize ();
+  let%map () = Incr.stabilize () in
   Incr.Observer.value_exn observer
 ;;
 

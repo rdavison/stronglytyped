@@ -1,8 +1,8 @@
 (library
  (name stronglytyped_generator)
  (public_name stronglytyped.generator)
- (libraries core incremental incr_map stronglytyped.analyzer)
+ (libraries async_kernel core incremental incr_map stronglytyped.analyzer)
  (inline_tests)
  (preprocess
   (pps ppx_jane))
- (flags :standard -open Core))
+ (flags :standard -open Core -open Async_kernel))

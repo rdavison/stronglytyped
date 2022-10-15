@@ -1,5 +1,4 @@
 open! Import
-open! Stronglytyped_analyzer
 
 type t =
   { n : int
