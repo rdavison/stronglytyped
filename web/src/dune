@@ -1,0 +1,15 @@
+(executable
+ (name main)
+ (libraries
+  stronglytyped.analyzer
+  stronglytyped.generator
+  incr_dom
+  virtual_dom
+  js_of_ocaml
+  async_kernel
+  async_js
+  core)
+ (flags -open Core -open Async_kernel -open Async_js)
+ (modes js)
+ (preprocess
+  (pps ppx_jane js_of_ocaml-ppx)))

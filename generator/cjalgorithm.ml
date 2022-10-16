@@ -6,7 +6,7 @@
 
 open! Import
 
-let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table =
+let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap =
   let monograms_len = Array.length monograms_arr in
   let q = monograms_len / 4 in
   let swaps_len = 2 * swaps in
@@ -30,7 +30,7 @@ let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table =
         let lc1 = Map.find_exn reverse_lookup_table chars_to_swap.(i) in
         let lc2 = Map.find_exn reverse_lookup_table chars_to_swap.(i + 1) in
         let lockins = (lc1, lc2) :: lockins in
-        Root.swap lc1 lc2;
+        Root.swap lc1 lc2 ~on_swap;
         loop (i + 2) lockins)
     in
     loop 0 []
@@ -48,7 +48,7 @@ let build_shuffled_indices length =
   indices
 ;;
 
-let improve_layout (score_to_beat : float) lockins =
+let improve_layout (score_to_beat : float) lockins ~on_swap =
   let ksize = Vars.Default.ksize in
   let indices = build_shuffled_indices ksize in
   let rec loop_i i =
@@ -74,7 +74,7 @@ let improve_layout (score_to_beat : float) lockins =
         | true -> loop_j (j + 1)
         | false ->
           let%bind (k : Analysis.t) =
-            Root.swap indices.(i) indices.(j);
+            Root.swap indices.(i) indices.(j) ~on_swap;
             Keyboard.next ()
           in
           let score = k.score in
@@ -82,7 +82,7 @@ let improve_layout (score_to_beat : float) lockins =
           then return (`Stop k)
           else (
             (* Undo swap*)
-            Root.swap indices.(i) indices.(j);
+            Root.swap indices.(i) indices.(j) ~on_swap;
             loop_j (j + 1)))
     in
     match i < ksize with
@@ -95,7 +95,7 @@ let improve_layout (score_to_beat : float) lockins =
   loop_i 0
 ;;
 
-let anneal (k : Analysis.t) lockins =
+let anneal (k : Analysis.t) lockins ~on_swap =
   let rec loop (last_score : Analysis.t) (score : Analysis.t) =
     let last_improvement =
       if Float.(score.score < last_score.score)
@@ -104,7 +104,7 @@ let anneal (k : Analysis.t) lockins =
     in
     let last_score = score in
     let score_to_beat = last_score.score +. last_improvement in
-    let%bind score' = improve_layout score_to_beat lockins in
+    let%bind score' = improve_layout score_to_beat lockins ~on_swap in
     match score' with
     | None -> return score
     | Some score' ->
@@ -145,6 +145,8 @@ let smart_mutate_and_anneal
     ~bestk
     ~monograms_arr
     ~reverse_lookup_table
+    ~on_bestk
+    ~on_swap
   =
   let rec loop i (prevk, bestk) =
     match i < num_rounds with
@@ -152,13 +154,14 @@ let smart_mutate_and_anneal
     | true ->
       let%bind prevk' =
         if i > 0 && Float.(Random.float 1. < chance_to_use_prev)
-        then fst (smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table)
+        then fst (smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap)
         else Keyboard.nil ()
       in
-      let%bind k = anneal prevk [||] in
+      let%bind k = anneal prevk [||] ~on_swap in
       let bestk' =
         if Float.(k.score < bestk.Analysis.score)
         then (
+          on_bestk k;
           print_percentages k;
           print_time start_time;
           k)
@@ -171,9 +174,9 @@ let smart_mutate_and_anneal
   if Float.(bestk'.score < bestk.score) then bestk' else bestk
 ;;
 
-let reset ?(layout = `Name "dvorak") () =
+let reset ?(layout = `Name "dvorak") ?on_swap () =
   Layout.set layout;
-  Root.scramble 30;
+  Root.scramble 30 ?on_swap;
   Control.reset ();
   Incr.Var.set Mode.var Ready
 ;;
@@ -204,6 +207,7 @@ let update_miscellaneous
     ~start_time
     ~print_time_interval
     ~time_on_print
+    ~on_bestk
   =
   let is_better = Float.(bestk.Analysis.score < prev_best_fitness) in
   let ts = Time.now () |> Time.to_span_since_epoch in
@@ -211,6 +215,7 @@ let update_miscellaneous
   if is_better
   then (
     let prev_best_fitness = bestk.score in
+    on_bestk bestk;
     print_percentages bestk;
     print_time start_time;
     (* If a keyboard was just printed, don't print the time for a while. *)
@@ -225,7 +230,13 @@ let update_miscellaneous
   else prev_best_fitness, time_on_print, print_time_interval
 ;;
 
-let great_to_best (bestk : Analysis.t) ~num_rounds ~monograms_arr ~reverse_lookup_table =
+let great_to_best
+    (bestk : Analysis.t)
+    ~num_rounds
+    ~monograms_arr
+    ~reverse_lookup_table
+    ~on_swap
+  =
   let rec loop i ~(bestk : Analysis.t) ~swaps =
     match i < num_rounds with
     | false -> return bestk
@@ -237,11 +248,15 @@ let great_to_best (bestk : Analysis.t) ~num_rounds ~monograms_arr ~reverse_looku
         else swaps
       in
       (* Any swaps made by smartMutate() are "locked in" and may not be undone by anneal() *)
-      let mutated, lockins = smart_mutate ~swaps ~monograms_arr ~reverse_lookup_table in
+      let mutated, lockins =
+        smart_mutate ~swaps ~monograms_arr ~reverse_lookup_table ~on_swap
+      in
       let%bind mutated = mutated in
       let%bind (k : Analysis.t) =
         (* Use lockins only half the time *)
-        if i mod 2 = 0 then anneal mutated lockins else anneal mutated [||]
+        if i mod 2 = 0
+        then anneal mutated lockins ~on_swap
+        else anneal mutated [||] ~on_swap
       in
       let bestk = if Float.(k.score < bestk.score) then k else bestk in
       loop (i + 1) ~bestk ~swaps
@@ -260,6 +275,8 @@ let run
     ~print_time_interval
     ~time_on_print
     ~num_rounds
+    ~on_bestk
+    ~on_swap
   =
   let%bind bestk =
     smart_mutate_and_anneal
@@ -270,6 +287,8 @@ let run
       ~bestk
       ~monograms_arr
       ~reverse_lookup_table
+      ~on_bestk
+      ~on_swap
   in
   let prev_best_fitness, time_on_print, print_time_interval =
     update_miscellaneous
@@ -278,16 +297,23 @@ let run
       ~start_time
       ~print_time_interval
       ~time_on_print
+      ~on_bestk
   in
   let best_before_gtb = bestk.score in
   let%map (bestk : Analysis.t) =
-    great_to_best bestk ~num_rounds:gtb_rounds ~monograms_arr ~reverse_lookup_table
+    great_to_best
+      bestk
+      ~num_rounds:gtb_rounds
+      ~monograms_arr
+      ~reverse_lookup_table
+      ~on_swap
   in
   let prev_best_fitness =
     if Float.(bestk.score < best_before_gtb)
     then (
       let prev_best_fitness = bestk.score in
       if Vars.Default.detailed_output then printf "\n***Found from greatToBest()***\n";
+      on_bestk bestk;
       print_percentages bestk;
       print_time start_time;
       prev_best_fitness)
@@ -296,7 +322,7 @@ let run
   bestk, prev_best_fitness, time_on_print, print_time_interval
 ;;
 
-let start max_loops =
+let start ?(on_bestk = Fn.const ()) ?(on_swap = Fn.const ()) max_loops =
   reset ();
   let monograms_arr = Incr.observe Corpus.monograms_arr in
   let reverse_lookup_table = Incr.observe Root.reverse_lookup_table in
@@ -335,6 +361,8 @@ let start max_loops =
           ~print_time_interval
           ~time_on_print
           ~num_rounds:Vars.Default.algorithm_rounds
+          ~on_bestk
+          ~on_swap
       in
       let mode' =
         match n < Vars.Default.max_runs with

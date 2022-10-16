@@ -7,4 +7,5 @@
 (package
  (name stronglytyped)
  (sites
-  (share corpus)))
+  (share corpus)
+  (share web)))
