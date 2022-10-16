@@ -17,6 +17,7 @@
     "@opam/dune-site": "*",
     "@opam/incremental": "*",
     "@opam/incr_map": "*",
+    "@opam/incr_dom": "*",
     "@opam/notty": "*",
     "@opam/notty_async": "*",
     "@opam/ppx_jane": "*",
@@ -32,6 +33,15 @@
     "@opam/utop": "*"
   },
   "resolutions": {
+    "@opam/virtual_dom": "git+ssh://git@github.com:janestreet/virtual_dom:virtual_dom.opam#8e19b04576a6d485b2ad580f2d0c1a69fd8ce4ee",
+    "@opam/incr_dom": {
+      "source": "git+ssh://git@github.com:janestreet/incr_dom:incr_dom.opam#c18d54e3f09585aef8d3cfd96ee5019d22342813",
+      "override": {
+        "dependencies": {
+          "@opam/virtual_dom": "*"
+        }
+      }
+    },
     "@opam/js_of_ocaml": {
       "source": "git+ssh://git@github.com:ocsigen/js_of_ocaml:js_of_ocaml.opam#efef21c6e6837a87d439ddb04e30f446b7772a03",
       "override": {
