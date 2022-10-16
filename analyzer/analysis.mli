@@ -6,6 +6,7 @@ type t =
   ; layout_pretty : string
   ; stats : Stats.t option
   }
-[@@deriving sexp]
+[@@deriving sexp, compare]
 
+val empty : t
 val incr : t Incr.t

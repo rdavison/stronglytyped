@@ -42,7 +42,7 @@ type t =
   ; dshrc_bad : float Hand.Map.t
   ; dshrc_bad_total : float
   }
-[@@deriving sexp]
+[@@deriving sexp, compare]
 
 val empty : t
 
