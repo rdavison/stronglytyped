@@ -52,57 +52,65 @@ module App = struct
     don't_wait_for (Generator.Cjalgorithm.start 3 ~on_bestk ~on_swap)
   ;;
 
+  let apply_action model =
+    let open Incr_dom.Incr.Let_syntax in
+    let%map model = model in
+    fun (action : Action.t) _ ~schedule_action ->
+      let keyboard = Model.keyboard model in
+      match action with
+      | Action.Swap (ka, kb) ->
+        let va = Map.find_exn keyboard ka in
+        let vb = Map.find_exn keyboard kb in
+        let keyboard = Map.update keyboard ka ~f:(fun _ -> vb) in
+        { model with keyboard = Map.update keyboard kb ~f:(fun _ -> va) }
+      | Replace s ->
+        { model with
+          keyboard =
+            Int.Map.of_alist_exn (List.init (String.length s) ~f:(fun i -> i, s.[i]))
+        }
+      | Store_best s ->
+        { model with
+          best = Map.add_exn (Model.best model) ~key:(Map.length model.best) ~data:s
+        }
+  ;;
+
+  let view model ~inject =
+    let open Incr_dom.Incr.Let_syntax in
+    let open Incr_dom.Vdom in
+    let keyboard = Incr_dom.Incr.map model ~f:Model.keyboard in
+    let%map table =
+      let%map top =
+        Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
+            if i < 10 then Some c else None)
+        |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
+        |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
+      and middle =
+        Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
+            if i >= 10 && i < 20 then Some c else None)
+        |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
+        |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
+      and bottom =
+        Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
+            if i >= 20 && i < 30 then Some c else None)
+        |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
+        |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
+      in
+      Node.table [ top; middle; bottom ]
+    and best =
+      let%map best = model >>| Model.best in
+      Map.to_alist best ~key_order:`Decreasing
+      |> List.map ~f:(fun (_, s) ->
+             Node.li
+               ~attr:(Attr.on_click (fun _ev -> inject (Action.Replace s)))
+               [ Node.text s ])
+    in
+    Node.body [ Node.h3 [ Node.text "Strongly Typed 💪" ]; table; Node.ul best ]
+  ;;
+
   let create model ~old_model:_ ~inject =
     let open Incr_dom.Incr.Let_syntax in
-    let%map apply_action =
-      let%map model = model in
-      fun (action : Action.t) _ ~schedule_action ->
-        let keyboard = Model.keyboard model in
-        match action with
-        | Action.Swap (ka, kb) ->
-          let va = Map.find_exn keyboard ka in
-          let vb = Map.find_exn keyboard kb in
-          let keyboard = Map.update keyboard ka ~f:(fun _ -> vb) in
-          { model with keyboard = Map.update keyboard kb ~f:(fun _ -> va) }
-        | Replace s ->
-          { model with
-            keyboard =
-              Int.Map.of_alist_exn (List.init (String.length s) ~f:(fun i -> i, s.[i]))
-          }
-        | Store_best s ->
-          { model with
-            best = Map.add_exn (Model.best model) ~key:(Map.length model.best) ~data:s
-          }
-    and view =
-      let open Incr_dom.Vdom in
-      let keyboard = Incr_dom.Incr.map model ~f:Model.keyboard in
-      let%map table =
-        let%map top =
-          Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
-              if i < 10 then Some c else None)
-          |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
-          |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
-        and middle =
-          Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
-              if i >= 10 && i < 20 then Some c else None)
-          |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
-          |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
-        and bottom =
-          Incr_map.filter_mapi keyboard ~f:(fun ~key:i ~data:c ->
-              if i >= 20 && i < 30 then Some c else None)
-          |> Incr_map.map ~f:(fun c -> Node.td [ Node.text (Char.to_string c) ])
-          |> Incr_dom.Incr.map ~f:(fun r -> Map.data r |> Node.tr)
-        in
-        Node.table [ top; middle; bottom ]
-      and best =
-        let%map best = model >>| Model.best in
-        Map.to_alist best ~key_order:`Decreasing
-        |> List.map ~f:(fun (_, s) ->
-               Node.li
-                 ~attr:(Attr.on_click (fun _ev -> inject (Action.Replace s)))
-                 [ Node.text s ])
-      in
-      Node.body [ Node.h3 [ Node.text "Strongly Typed 💪" ]; table; Node.ul best ]
+    let%map apply_action = apply_action model
+    and view = view model ~inject
     and model = model in
     Incr_dom.Component.create ~apply_action model view
   ;;
