@@ -10,19 +10,6 @@
   (pps ppx_jane))
  (modules main sites))
 
-(executable
- (name mainjs)
- (libraries
-  stronglytyped.analyzer
-  stronglytyped.generator
-  js_of_ocaml
-  async_kernel
-  async_js)
- (preprocess
-  (pps ppx_jane js_of_ocaml-ppx))
- (modes js)
- (modules mainjs))
-
 (generate_sites_module
  (module sites)
  (sites stronglytyped))

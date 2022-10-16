@@ -9,16 +9,17 @@ let all =
   |> List.to_array
 ;;
 
-let swap a b =
+let swap ?on_swap a b =
+  Option.iter on_swap ~f:(fun f -> f (a, b));
   let tmp = Incr.Var.value all.(a) in
   Incr.Var.set all.(a) (Incr.Var.value all.(b));
   Incr.Var.set all.(b) tmp
 ;;
 
-let scramble i =
+let scramble ?on_swap i =
   for _ = 1 to i do
     let i, j = Random.int2 30 in
-    swap i j
+    swap ?on_swap i j
   done
 ;;
 
