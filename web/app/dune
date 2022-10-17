@@ -1,0 +1,6 @@
+(executable
+ (name main)
+ (libraries stronglytyped.web incr_dom)
+ (modes js)
+ (preprocess
+  (pps ppx_jane js_of_ocaml-ppx)))
