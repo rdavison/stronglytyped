@@ -67,7 +67,7 @@ let apply_action model =
 let view old_model model ~inject =
   let open Incr_dom.Incr.Let_syntax in
   let open Incr_dom.Vdom in
-  let%map table =
+  let%map keyboard =
     let%bind analysis = model >>| Model.analysis in
     match analysis with
     | None -> Incr_dom.Incr.return (Node.div [ Node.text "<keyboard>" ])
@@ -100,7 +100,12 @@ let view old_model model ~inject =
     |> Incr_dom.Incr.map ~f:(fun map ->
            map |> Map.to_alist ~key_order:`Decreasing |> List.map ~f:snd)
   in
-  Node.body [ Node.h3 [ Node.text "Strongly Typed 💪" ]; table; stats; Node.ul best ]
+  Node.body
+    [ Node.h3 [ Node.text "Strongly Typed 💪" ]
+    ; Node.create
+        "article"
+        [ Node.div ~attr:(Attr.class_ "kb-wrapper") [ keyboard ]; stats; Node.ul best ]
+    ]
 ;;
 
 let create model ~old_model ~inject =
