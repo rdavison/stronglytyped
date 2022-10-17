@@ -1,5 +1,84 @@
 open! Import
-include Analyzer.Stats
+
+type 'a t = 'a Analyzer.Stats.t
+
+let worst = Analyzer.Stats.worst
+let both = Analyzer.Stats.both
+
+module Vio = struct
+  type 'a t =
+    { v : 'a Incr_dom.Incr.Var.t
+    ; i : 'a Incr_dom.Incr.t
+    ; o : 'a Incr_dom.Incr.Observer.t
+    }
+
+  let make ?cutoff data =
+    let open Incr_dom in
+    let var = Incr.Var.create data in
+    let incr = Incr.Var.watch var in
+    let observer = Incr.observe incr in
+    Option.iter cutoff ~f:(Incr.set_cutoff incr);
+    var, incr, observer
+  ;;
+
+  module Internal = struct
+    let hf v =
+      Analyzer.Hf.all |> List.map ~f:(fun key -> key, v) |> Analyzer.Hf.Map.of_alist_exn
+    ;;
+
+    let hand v =
+      Analyzer.Hand.all
+      |> List.map ~f:(fun key -> key, v)
+      |> Analyzer.Hand.Map.of_alist_exn
+    ;;
+
+    let max = Float.max_finite_value
+    let min = 0.
+  end
+
+  open Internal
+
+  let sfb = hf max |> make
+  let sfb_total = max |> make
+  let dsfb = hf max |> make
+  let dsfb_total = max |> make
+  let speed = hf max |> make
+  let speed_total = max |> make
+  let lsb = hand max |> make
+  let lsb_total = max |> make
+  let keyfreq = hf max |> make
+  let keyfreq_total = max |> make
+  let roll = hand min |> make
+  let roll_total = min |> make
+  let roll_top = hand min |> make
+  let roll_top_total = min |> make
+  let roll_middle = hand min |> make
+  let roll_middle_total = min |> make
+  let roll_bottom = hand min |> make
+  let roll_bottom_total = min |> make
+  let roll_in = hand min |> make
+  let roll_in_total = min |> make
+  let roll_in_top = hand min |> make
+  let roll_in_top_total = min |> make
+  let roll_in_middle = hand min |> make
+  let roll_in_middle_total = min |> make
+  let roll_in_bottom = hand min |> make
+  let roll_in_bottom_total = min |> make
+  let roll_out = hand min |> make
+  let roll_out_total = min |> make
+  let roll_out_top = hand min |> make
+  let roll_out_top_total = min |> make
+  let roll_out_middle = hand min |> make
+  let roll_out_middle_total = min |> make
+  let roll_out_bottom = hand min |> make
+  let roll_out_bottom_total = min |> make
+  let dshrc = hand max |> make
+  let dshrc_total = max |> make
+  let dshrc_good = hand min |> make
+  let dshrc_good_total = min |> make
+  let dshrc_bad = hand max |> make
+  let dshrc_bad_total = max |> make
+end
 
 let diff_color
     { Analyzer.Stats.sfb
