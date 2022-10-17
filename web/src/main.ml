@@ -67,23 +67,33 @@ module App = struct
             { model with best }))
   ;;
 
-  let view model ~inject =
+  let view old_model model ~inject =
     let open Incr_dom.Incr.Let_syntax in
     let open Incr_dom.Vdom in
     let%map table =
       let%bind analysis = model >>| Model.analysis in
       match analysis with
-      | None -> Incr_dom.Incr.return (Node.text "<keyboard>")
+      | None -> Incr_dom.Incr.return (Node.div [ Node.text "<keyboard>" ])
       | Some analysis ->
         Keyboard.view (analysis.layout |> Keyboard.of_string |> Incr_dom.Incr.return)
     and stats =
-      let%map analysis = model >>| Model.analysis in
-      let stats =
-        Option.bind analysis ~f:(fun (analysis : Analyzer.Analysis.t) -> analysis.stats)
+      let%map analysis = model >>| Model.analysis
+      and old_analysis = old_model >>| Model.analysis in
+      let stats analysis =
+        analysis
+        |> Option.bind ~f:(fun (analysis : Analyzer.Analysis.t) -> analysis.stats)
+        |> Option.value ~default:Stats.worst
       in
-      match stats with
-      | None -> Node.text "<stats>"
-      | Some stats -> Stats.view stats
+      let old_stats = stats old_analysis in
+      let stats = stats analysis in
+      let diff = Stats.diff_color (Stats.both old_stats stats) in
+      Stats.view diff (fun (cell, color) ->
+          let open Incr_dom.Vdom in
+          let data = cell |> Float.( * ) 100. |> sprintf "%.2f" |> Node.text in
+          let attr =
+            Option.map color ~f:(fun color -> Attr.style (Css_gen.color color))
+          in
+          Node.td ?attr [ data ])
     and best =
       let best = model >>| Model.best in
       Incr_map.map best ~f:(fun (s : Analyzer.Analysis.t) ->
@@ -100,10 +110,10 @@ module App = struct
     Node.body [ Node.h3 [ Node.text "Strongly Typed 💪" ]; table; stats; Node.ul best ]
   ;;
 
-  let create model ~old_model:_ ~inject =
+  let create model ~old_model ~inject =
     let open Incr_dom.Incr.Let_syntax in
     let%map apply_action = apply_action model
-    and view = view model ~inject
+    and view = view old_model model ~inject
     and model = model in
     Incr_dom.Component.create ~apply_action model view
   ;;
