@@ -6,7 +6,7 @@ module Keyboard = struct
   type t =
     { layout : string
     ; shiftedLayout : string
-    ; stats : Stats.t
+    ; stats : float Stats.t
     ; score : float
     }
   [@@deriving sexp]
@@ -14,7 +14,7 @@ module Keyboard = struct
   let nilKeyboard =
     { layout = String.make ksize_max '0'
     ; shiftedLayout = String.make ksize_max '0'
-    ; stats = Stats.empty
+    ; stats = Stats.worst
     ; score = Float.infinity
     }
   ;;

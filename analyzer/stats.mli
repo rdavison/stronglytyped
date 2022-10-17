@@ -1,50 +1,51 @@
 open! Import
 
-type t =
-  { sfb : float Hf.Map.t
-  ; sfb_total : float
-  ; dsfb : float Hf.Map.t
-  ; dsfb_total : float
-  ; speed : float Hf.Map.t
-  ; speed_total : float
-  ; lsb : float Hand.Map.t
-  ; lsb_total : float
-  ; keyfreq : float Hf.Map.t
-  ; keyfreq_total : float
-  ; roll : float Hand.Map.t
-  ; roll_total : float
-  ; roll_top : float Hand.Map.t
-  ; roll_top_total : float
-  ; roll_middle : float Hand.Map.t
-  ; roll_middle_total : float
-  ; roll_bottom : float Hand.Map.t
-  ; roll_bottom_total : float
-  ; roll_in : float Hand.Map.t
-  ; roll_in_total : float
-  ; roll_in_top : float Hand.Map.t
-  ; roll_in_top_total : float
-  ; roll_in_middle : float Hand.Map.t
-  ; roll_in_middle_total : float
-  ; roll_in_bottom : float Hand.Map.t
-  ; roll_in_bottom_total : float
-  ; roll_out : float Hand.Map.t
-  ; roll_out_total : float
-  ; roll_out_top : float Hand.Map.t
-  ; roll_out_top_total : float
-  ; roll_out_middle : float Hand.Map.t
-  ; roll_out_middle_total : float
-  ; roll_out_bottom : float Hand.Map.t
-  ; roll_out_bottom_total : float
-  ; dshrc : float Hand.Map.t
-  ; dshrc_total : float
-  ; dshrc_good : float Hand.Map.t
-  ; dshrc_good_total : float
-  ; dshrc_bad : float Hand.Map.t
-  ; dshrc_bad_total : float
+type 'a t =
+  { sfb : 'a Hf.Map.t
+  ; sfb_total : 'a
+  ; dsfb : 'a Hf.Map.t
+  ; dsfb_total : 'a
+  ; speed : 'a Hf.Map.t
+  ; speed_total : 'a
+  ; lsb : 'a Hand.Map.t
+  ; lsb_total : 'a
+  ; keyfreq : 'a Hf.Map.t
+  ; keyfreq_total : 'a
+  ; roll : 'a Hand.Map.t
+  ; roll_total : 'a
+  ; roll_top : 'a Hand.Map.t
+  ; roll_top_total : 'a
+  ; roll_middle : 'a Hand.Map.t
+  ; roll_middle_total : 'a
+  ; roll_bottom : 'a Hand.Map.t
+  ; roll_bottom_total : 'a
+  ; roll_in : 'a Hand.Map.t
+  ; roll_in_total : 'a
+  ; roll_in_top : 'a Hand.Map.t
+  ; roll_in_top_total : 'a
+  ; roll_in_middle : 'a Hand.Map.t
+  ; roll_in_middle_total : 'a
+  ; roll_in_bottom : 'a Hand.Map.t
+  ; roll_in_bottom_total : 'a
+  ; roll_out : 'a Hand.Map.t
+  ; roll_out_total : 'a
+  ; roll_out_top : 'a Hand.Map.t
+  ; roll_out_top_total : 'a
+  ; roll_out_middle : 'a Hand.Map.t
+  ; roll_out_middle_total : 'a
+  ; roll_out_bottom : 'a Hand.Map.t
+  ; roll_out_bottom_total : 'a
+  ; dshrc : 'a Hand.Map.t
+  ; dshrc_total : 'a
+  ; dshrc_good : 'a Hand.Map.t
+  ; dshrc_good_total : 'a
+  ; dshrc_bad : 'a Hand.Map.t
+  ; dshrc_bad_total : 'a
   }
 [@@deriving sexp, compare]
 
-val empty : t
+val worst : float t
+val both : 'a t -> 'b t -> ('a * 'b) t
 
 module Internal : sig
   module Sfb : sig
@@ -72,8 +73,8 @@ module Internal : sig
   end
 end
 
-val to_string : t -> string
-val incr : t Incr.t
+val to_string : float t -> string
+val incr : float t Incr.t
 
 (* same finger bigram *)
 
