@@ -37,3 +37,13 @@ let to_string = function
 ;;
 
 let all : t list = [ `P; `R; `M; `I ]
+
+let of_char c =
+  let c = Char.uppercase c in
+  match c with
+  | 'P' -> Some `P
+  | 'R' -> Some `R
+  | 'M' -> Some `M
+  | 'I' -> Some `I
+  | _ -> None
+;;
