@@ -1,5 +1,66 @@
 open! Import
 
+module Ast = struct
+  type t =
+    | Var of string
+    | Prj of t * string
+    | Add of t * t
+    | Sub of t * t
+    | Mul of t * t
+    | Div of t * t
+    | Pow of t * float
+  [@@deriving sexp]
+
+  let vars = [ "speed", `Hf Stats.speed ]
+
+  let project var prj =
+    match List.Assoc.find vars ~equal:String.equal var with
+    | None -> Error (sprintf "unknown var %s" var)
+    | Some res ->
+      (match res with
+      | `Hf incr_map ->
+        (match Hf.of_string prj with
+        | None -> Error (sprintf "unknown field %s in var %s" prj var)
+        | Some hf ->
+          let incr =
+            let%map.Incr map = incr_map in
+            Hf.Map.find_exn map hf
+          in
+          Ok incr))
+  ;;
+
+  let compile t =
+    let rec math f t1 t2 =
+      let%map.Result t1 = recurse (Ok t1)
+      and t2 = recurse (Ok t2) in
+      let%map.Incr t1 = t1
+      and t2 = t2 in
+      f t1 t2
+    and recurse acc =
+      match acc with
+      | Error e -> Error e
+      | Ok acc ->
+        (match acc with
+        | Var "speed_total" -> Ok Stats.speed_total
+        | Var var -> Error (sprintf "unknown var: %s" var)
+        | Prj (Var "speed", prj) -> project "speed" prj
+        | Prj (Var var, _) -> Error (sprintf "unknown var: %s" var)
+        | Prj _ -> Error "invalid projection of non-var term"
+        | Add (t1, t2) -> math ( +. ) t1 t2
+        | Sub (t1, t2) -> math ( -. ) t1 t2
+        | Mul (t1, t2) -> math ( *. ) t1 t2
+        | Div (t1, t2) ->
+          let ( /. ) a b = if Float.equal b Float.zero then Float.infinity else a /. b in
+          math ( /. ) t1 t2
+        | Pow (t, n) ->
+          let%map.Result t = recurse (Ok t) in
+          let%map.Incr t = t in
+          t ** n)
+    in
+    recurse (Ok t)
+  ;;
+end
+
 let ( < ) = Float.( < )
 
 let sfb =

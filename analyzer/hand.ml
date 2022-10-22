@@ -29,3 +29,11 @@ let to_string = function
 ;;
 
 let all : t list = [ `L; `R ]
+
+let of_char c =
+  let c = Char.uppercase c in
+  match c with
+  | 'L' -> Some `L
+  | 'R' -> Some `R
+  | _ -> None
+;;

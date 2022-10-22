@@ -34,3 +34,12 @@ let of_int = function
 
 let to_string (h, f) = sprintf "%s%s" (Hand.to_string h) (Finger.to_string f)
 let all = [ `L, `P; `L, `R; `L, `M; `L, `I; `R, `I; `R, `M; `R, `R; `R, `P ]
+
+let of_string s =
+  match Int.equal (String.length s) 2 with
+  | false -> None
+  | true ->
+    let h = Hand.of_char s.[0] in
+    let f = Finger.of_char s.[1] in
+    Option.both h f
+;;
