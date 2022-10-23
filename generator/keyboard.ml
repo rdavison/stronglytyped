@@ -1,13 +1,19 @@
 open! Import
 
-let observer = Incr.observe Analysis.incr
+type t =
+  { next : unit -> Analysis.t Deferred.t
+  ; nil : unit -> Analysis.t Deferred.t
+  }
 
-let next () =
-  let%map () = Incr.stabilize () in
-  Incr.Observer.value_exn observer
-;;
-
-let nil () =
-  Root.scramble 30;
-  next ()
+let make analysis =
+  let observer = Incr.observe analysis in
+  let next () =
+    let%map () = Incr.stabilize () in
+    Incr.Observer.value_exn observer
+  in
+  let nil () =
+    Root.scramble 30;
+    next ()
+  in
+  { next; nil }
 ;;

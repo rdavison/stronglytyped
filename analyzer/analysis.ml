@@ -18,10 +18,9 @@ u v w x y z , . ' ;|}
   }
 ;;
 
-let incr =
-  let%map_open.Incr score = Score.incr
+let make_incr score =
+  let%map_open.Incr score = score
   and layout = Root.layout
-  and layout_pretty = Root.layout_pretty
-  and stats = Stats.incr in
-  { score; layout; layout_pretty; stats = Some stats }
+  and layout_pretty = Root.layout_pretty in
+  { score; layout; layout_pretty; stats = None }
 ;;

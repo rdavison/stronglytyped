@@ -37,3 +37,10 @@ let of_char c =
   | 'R' -> Some `R
   | _ -> None
 ;;
+
+let of_string s =
+  match String.lowercase s with
+  | "left" | "l" -> Some `L
+  | "right" | "r" -> Some `R
+  | _ -> None
+;;

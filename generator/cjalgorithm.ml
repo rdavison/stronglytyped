@@ -6,7 +6,7 @@
 
 open! Import
 
-let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap =
+let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap ~keyboard =
   let monograms_len = Array.length monograms_arr in
   let q = monograms_len / 4 in
   let swaps_len = 2 * swaps in
@@ -35,7 +35,7 @@ let smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap =
     in
     loop 0 []
   in
-  Keyboard.next (), Array.of_list_rev lockins
+  keyboard.Keyboard.next (), Array.of_list_rev lockins
 ;;
 
 let build_shuffled_indices length =
@@ -48,7 +48,7 @@ let build_shuffled_indices length =
   indices
 ;;
 
-let improve_layout (score_to_beat : float) lockins ~on_swap =
+let improve_layout (score_to_beat : float) lockins ~on_swap ~keyboard =
   let ksize = Vars.Default.ksize in
   let indices = build_shuffled_indices ksize in
   let rec loop_i i =
@@ -75,7 +75,7 @@ let improve_layout (score_to_beat : float) lockins ~on_swap =
         | false ->
           let%bind (k : Analysis.t) =
             Root.swap indices.(i) indices.(j) ~on_swap;
-            Keyboard.next ()
+            keyboard.Keyboard.next ()
           in
           let score = k.score in
           if Float.(score < score_to_beat)
@@ -95,7 +95,7 @@ let improve_layout (score_to_beat : float) lockins ~on_swap =
   loop_i 0
 ;;
 
-let anneal (k : Analysis.t) lockins ~on_swap =
+let anneal (k : Analysis.t) lockins ~on_swap ~keyboard =
   let rec loop (last_score : Analysis.t) (score : Analysis.t) =
     let last_improvement =
       if Float.(score.score < last_score.score)
@@ -104,7 +104,7 @@ let anneal (k : Analysis.t) lockins ~on_swap =
     in
     let last_score = score in
     let score_to_beat = last_score.score +. last_improvement in
-    let%bind score' = improve_layout score_to_beat lockins ~on_swap in
+    let%bind score' = improve_layout score_to_beat lockins ~on_swap ~keyboard in
     match score' with
     | None -> return score
     | Some score' ->
@@ -147,6 +147,7 @@ let smart_mutate_and_anneal
     ~reverse_lookup_table
     ~on_bestk
     ~on_swap
+    ~keyboard
   =
   let rec loop i (prevk, bestk) =
     match i < num_rounds with
@@ -154,10 +155,12 @@ let smart_mutate_and_anneal
     | true ->
       let%bind prevk' =
         if i > 0 && Float.(Random.float 1. < chance_to_use_prev)
-        then fst (smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap)
-        else Keyboard.nil ()
+        then
+          fst
+            (smart_mutate ~monograms_arr ~swaps ~reverse_lookup_table ~on_swap ~keyboard)
+        else keyboard.Keyboard.nil ()
       in
-      let%bind k = anneal prevk [||] ~on_swap in
+      let%bind k = anneal prevk [||] ~on_swap ~keyboard in
       let bestk' =
         if Float.(k.score < bestk.Analysis.score)
         then (
@@ -169,7 +172,7 @@ let smart_mutate_and_anneal
       in
       loop (i + 1) (prevk', bestk')
   in
-  let%bind nil = Keyboard.nil () in
+  let%bind nil = keyboard.Keyboard.nil () in
   let%map bestk' = loop 0 (nil, bestk) in
   if Float.(bestk'.score < bestk.score) then bestk' else bestk
 ;;
@@ -236,6 +239,7 @@ let great_to_best
     ~monograms_arr
     ~reverse_lookup_table
     ~on_swap
+    ~keyboard
   =
   let rec loop i ~(bestk : Analysis.t) ~swaps =
     match i < num_rounds with
@@ -249,14 +253,14 @@ let great_to_best
       in
       (* Any swaps made by smartMutate() are "locked in" and may not be undone by anneal() *)
       let mutated, lockins =
-        smart_mutate ~swaps ~monograms_arr ~reverse_lookup_table ~on_swap
+        smart_mutate ~swaps ~monograms_arr ~reverse_lookup_table ~on_swap ~keyboard
       in
       let%bind mutated = mutated in
       let%bind (k : Analysis.t) =
         (* Use lockins only half the time *)
         if i mod 2 = 0
-        then anneal mutated lockins ~on_swap
-        else anneal mutated [||] ~on_swap
+        then anneal mutated lockins ~on_swap ~keyboard
+        else anneal mutated [||] ~on_swap ~keyboard
       in
       let bestk = if Float.(k.score < bestk.score) then k else bestk in
       loop (i + 1) ~bestk ~swaps
@@ -277,6 +281,7 @@ let run
     ~num_rounds
     ~on_bestk
     ~on_swap
+    ~keyboard
   =
   let%bind bestk =
     smart_mutate_and_anneal
@@ -289,6 +294,7 @@ let run
       ~reverse_lookup_table
       ~on_bestk
       ~on_swap
+      ~keyboard
   in
   let prev_best_fitness, time_on_print, print_time_interval =
     update_miscellaneous
@@ -307,6 +313,7 @@ let run
       ~monograms_arr
       ~reverse_lookup_table
       ~on_swap
+      ~keyboard
   in
   let prev_best_fitness =
     if Float.(bestk.score < best_before_gtb)
@@ -322,7 +329,7 @@ let run
   bestk, prev_best_fitness, time_on_print, print_time_interval
 ;;
 
-let start ?(on_bestk = Fn.const ()) ?(on_swap = Fn.const ()) max_loops =
+let start ?(on_bestk = Fn.const ()) ?(on_swap = Fn.const ()) max_loops ~keyboard =
   reset ();
   let monograms_arr = Incr.observe Corpus.monograms_arr in
   let reverse_lookup_table = Incr.observe Root.reverse_lookup_table in
@@ -343,7 +350,7 @@ let start ?(on_bestk = Fn.const ()) ?(on_swap = Fn.const ()) max_loops =
       ->
       let%bind bestk =
         match bestk with
-        | None -> Keyboard.nil ()
+        | None -> keyboard.Keyboard.nil ()
         | Some bestk -> return bestk
       in
       let control = Incr.Observer.value_exn Control.observer in
@@ -363,6 +370,7 @@ let start ?(on_bestk = Fn.const ()) ?(on_swap = Fn.const ()) max_loops =
           ~num_rounds:Vars.Default.algorithm_rounds
           ~on_bestk
           ~on_swap
+          ~keyboard
       in
       let mode' =
         match n < Vars.Default.max_runs with

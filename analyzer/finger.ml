@@ -47,3 +47,11 @@ let of_char c =
   | 'I' -> Some `I
   | _ -> None
 ;;
+
+let of_string s =
+  match String.lowercase s with
+  | "p" | "pinky" -> Some `P
+  | "r" | "ring" -> Some `R
+  | "m" | "middle" -> Some `M
+  | "i" | "index" -> Some `I
+  | _ -> None;;
