@@ -17,4 +17,4 @@ end
 
 type t = float -> unit
 
-val make : Config.t -> root:Root.t -> t
+val make : Config.t -> Layout.t -> t
