@@ -29,5 +29,5 @@ let row_offset t row =
   | _, _ -> failwithf "Undefined: (%s, %d)" (to_string t) row ()
 ;;
 
-let var = Incr.Var.create default
+let var : t Incr.Var.t = Incr.Var.create default
 let incr = Incr.Var.watch var

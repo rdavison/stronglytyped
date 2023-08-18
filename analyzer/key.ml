@@ -29,13 +29,13 @@ let make i c : t =
   { code; rc = r, c; hand; finger }
 ;;
 
-let all_arr_incr =
-  Root.all |> Array.mapi ~f:(fun i v -> Incr.Var.watch v |> Incr.map ~f:(make i))
-;;
+(* let all_arr_incr =
+   Root.all |> Array.mapi ~f:(fun i v -> Incr.Var.watch v |> Incr.map ~f:(make i))
+   ;;
 
-let all_list_incr = all_arr_incr |> Array.to_list
-let all_incr_set = all_arr_incr |> Array.to_list |> Incr.all |> Incr.map ~f:Set.of_list
-let all_incr_map = all_incr_set |> Imap.of_set
+   let all_list_incr = all_arr_incr |> Array.to_list
+   let all_incr_set = all_arr_incr |> Array.to_list |> Incr.all |> Incr.map ~f:Set.of_list
+   let all_incr_map = all_incr_set |> Imap.of_set *)
 
 let dist k1 k2 ~stagger =
   let pr, pc = k1.rc in
