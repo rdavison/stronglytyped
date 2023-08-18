@@ -1,7 +1,7 @@
 open! Import
 
-type key =
-  { var : Code.t Incr.Var.t
+type 'var key =
+  { var : 'var
   ; finger : Finger.t
   ; hand : Hand.t
   ; x : float
@@ -14,9 +14,9 @@ type key =
   ; swappable : bool
   ; locked_to : int array
   }
-[@@deriving sexp_of]
+[@@deriving sexp]
 
-type t = key [@@deriving sexp_of]
+type t = Code.t Incr.Var.t key [@@deriving sexp_of]
 
 let init
   n
@@ -105,18 +105,18 @@ let ortho42 =
       (let s =
          parse
            {|
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-          8 8 8 9 9 9
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-          8 8 8 9 9 9
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-    0 0 1 2 3 3 4 4 5 6 7 7
-          8 8 8 9 9 9
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+          4 4 4 4 4 4
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+          4 4 4 4 4 4
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
+          4 4 4 4 4 4
     |}
        in
        fun i -> Int.of_string s.(i) |> Finger.of_int)
