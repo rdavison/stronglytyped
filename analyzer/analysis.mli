@@ -4,7 +4,7 @@ type t =
   { score : float
   ; layout : string
   ; layout_pretty : string
-  ; stats : float Stats.t option
+  ; stats : Stats.t option
   }
 [@@deriving sexp, compare]
 

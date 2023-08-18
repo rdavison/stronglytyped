@@ -6,7 +6,7 @@ module Keyboard = struct
   type t =
     { layout : string
     ; shiftedLayout : string
-    ; stats : float Stats.t
+    ; stats : Stats.t
     ; score : float
     }
   [@@deriving sexp]
