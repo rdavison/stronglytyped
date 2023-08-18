@@ -2,10 +2,17 @@ open! Import
 
 module T = struct
   type t =
-    { code : Code.t
-    ; rc : int * int
+    { finger : Finger.t
     ; hand : Hand.t
-    ; finger : Finger.t
+    ; x : float
+    ; y : float
+    ; col : int
+    ; row : int
+    ; layer : int
+    ; layer_trigger : int option
+    ; modifier : bool
+    ; swappable : bool
+    ; locked_to : int list
     }
   [@@deriving sexp, compare, hash, equal]
 end
@@ -14,32 +21,9 @@ include T
 include Comparable.Make (T)
 include Hashable.Make (T)
 
-let make i c : t =
-  let code = `Char c in
-  let r, c = i / 10, i mod 10 in
-  let hand = if Int.( <= ) c 4 then `L else `R in
-  let finger =
-    match c with
-    | 0 | 9 -> `P
-    | 1 | 8 -> `R
-    | 2 | 7 -> `M
-    | 3 | 4 | 5 | 6 -> `I
-    | _ -> assert false
-  in
-  { code; rc = r, c; hand; finger }
-;;
-
-(* let all_arr_incr =
-   Root.all |> Array.mapi ~f:(fun i v -> Incr.Var.watch v |> Incr.map ~f:(make i))
-   ;;
-
-   let all_list_incr = all_arr_incr |> Array.to_list
-   let all_incr_set = all_arr_incr |> Array.to_list |> Incr.all |> Incr.map ~f:Set.of_list
-   let all_incr_map = all_incr_set |> Imap.of_set *)
-
 let dist k1 k2 ~stagger =
-  let pr, pc = k1.rc in
-  let qr, qc = k2.rc in
+  let pr, pc = k1.row, k1.col in
+  let qr, qc = k2.row, k2.col in
   let px = Float.of_int pc +. Stagger.row_offset stagger pr in
   let qx = Float.of_int qc +. Stagger.row_offset stagger qr in
   let dx = qx -. px in
@@ -95,7 +79,7 @@ let%expect_test "slope" =
     (Pass ((1 3) (0 2) -0.8 -1 -1)) |}]
 ;;
 
-let slope (k1 : t) (k2 : t) ~stagger = slope k1.rc k2.rc ~stagger
+let slope (k1 : t) (k2 : t) ~stagger = slope (k1.row, k1.col) (k2.row, k2.col) ~stagger
 
 module T2 = struct
   module T = struct

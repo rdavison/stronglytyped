@@ -9,7 +9,7 @@ let all =
   ]
 ;;
 
-let set (root : Root.t array) v =
+let set (root : Root.t) v =
   let layout =
     match v with
     | `Layout layout -> layout
@@ -17,7 +17,9 @@ let set (root : Root.t array) v =
       List.find_map_exn all ~f:(fun (name', layout) ->
         if String.equal name name' then Some layout else None)
   in
-  String.iteri layout ~f:(fun i c -> Incr.Var.set root.(i).var (`Char c))
+  String.iteri layout ~f:(fun i c ->
+    let _key, var = root.(i) in
+    Incr.Var.set var (`Char c))
 ;;
 
 let best_v : (float * string) list Incr.Var.t = Incr.Var.create []
