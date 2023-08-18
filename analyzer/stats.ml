@@ -9,16 +9,17 @@ module Internal = struct
       and stagger = Stagger.incr in
       let%map.Incr assoc =
         Incr.all
-        @@ let%map.List hf = Hf.all in
-           let%map.Incr keyset = keyset hf in
-           ( hf
-           , List.sum
-               (module Float)
-               keyset
-               ~f:(fun (k1, k2) ->
-                 let dist = if dist then Key.dist k1 k2 ~stagger else 1. in
-                 let freq = Ngrams.freq2 (k1, k2) ~data in
-                 dist *. freq) )
+        @@
+        let%map.List hf = Hf.all in
+        let%map.Incr keyset = keyset hf in
+        ( hf
+        , List.sum
+            (module Float)
+            keyset
+            ~f:(fun (k1, k2) ->
+              let dist = if dist then Key.dist k1 k2 ~stagger else 1. in
+              let freq = Ngrams.freq2 (k1, k2) ~data in
+              dist *. freq) )
       in
       Hf.Map.of_alist_exn assoc
     ;;
@@ -60,16 +61,17 @@ module Internal = struct
       and stagger = Stagger.incr in
       let%map.Incr assoc =
         Incr.all
-        @@ let%map.List hand = Hand.all in
-           let%map.Incr keyset = keyset hand in
-           ( hand
-           , List.sum
-               (module Float)
-               keyset
-               ~f:(fun (k1, k2) ->
-                 let dist = Key.dist k1 k2 ~stagger in
-                 let freq = Ngrams.freq2 (k1, k2) ~data in
-                 dist *. freq) )
+        @@
+        let%map.List hand = Hand.all in
+        let%map.Incr keyset = keyset hand in
+        ( hand
+        , List.sum
+            (module Float)
+            keyset
+            ~f:(fun (k1, k2) ->
+              let dist = Key.dist k1 k2 ~stagger in
+              let freq = Ngrams.freq2 (k1, k2) ~data in
+              dist *. freq) )
       in
       Hand.Map.of_alist_exn assoc
     ;;
@@ -88,9 +90,10 @@ module Internal = struct
           ]
         in
         Array.of_list
-        @@ let%map.List k = keys in
-           let%bind.Incr k = k in
-           f k
+        @@
+        let%map.List k = keys in
+        let%bind.Incr k = k in
+        f k
       in
       let l =
         let%map.List hf = Hf.all in
@@ -105,7 +108,7 @@ module Internal = struct
       let c = k.Key.code in
       match c with
       | `Char c ->
-        let freq = Char.Table.find_or_add data c ~default:(fun () -> 0.) in
+        let freq = Hashtbl.find_or_add data c ~default:(fun () -> 0.) in
         freq *. dist
     ;;
 
@@ -122,8 +125,8 @@ module Internal = struct
 
     let incr =
       make_incr1 ~select_keys:cols ~f:(fun k ->
-          let%map.Incr data = Corpus.monograms in
-          calculate_sf1 k ~data)
+        let%map.Incr data = Corpus.monograms in
+        calculate_sf1 k ~data)
     ;;
 
     let total = Imap.sum incr (module Float) ~f:Fn.id
@@ -152,18 +155,19 @@ module Internal = struct
       let%bind.Incr data = Corpus.bigrams in
       let%map.Incr assoc =
         Incr.all
-        @@ let%map.List hand = Hand.all in
-           let%map.Incr keyset = keyset (hand, row) in
-           ( hand
-           , List.sum
-               (module Float2)
-               keyset
-               ~f:(fun (k1, k2) ->
-                 let freq = Ngrams.freq2 (k1, k2) ~data in
-                 let dir = Key.direction k1 k2 in
-                 match dir with
-                 | `I -> freq, 0.
-                 | `O -> 0., freq) )
+        @@
+        let%map.List hand = Hand.all in
+        let%map.Incr keyset = keyset (hand, row) in
+        ( hand
+        , List.sum
+            (module Float2)
+            keyset
+            ~f:(fun (k1, k2) ->
+              let freq = Ngrams.freq2 (k1, k2) ~data in
+              let dir = Key.direction k1 k2 in
+              match dir with
+              | `I -> freq, 0.
+              | `O -> 0., freq) )
       in
       Hand.Map.of_alist_exn assoc
     ;;
@@ -191,13 +195,13 @@ module Internal = struct
 
     let merge a b =
       Imap.merge a b ~f:(fun ~key:_ merge_elem ->
-          let left, right =
-            Map.Merge_element.values
-              merge_elem
-              ~left_default:(0., 0.)
-              ~right_default:(0., 0.)
-          in
-          Some (Float2.( + ) left right))
+        let left, right =
+          Map.Merge_element.values
+            merge_elem
+            ~left_default:(0., 0.)
+            ~right_default:(0., 0.)
+        in
+        Some (Float2.( + ) left right))
     ;;
 
     let roll2 = merge roll_top2 roll_middle2 |> merge roll_bottom2
@@ -386,9 +390,7 @@ type 'a t =
 let both : 'a t -> 'b t -> ('a * 'b) t =
   let f ma mb =
     Map.merge ma mb ~f:(fun ~key:_ merge_elem ->
-        Option.both
-          (Map.Merge_element.left merge_elem)
-          (Map.Merge_element.right merge_elem))
+      Option.both (Map.Merge_element.left merge_elem) (Map.Merge_element.right merge_elem))
   in
   fun a b ->
     { sfb = f a.sfb b.sfb
@@ -483,67 +485,64 @@ let worst =
 ;;
 
 let to_string
-    { sfb
-    ; sfb_total
-    ; dsfb
-    ; dsfb_total
-    ; speed
-    ; speed_total
-    ; lsb
-    ; lsb_total
-    ; keyfreq
-    ; keyfreq_total
-    ; roll
-    ; roll_total
-    ; roll_top
-    ; roll_top_total
-    ; roll_middle
-    ; roll_middle_total
-    ; roll_bottom
-    ; roll_bottom_total
-    ; roll_in
-    ; roll_in_total
-    ; roll_in_top
-    ; roll_in_top_total
-    ; roll_in_middle
-    ; roll_in_middle_total
-    ; roll_in_bottom
-    ; roll_in_bottom_total
-    ; roll_out
-    ; roll_out_total
-    ; roll_out_top
-    ; roll_out_top_total
-    ; roll_out_middle
-    ; roll_out_middle_total
-    ; roll_out_bottom
-    ; roll_out_bottom_total
-    ; dshrc
-    ; dshrc_good
-    ; dshrc_bad
-    ; dshrc_total
-    ; dshrc_good_total
-    ; dshrc_bad_total
-    }
+  { sfb
+  ; sfb_total
+  ; dsfb
+  ; dsfb_total
+  ; speed
+  ; speed_total
+  ; lsb
+  ; lsb_total
+  ; keyfreq
+  ; keyfreq_total
+  ; roll
+  ; roll_total
+  ; roll_top
+  ; roll_top_total
+  ; roll_middle
+  ; roll_middle_total
+  ; roll_bottom
+  ; roll_bottom_total
+  ; roll_in
+  ; roll_in_total
+  ; roll_in_top
+  ; roll_in_top_total
+  ; roll_in_middle
+  ; roll_in_middle_total
+  ; roll_in_bottom
+  ; roll_in_bottom_total
+  ; roll_out
+  ; roll_out_total
+  ; roll_out_top
+  ; roll_out_top_total
+  ; roll_out_middle
+  ; roll_out_middle_total
+  ; roll_out_bottom
+  ; roll_out_bottom_total
+  ; dshrc
+  ; dshrc_good
+  ; dshrc_bad
+  ; dshrc_total
+  ; dshrc_good_total
+  ; dshrc_bad_total
+  }
   =
   let module T = Text_block in
   let table data ~to_string ~all =
     let cols =
       all
       |> List.map ~f:(fun hf ->
-             let data =
-               data
-               |> List.map ~f:snd
-               |> List.map ~f:(fun map ->
-                      Map.find_exn (fst map) hf
-                      |> Float.( * ) 100.
-                      |> sprintf "%.2f"
-                      |> T.text)
-             in
-             T.text (to_string hf) :: data, `Right)
+        let data =
+          data
+          |> List.map ~f:snd
+          |> List.map ~f:(fun map ->
+            Map.find_exn (fst map) hf |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
+        in
+        T.text (to_string hf) :: data, `Right)
       |> List.cons
            ( T.text "(total)"
              :: List.map data ~f:(fun x ->
-                    x |> snd |> snd |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
+               x |> snd |> snd |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
            , `Right )
       |> List.cons (T.nil :: List.map data ~f:(Fn.compose T.text fst), `Right)
     in
@@ -586,9 +585,9 @@ let to_string
   let t =
     sections
     |> List.map ~f:(fun (title, table) ->
-           let title = title |> T.text in
-           let table = table |> T.Boxed.cell |> T.boxed in
-           T.vcat [ title; table ])
+      let title = title |> T.text in
+      let table = table |> T.Boxed.cell |> T.boxed in
+      T.vcat [ title; table ])
     |> T.vcat
   in
   T.render t

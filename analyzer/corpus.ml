@@ -43,25 +43,23 @@ let bigrams =
 
 let skipgrams =
   Incr.map incr ~f:(fun v ->
-      let acc = String.Table.create () in
-      [ v.s2; v.s3; v.s4; v.s5; v.s6; v.s7; v.s8 ]
-      |> List.fold ~init:2 ~f:(fun denom s ->
-             String.Table.merge_into ~src:s ~dst:acc ~f:(fun ~key:_ a maybe_b ->
-                 let res =
-                   (a /. Float.of_int denom) +. Option.value maybe_b ~default:0.
-                 in
-                 Hashtbl.Merge_into_action.Set_to res);
-             denom + 1)
-      |> ignore;
-      acc)
+    let acc = String.Table.create () in
+    [ v.s2; v.s3; v.s4; v.s5; v.s6; v.s7; v.s8 ]
+    |> List.fold ~init:2 ~f:(fun denom s ->
+      Hashtbl.merge_into ~src:s ~dst:acc ~f:(fun ~key:_ a maybe_b ->
+        let res = (a /. Float.of_int denom) +. Option.value maybe_b ~default:0. in
+        Hashtbl.Merge_into_action.Set_to res);
+      denom + 1)
+    |> ignore;
+    acc)
 ;;
 
 let allgrams =
   Incr.map2 bigrams skipgrams ~f:(fun bigrams skipgrams ->
-      Hashtbl.merge bigrams skipgrams ~f:(fun ~key:_ -> function
-        | `Left a -> Some a
-        | `Right b -> Some b
-        | `Both (a, b) -> Some (a +. b)))
+    Hashtbl.merge bigrams skipgrams ~f:(fun ~key:_ -> function
+      | `Left a -> Some a
+      | `Right b -> Some b
+      | `Both (a, b) -> Some (a +. b)))
 ;;
 
 let n tbl =
@@ -86,9 +84,9 @@ let of_string s =
   let sn_len = Array.length sn in
   for i = 0 to len - 1 do
     let c1 = Char.lowercase s.[i] in
-    Char.Table.update singles c1 ~f:(function
-        | Some v -> v +. 1.
-        | None -> 1.);
+    Hashtbl.update singles c1 ~f:(function
+      | Some v -> v +. 1.
+      | None -> 1.);
     for j = 0 to sn_len - 1 do
       if i + j + 1 < len
       then (
@@ -96,13 +94,13 @@ let of_string s =
         if i + j + 2 < len
         then (
           let c3 = Char.lowercase s.[i + j + 2] in
-          String.Table.update
+          Hashtbl.update
             triples
             (String.of_char_list [ c1; c2; c3 ])
             ~f:(function
               | Some v -> v +. 1.
               | None -> 1.);
-          String.Table.update
+          Hashtbl.update
             sn.(j)
             (String.of_char_list [ c1; c2 ])
             ~f:(function

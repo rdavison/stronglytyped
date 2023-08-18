@@ -2,10 +2,10 @@ let index r c = (r * 10) + (c mod 10)
 let rc t r c = t.((r * 10) + (c mod 10))
 
 let time_it f =
-  let start = Time.now () in
+  let start = Time_float.now () in
   let res = f () in
-  let finish = Time.now () in
-  let span = Time.abs_diff start finish in
+  let finish = Time_float.now () in
+  let span = Time_float.abs_diff start finish in
   span, res
 ;;
 
