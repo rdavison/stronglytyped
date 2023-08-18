@@ -9,7 +9,3 @@
  (preprocess
   (pps ppx_jane))
  (modules main sites))
-
-(generate_sites_module
- (module sites)
- (sites stronglytyped))
