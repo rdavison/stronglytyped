@@ -23,3 +23,9 @@ val bigrams : float String.Table.t Incr.t
 val skipgrams : float String.Table.t Incr.t
 val allgrams : float String.Table.t Incr.t
 val of_string : string -> t
+
+module Lookup : sig
+  val freq1 : Code.t -> data:float Char.Table.t -> float
+  val freq2 : Code.t * Code.t -> data:float String.Table.t -> float
+  val freq3 : Code.t * Code.t * Code.t -> data:float String.Table.t -> float
+end
