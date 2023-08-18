@@ -5,7 +5,3 @@
  (preprocess
   (pps ppx_jane))
  (flags :standard -open Core -open Stronglytyped_analyzer))
-
-(generate_sites_module
- (module sites)
- (sites stronglytyped))
