@@ -1,22 +1,6 @@
 open! Import
 
-type 'var key =
-  { var : 'var
-  ; finger : Finger.t
-  ; hand : Hand.t
-  ; x : float
-  ; y : float
-  ; col : int
-  ; row : int
-  ; layer : int
-  ; layer_trigger : int option
-  ; modifier : bool
-  ; swappable : bool
-  ; locked_to : int array
-  }
-[@@deriving sexp]
-
-type t = Code.t Incr.Var.t key [@@deriving sexp_of]
+type t = (Key.t * Code.t Incr.Var.t) array [@@deriving sexp_of]
 
 let init
   n
@@ -33,30 +17,32 @@ let init
   ~locked_to
   =
   Array.init n ~f:(fun i ->
+    let key =
+      let finger = finger i in
+      let hand = hand i in
+      let x, y = pos i in
+      let col = col i in
+      let row = row i in
+      let layer = layer i in
+      let layer_trigger = layer_trigger i in
+      let modifier = modifier i in
+      let swappable = swappable i in
+      let locked_to = locked_to i in
+      { Key.finger
+      ; hand
+      ; x
+      ; y
+      ; col
+      ; row
+      ; layer
+      ; layer_trigger
+      ; modifier
+      ; swappable
+      ; locked_to
+      }
+    in
     let var = Incr.Var.create (code i) in
-    let finger = finger i in
-    let hand = hand i in
-    let x, y = pos i in
-    let col = col i in
-    let row = row i in
-    let layer = layer i in
-    let layer_trigger = layer_trigger i in
-    let modifier = modifier i in
-    let swappable = swappable i in
-    let locked_to = locked_to i in
-    { var
-    ; finger
-    ; hand
-    ; x
-    ; y
-    ; col
-    ; row
-    ; layer
-    ; layer_trigger
-    ; modifier
-    ; swappable
-    ; locked_to
-    })
+    key, var)
 ;;
 
 let ortho42 =
@@ -220,12 +206,12 @@ let ortho42 =
     ~locked_to:(fun i ->
       let layer, offset = layer_offset i in
       match offset with
-      | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> tower i |> List.to_array
+      | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> tower i
       | _ ->
         let alpha_pair x =
           match layer with
-          | 0 -> Some [| x + keys |]
-          | 1 -> Some [| x - keys |]
+          | 0 -> Some [ x + keys ]
+          | 1 -> Some [ x - keys ]
           | _ -> None
         in
         let pairing =
@@ -235,34 +221,16 @@ let ortho42 =
           then alpha_pair i
           else None
         in
-        Option.value pairing ~default:[||])
+        Option.value pairing ~default:[])
 ;;
 
-(* let all =
-  String.make 30 '@'
-  |> String.to_array
-  |> Array.map ~f:(fun c ->
-       let var = Incr.Var.create c in
-       { var
-       ; finger = 0
-       ; hand = 0
-       ; x = 0.
-       ; y = 0.
-       ; col = 0
-       ; row = 0
-       ; layer = 0
-       ; layer_trigger = None
-       ; modifier = false
-       ; swappable = true
-       ; locked_to = [||]
-       })
-;; *)
-
-let swap ?on_swap layout a b =
+let swap ?on_swap t a b =
   Option.iter on_swap ~f:(fun f -> f (a, b));
-  let tmp = Incr.Var.value layout.(a).var in
-  Incr.Var.set layout.(a).var (Incr.Var.value layout.(b).var);
-  Incr.Var.set layout.(b).var tmp
+  let _key, var_a = t.(a) in
+  let _key, var_b = t.(b) in
+  let tmp = Incr.Var.value var_a in
+  Incr.Var.set var_a (Incr.Var.value var_b);
+  Incr.Var.set var_b tmp
 ;;
 
 let scramble ?on_swap layout i =
@@ -273,43 +241,9 @@ let scramble ?on_swap layout i =
 ;;
 
 let length layout = Array.length layout
-let rebase layout s = String.iteri s ~f:(fun i c -> Incr.Var.set layout.(i).var (`Char c))
 
-let bijection layout =
-  layout
-  |> Array.mapi ~f:(fun i k ->
-    let%map.Incr k = Incr.Var.watch k.var in
-    i, k)
-  |> Array.to_list
-  |> Incr.all
-;;
-
-let char_list layout =
-  let%map.Incr bijection = bijection layout in
-  List.map ~f:snd bijection
-;;
-
-let reverse_lookup_table layout =
-  let%map.Incr bijection = bijection layout in
-  bijection |> List.map ~f:(fun (a, `Char b) -> b, a) |> Char.Map.of_alist_exn
-;;
-
-let layout layout =
-  let%map.Incr char_list = char_list layout in
-  String.of_char_list
-    (List.map char_list ~f:(fun c ->
-       match c with
-       | `Char c -> c))
-;;
-
-let layout_pretty layout =
-  let%map.Incr char_list = char_list layout in
-  let buf = Buffer.create 128 in
-  List.iteri char_list ~f:(fun i v ->
-    match v with
-    | `Char v ->
-      Buffer.add_char buf v;
-      if i <> length layout - 1
-      then Buffer.add_char buf (if i mod 10 = 9 then '\n' else ' '));
-  Buffer.contents buf
+let rebase layout s =
+  String.iteri s ~f:(fun i c ->
+    let _key, var = layout.(i) in
+    Incr.Var.set var (`Char c))
 ;;

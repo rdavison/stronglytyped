@@ -1,10 +1,17 @@
 open! Import
 
 type t =
-  { code : Code.t
-  ; rc : int * int
+  { finger : Finger.t
   ; hand : Hand.t
-  ; finger : Finger.t
+  ; x : float
+  ; y : float
+  ; col : int
+  ; row : int
+  ; layer : int
+  ; layer_trigger : int option
+  ; modifier : bool
+  ; swappable : bool
+  ; locked_to : int list
   }
 [@@deriving sexp, compare, hash, equal]
 
@@ -25,7 +32,7 @@ module T3 : sig
   include Hashable.S with type t := t
 end
 
-val make : int -> char -> t
+(* val make : int -> char -> t *)
 
 (* val all_arr_incr : t Incr.t array
    val all_list_incr : t Incr.t list
