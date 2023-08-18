@@ -5,6 +5,7 @@ type t =
   | `R
   | `M
   | `I
+  | `T
   ]
 [@@deriving sexp, compare, hash, equal]
 

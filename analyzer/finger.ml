@@ -6,6 +6,7 @@ module T = struct
     | `R
     | `M
     | `I
+    | `T
     ]
   [@@deriving sexp, compare, hash, equal]
 end
@@ -19,6 +20,7 @@ let to_int : t -> int = function
   | `R -> 1
   | `M -> 2
   | `I -> 3
+  | `T -> 4
 ;;
 
 let of_int : int -> t = function
@@ -26,6 +28,7 @@ let of_int : int -> t = function
   | 1 -> `R
   | 2 -> `M
   | 3 -> `I
+  | 4 -> `T
   | _ -> assert false
 ;;
 
@@ -34,9 +37,10 @@ let to_string = function
   | `R -> "R"
   | `M -> "M"
   | `I -> "I"
+  | `T -> "T"
 ;;
 
-let all : t list = [ `P; `R; `M; `I ]
+let all : t list = [ `P; `R; `M; `I; `T ]
 
 let of_char c =
   let c = Char.uppercase c in
@@ -45,6 +49,7 @@ let of_char c =
   | 'R' -> Some `R
   | 'M' -> Some `M
   | 'I' -> Some `I
+  | 'T' -> Some `T
   | _ -> None
 ;;
 
@@ -54,4 +59,6 @@ let of_string s =
   | "r" | "ring" -> Some `R
   | "m" | "middle" -> Some `M
   | "i" | "index" -> Some `I
-  | _ -> None;;
+  | "t" | "thumb" -> Some `T
+  | _ -> None
+;;
