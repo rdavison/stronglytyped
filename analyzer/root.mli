@@ -1,9 +1,9 @@
 open! Import
 
 type key =
-  { var : char Incr.Var.t
-  ; finger : int
-  ; hand : int
+  { var : Code.t Incr.Var.t
+  ; finger : Finger.t
+  ; hand : Hand.t
   ; x : float
   ; y : float
   ; col : int
@@ -17,9 +17,9 @@ type key =
 
 val init
   :  int
-  -> code:(int -> char)
-  -> finger:(int -> int)
-  -> hand:(int -> int)
+  -> code:(int -> Code.t)
+  -> finger:(int -> Finger.t)
+  -> hand:(int -> Hand.t)
   -> pos:(int -> float * float)
   -> col:(int -> int)
   -> row:(int -> int)

@@ -17,7 +17,7 @@ let set (root : Root.t array) v =
       List.find_map_exn all ~f:(fun (name', layout) ->
         if String.equal name name' then Some layout else None)
   in
-  String.iteri layout ~f:(fun i c -> Incr.Var.set root.(i).var c)
+  String.iteri layout ~f:(fun i c -> Incr.Var.set root.(i).var (`Char c))
 ;;
 
 let best_v : (float * string) list Incr.Var.t = Incr.Var.create []
