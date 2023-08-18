@@ -1,7 +1,7 @@
 open! Import
 
-type key =
-  { var : Code.t Incr.Var.t
+type 'var key =
+  { var : 'var
   ; finger : Finger.t
   ; hand : Hand.t
   ; x : float
@@ -28,9 +28,9 @@ val init
   -> modifier:(int -> bool)
   -> swappable:(int -> bool)
   -> locked_to:(int -> int array)
-  -> key array
+  -> Code.t Incr.Var.t key array
 
-type t = key [@@deriving sexp_of]
+type t = Code.t Incr.Var.t key [@@deriving sexp_of]
 
 val ortho42 : t array
 val swap : ?on_swap:(int * int -> unit) -> t array -> int -> int -> unit
