@@ -36,7 +36,7 @@ module Default = struct
   let runsBeforeChanceInc = 1
   let runsBeforeSwapsInc = 1
   let gtbRounds = 4
-  let printTimeInterval = Time.Span.of_sec 60.
+  let printTimeInterval = Time_float.Span.of_sec 60.
   let fitnessMax = Float.max_value
   let gtbNumberOfSwaps = 10
   let gtbRoundsBeforeSwapInc = 32
@@ -60,17 +60,15 @@ let smartMutate (k : Keyboard.t) numberOfSwaps =
   let swapslen = 2 * numberOfSwaps in
   let charsToSwap =
     Array.init swapslen ~f:(fun _ ->
-        let rec loop i default =
-          match i < 0 with
-          | true -> default
-          | false ->
-            (match
-               isSwappable monographs.(i).key && Random.int Int.max_value mod q = 0
-             with
-            | false -> loop (i - 1) default
-            | true -> monographs.(i).key)
-        in
-        loop (monLen - 1) monographs.(0).key)
+      let rec loop i default =
+        match i < 0 with
+        | true -> default
+        | false ->
+          (match isSwappable monographs.(i).key && Random.int Int.max_value mod q = 0 with
+           | false -> loop (i - 1) default
+           | true -> monographs.(i).key)
+      in
+      loop (monLen - 1) monographs.(0).key)
   in
   let k, lockins =
     let rec loop i k lockins =
@@ -106,37 +104,37 @@ let improveLayout evaluationToBeat (k : Keyboard.t) lockins lockin_length =
       | false -> `Continue
       | true ->
         (match isLegalSwap k indices.(i) indices.(j) with
-        | false -> loop_j (j + 1)
-        | true ->
-          let skipRound =
-            let rec loop inx acc =
-              match inx = lockin_length with
-              | true -> acc
-              | false ->
-                if fst lockins.(inx) = indices.(i)
-                   || fst lockins.(inx) = indices.(j)
-                   || snd lockins.(inx) = indices.(i)
-                   || snd lockins.(inx) = indices.(j)
-                then true
-                else loop (inx + 1) acc
-            in
-            loop 0 false
-          in
-          (match skipRound with
-          | true -> loop_j (j + 1)
-          | false ->
-            let k = calcFitness (swap k indices.(i) indices.(j)) in
-            let evaluation = k.score in
-            if Float.(evaluation < evaluationToBeat)
-            then `Stop evaluation
-            else loop_j (j + 1)))
+         | false -> loop_j (j + 1)
+         | true ->
+           let skipRound =
+             let rec loop inx acc =
+               match inx = lockin_length with
+               | true -> acc
+               | false ->
+                 if fst lockins.(inx) = indices.(i)
+                    || fst lockins.(inx) = indices.(j)
+                    || snd lockins.(inx) = indices.(i)
+                    || snd lockins.(inx) = indices.(j)
+                 then true
+                 else loop (inx + 1) acc
+             in
+             loop 0 false
+           in
+           (match skipRound with
+            | true -> loop_j (j + 1)
+            | false ->
+              let k = calcFitness (swap k indices.(i) indices.(j)) in
+              let evaluation = k.score in
+              if Float.(evaluation < evaluationToBeat)
+              then `Stop evaluation
+              else loop_j (j + 1)))
     in
     match i < 2 * Default.trueksize with
     | false -> evaluationToBeat
     | true ->
       (match loop_j (i + 1) with
-      | `Stop x -> x
-      | `Continue -> loop_i (i + 1))
+       | `Stop x -> x
+       | `Continue -> loop_i (i + 1))
   in
   loop_i 0
 ;;
@@ -160,11 +158,11 @@ let anneal (k : Keyboard.t) lockins lockin_length =
 let newKeeb () = Keyboard.nilKeyboard
 
 let smartMutateAndAnneal
-    ~chanceToUsePreviousLayout
-    ~numberOfSwaps
-    ~startTime
-    ~numRounds
-    ~bestk
+  ~chanceToUsePreviousLayout
+  ~numberOfSwaps
+  ~startTime
+  ~numRounds
+  ~bestk
   =
   let rec loop i (prevk, bestk) =
     match i < numRounds with
@@ -259,9 +257,9 @@ let updateGtbRounds i ~gtbRounds =
 let updateMiscellaneous ~bestk ~prevBestFitness ~startTime ~printTimeInterval ~timeOnPrint
   =
   let is_better = Float.(bestk.Keyboard.score < prevBestFitness) in
-  let ts = Time.now () |> Time.to_span_since_epoch in
+  let ts = Time_float.now () |> Time_float.to_span_since_epoch in
   let timeOnPrint' =
-    let ( + ) = Time.Span.( + ) in
+    let ( + ) = Time_float.Span.( + ) in
     ts + printTimeInterval
   in
   if is_better
@@ -271,30 +269,30 @@ let updateMiscellaneous ~bestk ~prevBestFitness ~startTime ~printTimeInterval ~t
     printTime startTime;
     (* If a keyboard was just printed, don't print the time for a while. *)
     prevBestFitness, timeOnPrint', printTimeInterval)
-  else if Time.Span.(ts >= timeOnPrint) && Default.detailedOutput
+  else if Time_float.Span.(ts >= timeOnPrint) && Default.detailedOutput
   then (
     printTime startTime;
     let printTimeInterval =
-      (Time.Span.to_sec printTimeInterval *. 1.5) +. 1. |> Time.Span.of_sec
+      (Time_float.Span.to_sec printTimeInterval *. 1.5) +. 1. |> Time_float.Span.of_sec
     in
     prevBestFitness, timeOnPrint', printTimeInterval)
   else prevBestFitness, timeOnPrint, printTimeInterval
 ;;
 
 let runAlgorithm () =
-  let startTime = Time.now () in
+  let startTime = Time_float.now () in
   let numRounds = Default.algorithm_rounds in
   let rec loop
-      i
-      ~runsBeforeChanceInc
-      ~runsBeforeSwapsInc
-      ~gtbRounds
-      ~prevBestFitness
-      ~timeOnPrint
-      ~printTimeInterval
-      ~chanceToUsePreviousLayout
-      ~numberOfSwaps
-      ~bestk
+    i
+    ~runsBeforeChanceInc
+    ~runsBeforeSwapsInc
+    ~gtbRounds
+    ~prevBestFitness
+    ~timeOnPrint
+    ~printTimeInterval
+    ~chanceToUsePreviousLayout
+    ~numberOfSwaps
+    ~bestk
     =
     match i < Default.maxRuns with
     | false -> ()
@@ -348,7 +346,7 @@ let runAlgorithm () =
   in
   let printTimeInterval = Default.printTimeInterval in
   let timeOnPrint =
-    Time.Span.( + ) (startTime |> Time.to_span_since_epoch) printTimeInterval
+    Time_float.Span.( + ) (startTime |> Time_float.to_span_since_epoch) printTimeInterval
   in
   loop
     0
