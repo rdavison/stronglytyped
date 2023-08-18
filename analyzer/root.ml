@@ -1,9 +1,9 @@
 open! Import
 
 type key =
-  { var : char Incr.Var.t
-  ; finger : int
-  ; hand : int
+  { var : Code.t Incr.Var.t
+  ; finger : Finger.t
+  ; hand : Hand.t
   ; x : float
   ; y : float
   ; col : int
@@ -100,7 +100,7 @@ let ortho42 =
           º º º º º º
     |}
        in
-       fun i -> s.(i).[0])
+       fun i -> `Char s.(i).[0])
     ~finger:
       (let s =
          parse
@@ -119,7 +119,7 @@ let ortho42 =
           8 8 8 9 9 9
     |}
        in
-       fun i -> Int.of_string s.(i))
+       fun i -> Int.of_string s.(i) |> Finger.of_int)
     ~hand:
       (let s =
          parse
@@ -138,7 +138,7 @@ let ortho42 =
              1 1 1 2 2 2
  |}
        in
-       fun i -> Int.of_string s.(i))
+       fun i -> Int.of_string s.(i) |> Hand.of_int)
     ~pos:(fun i ->
       let y =
         if i < 12
@@ -273,7 +273,7 @@ let scramble ?on_swap layout i =
 ;;
 
 let length layout = Array.length layout
-let rebase layout s = String.iteri s ~f:(fun i c -> Incr.Var.set layout.(i).var c)
+let rebase layout s = String.iteri s ~f:(fun i c -> Incr.Var.set layout.(i).var (`Char c))
 
 let bijection layout =
   layout
@@ -291,20 +291,25 @@ let char_list layout =
 
 let reverse_lookup_table layout =
   let%map.Incr bijection = bijection layout in
-  bijection |> List.map ~f:(fun (a, b) -> b, a) |> Char.Map.of_alist_exn
+  bijection |> List.map ~f:(fun (a, `Char b) -> b, a) |> Char.Map.of_alist_exn
 ;;
 
 let layout layout =
   let%map.Incr char_list = char_list layout in
-  String.of_char_list char_list
+  String.of_char_list
+    (List.map char_list ~f:(fun c ->
+       match c with
+       | `Char c -> c))
 ;;
 
 let layout_pretty layout =
   let%map.Incr char_list = char_list layout in
   let buf = Buffer.create 128 in
   List.iteri char_list ~f:(fun i v ->
-    Buffer.add_char buf v;
-    if i <> length layout - 1
-    then Buffer.add_char buf (if i mod 10 = 9 then '\n' else ' '));
+    match v with
+    | `Char v ->
+      Buffer.add_char buf v;
+      if i <> length layout - 1
+      then Buffer.add_char buf (if i mod 10 = 9 then '\n' else ' '));
   Buffer.contents buf
 ;;
