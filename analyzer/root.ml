@@ -3,13 +3,11 @@ open! Import
 type key =
   { var : char Incr.Var.t
   ; finger : int
-  ; symmetric_finger : int
   ; hand : int
   ; x : float
   ; y : float
   ; col : int
   ; row : int
-  ; symmetric_col : int
   ; layer : int
   ; layer_trigger : int option
   ; modifier : bool
@@ -24,12 +22,10 @@ let init
   n
   ~code
   ~finger
-  ~symmetric_finger
   ~hand
   ~pos
   ~col
   ~row
-  ~symmetric_col
   ~layer
   ~layer_trigger
   ~modifier
@@ -39,12 +35,10 @@ let init
   Array.init n ~f:(fun i ->
     let var = Incr.Var.create (code i) in
     let finger = finger i in
-    let symmetric_finger = symmetric_finger i in
     let hand = hand i in
     let x, y = pos i in
     let col = col i in
     let row = row i in
-    let symmetric_col = symmetric_col i in
     let layer = layer i in
     let layer_trigger = layer_trigger i in
     let modifier = modifier i in
@@ -52,13 +46,11 @@ let init
     let locked_to = locked_to i in
     { var
     ; finger
-    ; symmetric_finger
     ; hand
     ; x
     ; y
     ; col
     ; row
-    ; symmetric_col
     ; layer
     ; layer_trigger
     ; modifier
@@ -125,25 +117,6 @@ let ortho42 =
     0 0 1 2 3 3 4 4 5 6 7 7
     0 0 1 2 3 3 4 4 5 6 7 7
           8 8 8 9 9 9
-    |}
-       in
-       fun i -> Int.of_string s.(i))
-    ~symmetric_finger:
-      (let s =
-         parse
-           {|
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-                4 4 4 4 4 4
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-                4 4 4 4 4 4
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-          0 0 1 2 3 3 3 3 2 1 0 0
-                4 4 4 4 4 4
     |}
        in
        fun i -> Int.of_string s.(i))
@@ -216,25 +189,6 @@ let ortho42 =
  |}
        in
        fun i -> Int.of_string s.(i))
-    ~symmetric_col:
-      (let s =
-         parse
-           {|
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-             6 6 6 6 6 6
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-             6 6 6 6 6 6
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-       0 1 2 3 4 5 5 4 3 2 1 0
-             6 6 6 6 6 6
- |}
-       in
-       fun i -> Int.of_string s.(i))
     ~layer:(fun i ->
       let layer, _offset = layer_offset i in
       layer)
@@ -291,13 +245,11 @@ let ortho42 =
        let var = Incr.Var.create c in
        { var
        ; finger = 0
-       ; symmetric_finger = 0
        ; hand = 0
        ; x = 0.
        ; y = 0.
        ; col = 0
        ; row = 0
-       ; symmetric_col = 0
        ; layer = 0
        ; layer_trigger = None
        ; modifier = false
