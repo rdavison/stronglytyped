@@ -3,13 +3,11 @@ open! Import
 type key =
   { var : char Incr.Var.t
   ; finger : int
-  ; symmetric_finger : int
   ; hand : int
   ; x : float
   ; y : float
   ; col : int
   ; row : int
-  ; symmetric_col : int
   ; layer : int
   ; layer_trigger : int option
   ; modifier : bool
@@ -21,12 +19,10 @@ val init
   :  int
   -> code:(int -> char)
   -> finger:(int -> int)
-  -> symmetric_finger:(int -> int)
   -> hand:(int -> int)
   -> pos:(int -> float * float)
   -> col:(int -> int)
   -> row:(int -> int)
-  -> symmetric_col:(int -> int)
   -> layer:(int -> int)
   -> layer_trigger:(int -> int option)
   -> modifier:(int -> bool)
