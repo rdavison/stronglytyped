@@ -9,4 +9,9 @@ type t =
 [@@deriving sexp, compare]
 
 val empty : t
-val make_incr : float Incr.t -> t Incr.t
+
+val make_incr
+  :  score:float Incr.t
+  -> layout:string Incr.t
+  -> layout_pretty:string Incr.t
+  -> t Incr.t

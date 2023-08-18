@@ -30,7 +30,7 @@ end
 
 type t = float -> unit
 
-let make (t : Config.t) : t =
+let make (t : Config.t) ~root : t =
   let curve a x =
     Float.of_int t.max_swaps_at_once *. ((1. -. x) ** a) |> Float.round_up |> Float.to_int
   in
@@ -46,7 +46,7 @@ let make (t : Config.t) : t =
   in
   fun x ->
     for _ = 1 to num_swaps x do
-      let i, j = Random.int2 Root.length in
-      Root.swap i j
+      let i, j = Random.int2 (Root.length root) in
+      Root.swap root i j
     done
 ;;

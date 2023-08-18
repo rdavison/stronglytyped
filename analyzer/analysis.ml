@@ -18,9 +18,9 @@ u v w x y z , . ' ;|}
   }
 ;;
 
-let make_incr score =
+let make_incr ~score ~layout ~layout_pretty =
   let%map_open.Incr score = score
-  and layout = Root.layout
-  and layout_pretty = Root.layout_pretty in
+  and layout = layout
+  and layout_pretty = layout_pretty in
   { score; layout; layout_pretty; stats = None }
 ;;

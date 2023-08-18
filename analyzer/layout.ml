@@ -9,25 +9,25 @@ let all =
   ]
 ;;
 
-let set v =
+let set (root : Root.t array) v =
   let layout =
     match v with
     | `Layout layout -> layout
     | `Name name ->
       List.find_map_exn all ~f:(fun (name', layout) ->
-          if String.equal name name' then Some layout else None)
+        if String.equal name name' then Some layout else None)
   in
-  String.iteri layout ~f:(fun i c -> Incr.Var.set Root.all.(i) c)
+  String.iteri layout ~f:(fun i c -> Incr.Var.set root.(i).var c)
 ;;
 
 let best_v : (float * string) list Incr.Var.t = Incr.Var.create []
 let best = Incr.Var.watch best_v
 
-let set_best layouts =
+let set_best layouts ~root =
   Incr.Var.set best_v layouts;
   match layouts with
-  | (_, x) :: _ -> set (`Layout x)
+  | (_, x) :: _ -> set root (`Layout x)
   | _ -> ()
 ;;
 
-let set_next x = set (`Layout x)
+let set_next x ~root = set root (`Layout x)
