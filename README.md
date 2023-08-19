@@ -2,24 +2,16 @@
 
 ## Developer Setup
 
-Make sure you have nvm installed. Then you can:
+Make sure you have opam installed. Then you can:
 
 ```
-$ nvm use
-$ make install-deps
-$ make
+$ opam switch create . 5.0.0
+$ opam install . --deps-only
+$ dune exec bin/main.exe
 ```
 
-The default target for `make` will build in watch mode, so any changes will get automatically recompiled. To run the generator:
+You can also build the code in watch mode with:
 
 ```
-$ npx esy dune exec bin/main.exe
+$ dune build @all -w
 ```
-
-If you want to pass args to `main.exe`, you can do so like this:
-
-```
-$ npx esy dune exec bin/main.exe -- foo --bar
-```
-
-Args must be passed in after the double dash: `--`
