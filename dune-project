@@ -19,11 +19,13 @@
 
 (package
  (name stronglytyped)
+ (synopsis "Keyboard layout analysis")
  (sites
   (share corpus))
  (depends
   (ocaml
    (>= 5.0.0))
+  domainslib
   dune
   dune-site
   incremental
