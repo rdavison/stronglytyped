@@ -32,13 +32,4 @@ module T3 : sig
   include Hashable.S with type t := t
 end
 
-(* val make : int -> char -> t *)
-
-(* val all_arr_incr : t Incr.t array
-   val all_list_incr : t Incr.t list
-   val all_incr_set : Set.t Incr.t
-   val all_incr_map : unit Map.t Incr.t *)
-val direction : t -> t -> [ `I | `O ]
-val dist : t -> t -> stagger:Stagger.t -> float
-val slope : t -> t -> stagger:Stagger.t -> float
 val hand_finger : t -> Hand_finger.t
