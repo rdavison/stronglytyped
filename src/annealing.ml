@@ -62,13 +62,12 @@ let run layout ~corpus ~weights =
   let objective_function (_ : Layout.t) =
     Incr.stabilize ();
     let score = Incr.Observer.value_exn observer in
-    (* printf "score %f\n" score; *)
     score
   in
   let initial_solution = layout in
   let initial_temperature = 100.0 in
   let cooling_rate = 0.99998 in
-  let num_iterations = 1000000 in
+  let num_iterations = 3_000_000 in
   let best_solution, best_cost =
     simulated_annealing
       ~objective_function
