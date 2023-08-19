@@ -2,7 +2,7 @@ open! Import
 
 let main ~corpus =
   let corpus = Corpus.load_corpus corpus in
-  let layout = Layout.ortho42 in
+  let layout = Layout.ortho42 () in
   let weights = { Score.default_weights with sfss = 0. } in
   let score, _layout = Annealing.run layout ~corpus ~weights in
   printf "%.4f" score
