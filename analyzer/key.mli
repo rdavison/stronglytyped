@@ -41,3 +41,4 @@ end
 val direction : t -> t -> [ `I | `O ]
 val dist : t -> t -> stagger:Stagger.t -> float
 val slope : t -> t -> stagger:Stagger.t -> float
+val hand_finger : t -> Hand_finger.t

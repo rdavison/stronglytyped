@@ -1,0 +1,6 @@
+(install
+ (section
+  (site
+   (stronglytyped corpus)))
+ (files
+  (typeracer as typeracer)))

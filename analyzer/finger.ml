@@ -12,7 +12,9 @@ module T = struct
 end
 
 include T
-include Comparable.Make (T)
+module C = Comparable.Make (T)
+include C
+module Infix : Comparable.Infix with type t := t = C
 include Hashable.Make (T)
 
 let to_int : t -> int = function
