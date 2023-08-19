@@ -15,13 +15,7 @@ type t =
   }
 [@@deriving sexp]
 
-val data_v : string Incr.Var.t
-val incr : t Incr.t
-val monograms : float Char.Table.t Incr.t
-val monograms_arr : (char * float) array Incr.t
-val bigrams : float String.Table.t Incr.t
-val skipgrams : float String.Table.t Incr.t
-val allgrams : float String.Table.t Incr.t
+val load_corpus : string -> t
 val of_string : string -> t
 
 module Lookup : sig

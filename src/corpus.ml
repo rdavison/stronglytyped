@@ -15,51 +15,15 @@ type t =
   }
 [@@deriving sexp]
 
-let data_v = Incr.Var.create ""
-let data = Incr.Var.watch data_v
-
-let incr =
-  let%map.Incr v = data in
-  Sexp.of_string v |> t_of_sexp
-;;
-
-let monograms =
-  let%map.Incr v = incr in
-  v.singles
-;;
-
-let monograms_arr =
-  let%map.Incr monograms = monograms in
-  monograms
-  |> Hashtbl.to_alist
-  |> List.sort ~compare:(fun (_, v1) (_, v2) -> Float.compare v1 v2)
-  |> Array.of_list
-;;
-
-let bigrams =
-  let%map.Incr v = incr in
-  v.s1
-;;
-
-let skipgrams =
-  Incr.map incr ~f:(fun v ->
-    let acc = String.Table.create () in
-    [ v.s2; v.s3; v.s4; v.s5; v.s6; v.s7; v.s8 ]
-    |> List.fold ~init:2 ~f:(fun denom s ->
-      Hashtbl.merge_into ~src:s ~dst:acc ~f:(fun ~key:_ a maybe_b ->
-        let res = (a /. Float.of_int denom) +. Option.value maybe_b ~default:0. in
-        Hashtbl.Merge_into_action.Set_to res);
-      denom + 1)
-    |> ignore;
-    acc)
-;;
-
-let allgrams =
-  Incr.map2 bigrams skipgrams ~f:(fun bigrams skipgrams ->
-    Hashtbl.merge bigrams skipgrams ~f:(fun ~key:_ -> function
-      | `Left a -> Some a
-      | `Right b -> Some b
-      | `Both (a, b) -> Some (a +. b)))
+let load_corpus name =
+  let data =
+    In_channel.read_all
+      (match Sites.Sites.corpus with
+       | [ path ] -> path ^/ name
+       | _ -> failwith "No path to corpus")
+  in
+  let sexp = Sexp.of_string data in
+  t_of_sexp sexp
 ;;
 
 let n tbl =
