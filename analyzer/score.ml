@@ -55,6 +55,6 @@ let%expect_test "graphite" =
   let observer = Incr.observe score in
   Incr.stabilize ();
   let score = Incr.Observer.value_exn observer in
-  printf "%.4f" score;
-  [%expect {| 0.0233 |}]
+  printf "%.4f" (score *. 100.);
+  [%expect {| 2.3291 |}]
 ;;

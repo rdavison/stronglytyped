@@ -21,8 +21,6 @@
  (name stronglytyped)
  (sites
   (share corpus))
- (synopsis "Keyboard layout analyzer and generator")
- (description "Stronglytyped analyzes and generates keyboard layouts")
  (depends
   (ocaml
    (>= 5.0.0))
@@ -31,4 +29,5 @@
   incremental
   incr_map
   textutils_kernel
-  core))
+  core
+  core_unix))

@@ -1,33 +1,29 @@
 open! Core
 
-let () =
-  if Sys_unix.file_exists_exn "corpus.txt"
-  then (
-    let s =
-      In_channel.read_all "corpus.txt"
-      |> Stronglytyped_analyzer.Corpus.of_string
-      |> [%sexp_of: Stronglytyped_analyzer.Corpus.t]
-      |> Sexp.to_string_mach
+let main () =
+  let open Stronglytyped_analyzer in
+  let corpus =
+    let data =
+      In_channel.read_all
+        (match Sites.Sites.corpus with
+         | [ path ] -> path ^/ "typeracer"
+         | _ -> failwith "No path to corpus")
     in
-    Out_channel.write_all "corpus.sexp" ~data:s)
-;;
-
-let generator =
-  Async_command.async ~summary:"Stronglytyped Generator" Stronglytyped_generator.Cli.param
+    let sexp = Sexp.of_string data in
+    Corpus.t_of_sexp sexp
+  in
+  let layout = Layout.ortho42 in
+  let weights = { Score.default_weights with sfss = 0. } in
+  let score, _layout = Annealing.run layout ~corpus ~weights in
+  printf "%.4f" score
 ;;
 
 let () =
-  let data =
-    In_channel.read_all
-      (match Sites.Sites.corpus with
-      | [ path ] -> path ^/ "typeracer"
-      | _ -> failwith "No path to corpus")
+  let param =
+    let open Command.Let_syntax in
+    let%map_open () = return () in
+    fun () -> main ()
   in
-  Stronglytyped_analyzer.Incr.Var.set Stronglytyped_analyzer.Corpus.data_v data;
-  let group =
-    Command.group
-      ~summary:"StronglyTyped is a keyboard layout analyzer and generator."
-      [ "gen", generator ]
-  in
-  Command_unix.run group
+  let command = Command.basic ~summary:"Generate layouts" param in
+  Command_unix.run command
 ;;

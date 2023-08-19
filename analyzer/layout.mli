@@ -24,3 +24,4 @@ val scramble : ?on_swap:(int * int -> unit) -> t -> int -> unit
 val length : t -> int
 val all : (string * string) list
 val set : t -> [ `Name of string | `Layout of string ] -> unit
+val valid_swaps : t -> (int * int) array

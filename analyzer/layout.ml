@@ -201,8 +201,8 @@ let ortho42 =
     ~swappable:(fun i ->
       let _layer, offset = layer_offset i in
       match offset with
-      | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> true
-      | _ -> false)
+      | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> false
+      | _ -> true)
     ~locked_to:(fun i ->
       let layer, offset = layer_offset i in
       match offset with
@@ -224,12 +224,14 @@ let ortho42 =
         Option.value pairing ~default:[])
 ;;
 
-let swap ?on_swap t a b =
+let swap ?on_swap (t : t) a b =
   Option.iter on_swap ~f:(fun f -> f (a, b));
   let _key, var_a = t.(a) in
   let _key, var_b = t.(b) in
-  let tmp = Incr.Var.value var_a in
-  Incr.Var.set var_a (Incr.Var.value var_b);
+  let vala = Incr.Var.value var_a in
+  let valb = Incr.Var.value var_b in
+  let tmp = vala in
+  Incr.Var.set var_a valb;
   Incr.Var.set var_b tmp
 ;;
 
@@ -268,4 +270,33 @@ let set (t : t) v =
   String.iteri layout ~f:(fun i c ->
     let _key, var = t.(i) in
     Incr.Var.set var (`Char c))
+;;
+
+let valid_swaps (t : t) =
+  let module Int2 = struct
+    module T = struct
+      type t = Int.t * Int.t [@@deriving sexp, compare, hash, equal]
+    end
+
+    include T
+    include Comparable.Make (T)
+  end
+  in
+  let acc, _seen =
+    Array.foldi
+      t
+      ~init:([], Set.empty (module Int2))
+      ~f:(fun i init (k1, _v1) ->
+        Array.foldi t ~init ~f:(fun j (acc, seen) (k2, _v2) ->
+          if i = j
+          then acc, seen
+          else if k1.swappable && k2.swappable && not (Set.mem seen (i, j))
+          then (
+            let acc = (i, j) :: acc in
+            let seen = Set.add seen (i, j) in
+            let seen = Set.add seen (j, i) in
+            acc, seen)
+          else acc, seen))
+  in
+  List.to_array acc
 ;;

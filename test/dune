@@ -1,7 +1,0 @@
-(library
- (name stronglytyped_test)
- (libraries core_unix.sys_unix sexp_pretty stronglytyped.analyzer)
- (inline_tests)
- (preprocess
-  (pps ppx_jane))
- (flags :standard -open Core -open Stronglytyped_analyzer))
