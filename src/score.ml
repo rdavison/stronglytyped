@@ -48,7 +48,7 @@ let%expect_test "graphite" =
     let sexp = Sexp.of_string data in
     Corpus.t_of_sexp sexp
   in
-  let layout = Layout.ortho42 in
+  let layout = Layout.ortho42 () in
   let stats = Stats.make layout corpus in
   let weights = { default_weights with sfss = 0. } in
   let score = make stats ~weights in

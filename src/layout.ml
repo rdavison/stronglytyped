@@ -45,7 +45,7 @@ let init
     key, var)
 ;;
 
-let ortho42 =
+let ortho42 () =
   let layers = 2 in
   let keys = 42 in
   let layer_offset i = i / keys, i mod keys in
