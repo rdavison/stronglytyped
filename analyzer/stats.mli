@@ -1,5 +1,9 @@
 open! Import
 
-type t = unit [@@deriving sexp, compare]
+type t =
+  { sfbs : float Incr.t Hand_finger.Map.t
+  ; sfss : float Incr.t Hand_finger.Map.t
+  }
+[@@deriving sexp_of]
 
-val worst : t
+val make : Layout.t -> Corpus.t -> t

@@ -21,6 +21,8 @@ include T
 include Comparable.Make (T)
 include Hashable.Make (T)
 
+let hand_finger (t : t) = t.hand, t.finger
+
 let dist k1 k2 ~stagger =
   let pr, pc = k1.row, k1.col in
   let qr, qc = k2.row, k2.col in
