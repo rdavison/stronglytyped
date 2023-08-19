@@ -1,40 +1,35 @@
-ESY=npx esy
-DUNE=$(ESY) dune
-
 .PHONY: default
 default: build-watch
 
+.PHONY: install-dev-deps
+install-dev-deps:
+	opam install merlin ocaml-lsp-server odoc ocamlformat utop dune-release
+
 .PHONY: install-deps
 install-deps:
-	$(ESY) install
-	$(ESY) build
+	opam install . --deps-only
 
 .PHONY: build-watch
 build-watch:
-	$(DUNE) build @all -w
+	dune build @all -w
 
 .PHONY: build
 build:
-	$(DUNE) build @all
+	dune build @all
 
 .PHONY: test
 test:
-	$(DUNE) build @runtest
+	dune build @runtest
 
 .PHONY: clean
 clean:
-	$(DUNE) clean || rm -rf _build
+	dune clean || rm -rf _build
 	rm -rf _build.prev
-
-.PHONY: distclean
-distclean: clean
-	rm -rf _esy
-	rm -rf node_modules
 
 .PHONY: utop
 utop:
-	$(DUNE) utop
+	dune utop
 
 .PHONY: fmt
 fmt:
-	$(ESY) find src -name '*.ml' -o -name '*.mli' -exec ocamlformat -i {} \;
+	find src -name '*.ml' -o -name '*.mli' -exec ocamlformat -i {} \;
