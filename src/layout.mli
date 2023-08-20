@@ -25,3 +25,4 @@ val length : t -> int
 val all : (string * string) list
 val set : t -> [ `Name of string | `Layout of string ] -> unit
 val valid_swaps : t -> (int * int) array
+val valid_swaps2 : t -> ((int * int) * (int * int)) array
