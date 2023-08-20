@@ -53,10 +53,8 @@ let run layout ~corpus ~weights =
   let score = Score.make stats ~weights in
   let observer = Incr.observe score in
   let make_next_solution current =
-    for _ = 1 to Random.int 3 do
-      let a, b = next_swap () in
-      Layout.swap current a b
-    done;
+    let a, b = next_swap () in
+    Layout.swap current a b;
     current
   in
   let objective_function (_ : Layout.t) =
