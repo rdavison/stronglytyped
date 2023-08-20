@@ -300,3 +300,82 @@ let valid_swaps (t : t) =
   in
   List.to_array acc
 ;;
+
+let valid_swaps2 (t : t) =
+  let module Int22 = struct
+    module T = struct
+      type t = (Int.t * Int.t) * (Int.t * Int.t) [@@deriving sexp, compare, hash, equal]
+    end
+
+    include T
+    include Comparable.Make (T)
+  end
+  in
+  let valid_swaps = valid_swaps t in
+  let acc, _seen =
+    Array.fold
+      valid_swaps
+      ~init:([], Set.empty (module Int22))
+      ~f:(fun init ((s1i, s1j) as s1) ->
+        Array.fold valid_swaps ~init ~f:(fun (acc, seen) ((s2i, s2j) as s2) ->
+          let uniq = Int.Set.of_array [| s1i; s1j; s2i; s2j |] in
+          if Set.mem seen (s1, s2)
+          then acc, seen
+          else (
+            match Set.length uniq with
+            | 4 ->
+              let a = s1i in
+              let b = s1j in
+              let c = s2i in
+              let d = s2j in
+              let seen = Set.add seen ((a, b), (c, d)) in
+              let seen = Set.add seen ((a, b), (d, c)) in
+              let seen = Set.add seen ((b, a), (c, d)) in
+              let seen = Set.add seen ((b, a), (d, c)) in
+              let seen = Set.add seen ((c, d), (a, b)) in
+              let seen = Set.add seen ((c, d), (b, a)) in
+              let seen = Set.add seen ((d, c), (a, b)) in
+              let seen = Set.add seen ((d, c), (b, a)) in
+              let acc = (s1, s2) :: acc in
+              acc, seen
+            | 3 ->
+              let a = s1i in
+              let b = s1j in
+              let c = s2j in
+              if s1i = s2i
+              then (
+                let seen = Set.add seen ((a, b), (a, c)) in
+                let seen = Set.add seen ((a, b), (c, a)) in
+                let seen = Set.add seen ((a, c), (b, c)) in
+                let seen = Set.add seen ((a, c), (c, b)) in
+                let seen = Set.add seen ((b, a), (a, c)) in
+                let seen = Set.add seen ((b, a), (c, a)) in
+                let seen = Set.add seen ((b, c), (a, b)) in
+                let seen = Set.add seen ((b, c), (b, a)) in
+                let seen = Set.add seen ((c, a), (b, c)) in
+                let seen = Set.add seen ((c, a), (c, b)) in
+                let seen = Set.add seen ((c, b), (a, b)) in
+                let seen = Set.add seen ((c, b), (b, a)) in
+                let acc = (s1, s2) :: acc in
+                acc, seen)
+              else if s1j = s2i
+              then (
+                let seen = Set.add seen ((a, b), (b, c)) in
+                let seen = Set.add seen ((a, b), (c, b)) in
+                let seen = Set.add seen ((a, c), (a, b)) in
+                let seen = Set.add seen ((a, c), (b, a)) in
+                let seen = Set.add seen ((b, a), (b, c)) in
+                let seen = Set.add seen ((b, a), (c, b)) in
+                let seen = Set.add seen ((b, c), (a, c)) in
+                let seen = Set.add seen ((b, c), (c, a)) in
+                let seen = Set.add seen ((c, a), (a, b)) in
+                let seen = Set.add seen ((c, a), (b, a)) in
+                let seen = Set.add seen ((c, b), (a, c)) in
+                let seen = Set.add seen ((c, b), (c, a)) in
+                let acc = (s1, s2) :: acc in
+                acc, seen)
+              else acc, seen
+            | _ -> acc, seen)))
+  in
+  List.to_array acc
+;;
