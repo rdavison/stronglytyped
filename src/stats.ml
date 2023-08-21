@@ -7,7 +7,7 @@ type t =
 [@@deriving sexp_of]
 
 let make (layout : Layout.t) (corpus : Corpus.t) =
-  let layout = Array.map layout ~f:(fun (key, var) -> key, Incr.Var.watch var) in
+  let layout = Array.map layout.keys ~f:(fun (key, var) -> key, Incr.Var.watch var) in
   (* let len = Array.length layout in *)
   let sfbs, sfss =
     let init =
