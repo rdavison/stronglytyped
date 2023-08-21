@@ -5,15 +5,15 @@ let acceptance_probability old_cost new_cost temperature =
   let res =
     if new_cost < old_cost then 1. else Float.exp ((old_cost -. new_cost) /. temperature)
   in
-  if Random.float 1. < 0.001
-  then printf "%.4f\t%.4f\t%.4f\t%f\n%!" old_cost new_cost res temperature;
+  (* if new_cost < old_cost
+     then printf "%.12f\t%.12f\t%.12f\t%.12f\n%!" old_cost new_cost res temperature; *)
   res
 ;;
 
 let simulated_annealing
   ~objective_function
   ~make_next_solution
-  ~(initial_solution : Layout.t)
+  ~(initial_solution : Layout.save_state)
   ~initial_temperature
   ~cooling_rate
   ~num_iterations
@@ -52,20 +52,22 @@ let run layout ~corpus ~weights =
   let stats = Stats.make layout corpus in
   let score = Score.make stats ~weights in
   let observer = Incr.observe score in
-  let make_next_solution current =
+  let make_next_solution save_state =
+    Layout.load layout save_state;
     let a, b = next_swap () in
-    Layout.swap current a b;
-    current
+    Layout.swap layout a b;
+    Layout.save layout
   in
-  let objective_function (_ : Layout.t) =
+  let objective_function (save_state : Layout.save_state) =
+    Layout.load layout save_state;
     Incr.stabilize ();
     let score = Incr.Observer.value_exn observer in
     score
   in
-  let initial_solution = layout in
+  let initial_solution = Layout.save layout in
   let initial_temperature = 100.0 in
-  let cooling_rate = 0.99998 in
-  let num_iterations = 3_000_000 in
+  let cooling_rate = 0.99997 in
+  let num_iterations = 1_000_000 in
   let best_solution, best_cost =
     simulated_annealing
       ~objective_function
