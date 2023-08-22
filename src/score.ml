@@ -7,6 +7,8 @@ type weights =
   ; sfbs : float
   ; sfs : Hand_finger.t -> float
   ; sfss : float
+  ; speed : Hand_finger.t -> float
+  ; speeds : float
   ; inrowlls : Hand.t -> float
   ; inrowllss : float
   ; outrowlls : Hand.t -> float
@@ -18,6 +20,8 @@ let default_weights : weights =
   ; sfbs = 1.
   ; sfs = Fn.const 1.
   ; sfss = 1.
+  ; speed = Fn.const 1.
+  ; speeds = 1.
   ; inrowlls = Fn.const 1.
   ; inrowllss = 1.
   ; outrowlls = Fn.const 1.
@@ -41,10 +45,20 @@ let make (stats : Stats.t) ~(weights : weights) =
     |> Map.to_alist
     |> List.to_array
     |> Array.map ~f:(fun (hf, v) ->
-      let w = weights.sfb hf in
+      let w = weights.sfs hf in
       Incr.map v ~f:(fun v -> v *. w))
     |> Incr.sum_float
     |> Incr.map ~f:(fun v -> v *. weights.sfss)
+  in
+  let speeds =
+    stats.speed
+    |> Map.to_alist
+    |> List.to_array
+    |> Array.map ~f:(fun (hf, v) ->
+      let w = weights.speed hf in
+      Incr.map v ~f:(fun v -> v *. w))
+    |> Incr.sum_float
+    |> Incr.map ~f:(fun v -> v *. weights.speeds)
   in
   let inrowlls =
     stats.inrowlls
@@ -66,7 +80,7 @@ let make (stats : Stats.t) ~(weights : weights) =
     |> Incr.sum_float
     |> Incr.map ~f:(fun v -> (1. -. v) *. weights.outrowllss)
   in
-  Incr.sum_float [| sfbs; sfss; inrowlls; outrowlls |]
+  Incr.sum_float [| sfbs; sfss; speeds; inrowlls; outrowlls |]
 ;;
 
 let%expect_test "graphite" =
