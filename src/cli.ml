@@ -8,7 +8,19 @@ let main ~corpus =
   Layout.load layout save_state;
   Incr.stabilize ();
   printf
-    "%s\n%s\n%.12f\n%s\n%!"
+    "STATS\n\
+     ==========\n\
+     %s\n\n\
+     SCORE\n\
+     ==========\n\
+     %s\n\n\
+     FINAL SCORE\n\
+     ==========\n\
+     %.12f\n\n\
+     LAYOUT\n\
+     ==========\n\
+     %s\n\
+     %!"
     (Stats.sexp_of_t stats |> Sexp.to_string_hum)
     ([%sexp_of: Score.t Incr.t] score |> Sexp.to_string_hum)
     final_score
