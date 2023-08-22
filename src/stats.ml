@@ -10,6 +10,8 @@ type t =
   }
 [@@deriving sexp_of]
 
+let s29 = Hashtbl.create (module String)
+
 let make (layout : Layout.t) (corpus : Corpus.t) =
   let layout = Array.map layout.keys ~f:(fun (key, var) -> key, Incr.Var.watch var) in
   let usage, (sfbs, sfss, speed, inrowlls, outrowlls) =
@@ -43,18 +45,20 @@ let make (layout : Layout.t) (corpus : Corpus.t) =
             in
             let freq_s1 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s1) in
             let freq_s29 =
-              let freq_s2 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s2) in
-              let freq_s3 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s3) in
-              let freq_s4 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s4) in
-              let freq_s5 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s5) in
-              let freq_s6 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s6) in
-              let freq_s7 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s7) in
-              let freq_s8 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s8) in
-              let freq_s9 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s9) in
-              [| freq_s2; freq_s3; freq_s4; freq_s5; freq_s6; freq_s7; freq_s8; freq_s9 |]
-              |> Array.mapi ~f:(fun i sn ->
-                Incr.map sn ~f:(fun sn -> sn /. Float.of_int (i + 1)))
-              |> Incr.sum_float
+              Incr.map bigram ~f:(fun ((c1, c2) as bigram) ->
+                let bigram' = Code.to_string c1 ^ Code.to_string c2 in
+                Hashtbl.find_or_add s29 bigram' ~default:(fun () ->
+                  [ Corpus.Lookup.freq2 bigram ~data:corpus.s2
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s3
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s4
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s5
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s6
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s7
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s8
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s9
+                  ]
+                  |> List.foldi ~init:0. ~f:(fun i acc sn ->
+                    acc +. (sn /. Float.of_int (i + 1)))))
             in
             let sfbs =
               if Hand_finger.Infix.(hf1 = hf2)

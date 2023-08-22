@@ -1,6 +1,21 @@
 open! Import
 
-type t = float Incr.t
+type info =
+  { unweighted : float
+  ; weighted : float
+  ; final : float
+  }
+[@@deriving sexp_of]
+
+type t =
+  { usage : info
+  ; sfb : info
+  ; sfs : info
+  ; speed : info
+  ; inrowlls : info
+  ; outrowlls : info
+  }
+[@@deriving sexp_of]
 
 type config =
   { usage : Hand_finger.t -> float -> float
@@ -17,5 +32,6 @@ type config =
   ; aggregate_outrowlls : unweighted:float -> weighted:float -> float
   }
 
-val make : Stats.t -> config:config -> t
+val make : Stats.t -> config:config -> t Incr.t
+val final_sum : t Incr.t -> float Incr.t
 val default_config : config

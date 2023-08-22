@@ -4,10 +4,15 @@ let main ~corpus =
   let corpus = Corpus.load_corpus corpus in
   let layout = Layout.ansi () in
   let config = Score.default_config in
-  let score, save_state = Annealing.run layout ~corpus ~config in
+  let final_score, stats, score, save_state = Annealing.run layout ~corpus ~config in
   Layout.load layout save_state;
   Incr.stabilize ();
-  printf "%.12f\n%s\n%!" score (Layout.pretty_string layout)
+  printf
+    "%s\n%s\n%.12f\n%s\n%!"
+    (Stats.sexp_of_t stats |> Sexp.to_string_hum)
+    ([%sexp_of: Score.t Incr.t] score |> Sexp.to_string_hum)
+    final_score
+    (Layout.pretty_string layout)
 ;;
 
 (* let brute_force = Brute_force.run layout ~corpus ~weights in
