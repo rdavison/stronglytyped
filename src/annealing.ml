@@ -41,9 +41,9 @@ let simulated_annealing
   !best_solution, !best_cost
 ;;
 
-let run layout ~corpus ~weights =
+let run layout ~corpus ~config =
   let stats = Stats.make layout corpus in
-  let score = Score.make stats ~weights in
+  let score = Score.make stats ~config in
   let observer = Incr.observe score in
   let make_next_solution save_state =
     Layout.load layout save_state;

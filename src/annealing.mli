@@ -1,7 +1,3 @@
 open! Import
 
-val run
-  :  Layout.t
-  -> corpus:Corpus.t
-  -> weights:Score.weights
-  -> float * Layout.save_state
+val run : Layout.t -> corpus:Corpus.t -> config:Score.config -> float * Layout.save_state
