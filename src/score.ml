@@ -109,8 +109,8 @@ let default_config : config =
           | `L -> 1.
           | `R -> 1.
         in
-        (1. -. v) *. w)
-  ; aggregate_inrowlls = (fun ~unweighted:_ ~weighted -> weighted)
+        v *. w)
+  ; aggregate_inrowlls = (fun ~unweighted ~weighted:_ -> 1. -. unweighted)
   ; outrowlls =
       (fun hand v ->
         let w =
@@ -118,8 +118,8 @@ let default_config : config =
           | `L -> 1.
           | `R -> 1.
         in
-        (1. -. v) *. w)
-  ; aggregate_outrowlls = (fun ~unweighted:_ ~weighted -> weighted)
+        v *. w)
+  ; aggregate_outrowlls = (fun ~unweighted ~weighted:_ -> 1. -. unweighted)
   }
 ;;
 
