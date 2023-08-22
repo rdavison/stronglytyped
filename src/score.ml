@@ -2,85 +2,131 @@ open! Import
 
 type t = float Incr.t
 
-type weights =
-  { sfb : Hand_finger.t -> float
-  ; sfbs : float
-  ; sfs : Hand_finger.t -> float
-  ; sfss : float
-  ; speed : Hand_finger.t -> float
-  ; speeds : float
-  ; inrowlls : Hand.t -> float
-  ; inrowllss : float
-  ; outrowlls : Hand.t -> float
-  ; outrowllss : float
+type config =
+  { usage : Hand_finger.t -> float -> float
+  ; aggregate_usage : unweighted:float -> weighted:float -> float
+  ; sfb : Hand_finger.t -> float -> float
+  ; aggregate_sfb : unweighted:float -> weighted:float -> float
+  ; sfs : Hand_finger.t -> float -> float
+  ; aggregate_sfs : unweighted:float -> weighted:float -> float
+  ; speed : Hand_finger.t -> float -> float
+  ; aggregate_speed : unweighted:float -> weighted:float -> float
+  ; inrowlls : Hand.t -> float -> float
+  ; aggregate_inrowlls : unweighted:float -> weighted:float -> float
+  ; outrowlls : Hand.t -> float -> float
+  ; aggregate_outrowlls : unweighted:float -> weighted:float -> float
   }
 
-let default_weights : weights =
-  { sfb = Fn.const 1.
-  ; sfbs = 1.
-  ; sfs = Fn.const 1.
-  ; sfss = 1.
-  ; speed = Fn.const 1.
-  ; speeds = 1.
-  ; inrowlls = Fn.const 1.
-  ; inrowllss = 1.
-  ; outrowlls = Fn.const 1.
-  ; outrowllss = 1.
+let default_config : config =
+  let open! Float in
+  { usage =
+      (fun (hand, finger) v ->
+        let w =
+          match hand, finger with
+          | `L, `P -> 1.
+          | `L, `R -> 1.
+          | `L, `M -> 1.
+          | `L, `I -> 1.
+          | `L, `T -> 1.
+          | `R, `T -> 1.
+          | `R, `I -> 1.
+          | `R, `M -> 1.
+          | `R, `R -> 1.
+          | `R, `P -> 1.
+        in
+        v *. w)
+  ; aggregate_usage = (fun ~unweighted:_ ~weighted -> weighted)
+  ; sfb =
+      (fun (hand, finger) v ->
+        let w =
+          match hand, finger with
+          | `L, `P -> 1.
+          | `L, `R -> 1.
+          | `L, `M -> 1.
+          | `L, `I -> 1.
+          | `L, `T -> 1.
+          | `R, `T -> 1.
+          | `R, `I -> 1.
+          | `R, `M -> 1.
+          | `R, `R -> 1.
+          | `R, `P -> 1.
+        in
+        v *. w)
+  ; aggregate_sfb = (fun ~unweighted:_ ~weighted -> weighted)
+  ; sfs =
+      (fun (hand, finger) v ->
+        let w =
+          match hand, finger with
+          | `L, `P -> 1.
+          | `L, `R -> 1.
+          | `L, `M -> 1.
+          | `L, `I -> 1.
+          | `L, `T -> 1.
+          | `R, `T -> 1.
+          | `R, `I -> 1.
+          | `R, `M -> 1.
+          | `R, `R -> 1.
+          | `R, `P -> 1.
+        in
+        v *. w)
+  ; aggregate_sfs = (fun ~unweighted:_ ~weighted -> weighted)
+  ; speed =
+      (fun (hand, finger) v ->
+        let w =
+          match hand, finger with
+          | `L, `P -> 1.
+          | `L, `R -> 1.
+          | `L, `M -> 1.
+          | `L, `I -> 1.
+          | `L, `T -> 1.
+          | `R, `T -> 1.
+          | `R, `I -> 1.
+          | `R, `M -> 1.
+          | `R, `R -> 1.
+          | `R, `P -> 1.
+        in
+        v *. w)
+  ; aggregate_speed = (fun ~unweighted:_ ~weighted -> weighted)
+  ; inrowlls =
+      (fun hand v ->
+        let w =
+          match hand with
+          | `L -> 1.
+          | `R -> 1.
+        in
+        v *. w)
+  ; aggregate_inrowlls = (fun ~unweighted:_ ~weighted -> weighted)
+  ; outrowlls =
+      (fun hand v ->
+        let w =
+          match hand with
+          | `L -> 1.
+          | `R -> 1.
+        in
+        v *. w)
+  ; aggregate_outrowlls = (fun ~unweighted:_ ~weighted -> weighted)
   }
 ;;
 
-let make (stats : Stats.t) ~(weights : weights) =
-  let sfbs =
-    stats.sfbs
-    |> Map.to_alist
-    |> List.to_array
-    |> Array.map ~f:(fun (hf, v) ->
-      let w = weights.sfb hf in
-      Incr.map v ~f:(fun v -> v *. w))
-    |> Incr.sum_float
-    |> Incr.map ~f:(fun v -> v *. weights.sfbs)
+let make (stats : Stats.t) ~(config : config) =
+  let map_stat stat score_component score_aggregate =
+    let components = stat |> Map.to_alist |> List.to_array in
+    let unweighted = components |> Array.map ~f:(fun (_, v) -> v) |> Incr.sum_float in
+    let weighted =
+      components
+      |> Array.map ~f:(fun (k, v) -> Incr.map v ~f:(fun v -> score_component k v))
+      |> Incr.sum_float
+    in
+    Incr.map2 unweighted weighted ~f:(fun unweighted weighted ->
+      score_aggregate ~unweighted ~weighted)
   in
-  let sfss =
-    stats.sfss
-    |> Map.to_alist
-    |> List.to_array
-    |> Array.map ~f:(fun (hf, v) ->
-      let w = weights.sfs hf in
-      Incr.map v ~f:(fun v -> v *. w))
-    |> Incr.sum_float
-    |> Incr.map ~f:(fun v -> v *. weights.sfss)
-  in
-  let speeds =
-    stats.speed
-    |> Map.to_alist
-    |> List.to_array
-    |> Array.map ~f:(fun (hf, v) ->
-      let w = weights.speed hf in
-      Incr.map v ~f:(fun v -> v *. w))
-    |> Incr.sum_float
-    |> Incr.map ~f:(fun v -> v *. weights.speeds)
-  in
-  let inrowlls =
-    stats.inrowlls
-    |> Map.to_alist
-    |> List.to_array
-    |> Array.map ~f:(fun (hand, v) ->
-      let w = weights.inrowlls hand in
-      Incr.map v ~f:(fun v -> v *. w))
-    |> Incr.sum_float
-    |> Incr.map ~f:(fun v -> (1. -. v) *. weights.inrowllss)
-  in
-  let outrowlls =
-    stats.outrowlls
-    |> Map.to_alist
-    |> List.to_array
-    |> Array.map ~f:(fun (hand, v) ->
-      let w = weights.outrowlls hand in
-      Incr.map v ~f:(fun v -> v *. w))
-    |> Incr.sum_float
-    |> Incr.map ~f:(fun v -> (1. -. v) *. weights.outrowllss)
-  in
-  Incr.sum_float [| sfbs; sfss; speeds; inrowlls; outrowlls |]
+  let usage = map_stat stats.usage config.usage config.aggregate_usage in
+  let sfbs = map_stat stats.sfbs config.sfb config.aggregate_sfb in
+  let sfss = map_stat stats.sfss config.sfs config.aggregate_sfs in
+  let speeds = map_stat stats.speed config.speed config.aggregate_speed in
+  let inrowlls = map_stat stats.inrowlls config.inrowlls config.aggregate_inrowlls in
+  let outrowlls = map_stat stats.outrowlls config.outrowlls config.aggregate_outrowlls in
+  Incr.sum_float [| usage; sfbs; sfss; speeds; inrowlls; outrowlls |]
 ;;
 
 let%expect_test "graphite" =
@@ -96,8 +142,8 @@ let%expect_test "graphite" =
   in
   let layout = Layout.ortho42 () in
   let stats = Stats.make layout corpus in
-  let weights = { default_weights with sfss = 0. } in
-  let score = make stats ~weights in
+  let config = default_config in
+  let score = make stats ~config in
   let observer = Incr.observe score in
   Incr.stabilize ();
   let score = Incr.Observer.value_exn observer in

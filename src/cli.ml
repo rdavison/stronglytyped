@@ -3,8 +3,8 @@ open! Import
 let main ~corpus =
   let corpus = Corpus.load_corpus corpus in
   let layout = Layout.ansi () in
-  let weights = Score.default_weights in
-  let score, save_state = Annealing.run layout ~corpus ~weights in
+  let config = Score.default_config in
+  let score, save_state = Annealing.run layout ~corpus ~config in
   Layout.load layout save_state;
   Incr.stabilize ();
   printf "%.12f\n%s\n%!" score (Layout.pretty_string layout)

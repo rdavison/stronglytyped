@@ -1,7 +1,8 @@
 open! Import
 
 type t =
-  { sfbs : float Incr.t Hand_finger.Map.t
+  { usage : float Incr.t Hand_finger.Map.t
+  ; sfbs : float Incr.t Hand_finger.Map.t
   ; sfss : float Incr.t Hand_finger.Map.t
   ; speed : float Incr.t Hand_finger.Map.t
   ; inrowlls : float Incr.t Hand.Map.t
