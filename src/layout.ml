@@ -257,7 +257,7 @@ let ansi () =
 
     ~ ! @ # $ % ^ & * ( ) { } 
       B L D W Z _ F O U J : + |
-      N R T S G Y H A E I ,
+      N R T S G Y H A E I ?
     ¥ X Q M C V P K > " < ¥
     |}
        in
