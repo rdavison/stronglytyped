@@ -1,7 +1,5 @@
 open! Import
 
-type t = float Incr.t
-
 type config =
   { usage : Hand_finger.t -> float -> float
   ; aggregate_usage : unweighted:float -> weighted:float -> float
@@ -16,6 +14,23 @@ type config =
   ; outrowlls : Hand.t -> float -> float
   ; aggregate_outrowlls : unweighted:float -> weighted:float -> float
   }
+
+type info =
+  { unweighted : float
+  ; weighted : float
+  ; final : float
+  }
+[@@deriving sexp_of]
+
+type t =
+  { usage : info
+  ; sfb : info
+  ; sfs : info
+  ; speed : info
+  ; inrowlls : info
+  ; outrowlls : info
+  }
+[@@deriving sexp_of]
 
 let default_config : config =
   let open! Float in
@@ -94,7 +109,7 @@ let default_config : config =
           | `L -> 1.
           | `R -> 1.
         in
-        v *. w)
+        (1. -. v) *. w)
   ; aggregate_inrowlls = (fun ~unweighted:_ ~weighted -> weighted)
   ; outrowlls =
       (fun hand v ->
@@ -103,7 +118,7 @@ let default_config : config =
           | `L -> 1.
           | `R -> 1.
         in
-        v *. w)
+        (1. -. v) *. w)
   ; aggregate_outrowlls = (fun ~unweighted:_ ~weighted -> weighted)
   }
 ;;
@@ -118,7 +133,8 @@ let make (stats : Stats.t) ~(config : config) =
       |> Incr.sum_float
     in
     Incr.map2 unweighted weighted ~f:(fun unweighted weighted ->
-      score_aggregate ~unweighted ~weighted)
+      let final = score_aggregate ~unweighted ~weighted in
+      { unweighted; weighted; final })
   in
   let usage = map_stat stats.usage config.usage config.aggregate_usage in
   let sfbs = map_stat stats.sfbs config.sfb config.aggregate_sfb in
@@ -126,7 +142,23 @@ let make (stats : Stats.t) ~(config : config) =
   let speeds = map_stat stats.speed config.speed config.aggregate_speed in
   let inrowlls = map_stat stats.inrowlls config.inrowlls config.aggregate_inrowlls in
   let outrowlls = map_stat stats.outrowlls config.outrowlls config.aggregate_outrowlls in
-  Incr.sum_float [| usage; sfbs; sfss; speeds; inrowlls; outrowlls |]
+  let%map_open.Incr usage = usage
+  and sfb = sfbs
+  and sfs = sfss
+  and speed = speeds
+  and inrowlls = inrowlls
+  and outrowlls = outrowlls in
+  { usage; sfb; sfs; speed; inrowlls; outrowlls }
+;;
+
+let final_sum (t : t Incr.t) =
+  Incr.map t ~f:(fun { usage; sfb; sfs; speed; inrowlls; outrowlls } ->
+    usage.final
+    +. sfb.final
+    +. sfs.final
+    +. speed.final
+    +. inrowlls.final
+    +. outrowlls.final)
 ;;
 
 let%expect_test "graphite" =
@@ -143,7 +175,7 @@ let%expect_test "graphite" =
   let layout = Layout.ortho42 () in
   let stats = Stats.make layout corpus in
   let config = default_config in
-  let score = make stats ~config in
+  let score = final_sum (make stats ~config) in
   let observer = Incr.observe score in
   Incr.stabilize ();
   let score = Incr.Observer.value_exn observer in

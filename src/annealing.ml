@@ -44,7 +44,8 @@ let simulated_annealing
 let run layout ~corpus ~config =
   let stats = Stats.make layout corpus in
   let score = Score.make stats ~config in
-  let observer = Incr.observe score in
+  let final_sum = Score.final_sum score in
+  let observer = Incr.observe final_sum in
   let make_next_solution save_state =
     Layout.load layout save_state;
     let swaps = ref [] in
@@ -74,5 +75,5 @@ let run layout ~corpus ~config =
       ~cooling_rate
       ~num_iterations
   in
-  best_cost, best_solution
+  best_cost, stats, score, best_solution
 ;;
