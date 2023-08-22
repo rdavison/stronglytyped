@@ -1,15 +1,22 @@
 open! Import
 
+type var =
+  { swappability : Swappability.t
+  ; code : Code.t
+  }
+[@@deriving sexp]
+
 type t =
   { num_keys_per_layer : int
   ; num_layers : int
   ; num_cols : int
   ; num_rows : int
-  ; keys : (Key.t * Code.t Incr.Var.t) array
+  ; num_keys : int
+  ; keys : (Key.t * var Incr.Var.t) array
   }
 [@@deriving sexp_of]
 
-type save_state = Code.t array [@@deriving sexp]
+type save_state = var array [@@deriving sexp]
 
 let init
   n
@@ -22,8 +29,7 @@ let init
   ~layer
   ~layer_trigger
   ~modifier
-  ~swappable
-  ~locked_to
+  ~swappability
   =
   let keys =
     Array.init n ~f:(fun i ->
@@ -36,22 +42,9 @@ let init
         let layer = layer i in
         let layer_trigger = layer_trigger i ~hand in
         let modifier = modifier i in
-        let swappable = swappable i ~code:(code i) ~modifier in
-        let locked_to = locked_to i in
-        { Key.finger
-        ; hand
-        ; x
-        ; y
-        ; col
-        ; row
-        ; layer
-        ; layer_trigger
-        ; modifier
-        ; swappable
-        ; locked_to
-        }
+        { Key.finger; hand; x; y; col; row; layer; layer_trigger; modifier }
       in
-      let var = Incr.Var.create (code i) in
+      let var = Incr.Var.create { swappability = swappability i; code = code i } in
       key, var)
   in
   let num_cols, num_rows, num_layers, num_keys_per_layer =
@@ -67,20 +60,13 @@ let init
     in
     a + 1, b + 1, c + 1, d
   in
-  { num_keys_per_layer; num_cols; num_rows; num_layers; keys }
+  { num_keys_per_layer; num_cols; num_rows; num_layers; num_keys = n; keys }
 ;;
 
 let ortho42 () =
   let layers = 3 in
   let keys = 42 in
   let layer_offset i = i / keys, i mod keys in
-  let index layer offset = (layer * keys) + offset in
-  let tower n =
-    let layer, offset = layer_offset n in
-    List.init layers ~f:(fun layer' -> layer', offset)
-    |> List.filter_map ~f:(fun (layer', offset) ->
-      if layer = layer' then None else Some (index layer' offset))
-  in
   let parse s =
     s
     |> String.split_lines
@@ -223,50 +209,31 @@ let ortho42 () =
       match offset with
       | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> true
       | _ -> false)
-    ~swappable:
-      (let pinned = "1234567890bldwzfoujnrtsgyhaeixqmcvpkBLDWZFOUJNRTSGYHAEIXQMCVPK.'|" in
-       fun i ~code ~modifier ->
-         if modifier
-         then false
-         else (
-           let _layer, offset = layer_offset i in
-           match offset with
-           | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> false
-           | _ ->
-             let s = Code.to_string code in
-             not (String.is_substring pinned ~substring:s)))
-    ~locked_to:(fun i ->
-      let layer, offset = layer_offset i in
-      match offset with
-      | 0 | 12 | 24 | 35 | 36 | 37 | 38 | 39 | 40 | 41 -> tower i
-      | _ ->
-        let alpha_pair x =
-          match layer with
-          | 0 -> Some [ x + keys ]
-          | 1 -> Some [ x - keys ]
-          | _ -> None
-        in
-        let pairing =
-          if (offset >= 1 && offset < 12)
-             || (offset >= 13 && offset < 24)
-             || (offset >= 25 && offset < 35)
-          then alpha_pair i
-          else None
-        in
-        Option.value pairing ~default:[])
+    ~swappability:
+      (let s =
+         parse
+           {|
+      0 2 2 2 2 2 1 2 2 2 2 1
+      0 2 2 2 2 2 2 2 2 2 2 1
+      0 2 2 2 2 2 2 2 1 1 1 0
+            0 0 0 0 0 0 
+      0 2 2 2 2 2 1 2 2 2 2 1
+      0 2 2 2 2 2 2 2 2 2 2 1
+      0 2 2 2 2 2 2 2 1 1 1 0
+            0 0 0 0 0 0
+      0 0 0 0 0 0 0 0 0 0 0 1
+      0 1 1 1 1 1 0 0 0 0 0 1
+      0 1 1 1 1 1 1 1 1 1 1 0
+            0 0 0 0 0 0
+      |}
+       in
+       fun i -> Int.of_string s.(i) |> Swappability.of_int)
 ;;
 
 let ansi () =
   let layers = 2 in
   let keys = 49 in
   let layer_offset i = i / keys, i mod keys in
-  let index layer offset = (layer * keys) + offset in
-  let tower n =
-    let layer, offset = layer_offset n in
-    List.init layers ~f:(fun layer' -> layer', offset)
-    |> List.filter_map ~f:(fun (layer', offset) ->
-      if layer = layer' then None else Some (index layer' offset))
-  in
   let parse s =
     s
     |> String.split_lines
@@ -402,50 +369,110 @@ let ansi () =
       match offset with
       | 37 | 48 -> true
       | _ -> false)
-    ~swappable:
-      (let pinned = "1234567890bldwzfoujnrtsgyhaeixqmcvpkBLDWZFOUJNRTSGYHAEIXQMCVPK.'¥" in
-       fun _i ~code ~modifier ->
-         if modifier
-         then false
-         else (
-           let s = Code.to_string code in
-           not (String.is_substring pinned ~substring:s)))
-    ~locked_to:(fun i ->
-      let layer, offset = layer_offset i in
-      match offset with
-      | 37 | 48 -> tower i
-      | _ ->
-        let alpha_pair x =
-          match layer with
-          | 0 -> Some [ x + keys ]
-          | 1 -> Some [ x - keys ]
-          | _ -> None
-        in
-        let pairing =
-          if (offset >= 13 && offset < 23)
-             || (offset >= 26 && offset < 36)
-             || (offset >= 38 && offset < 48)
-          then alpha_pair i
-          else None
-        in
-        Option.value pairing ~default:[])
+    ~swappability:
+      (let s =
+         parse
+           {|
+      1 0 0 0 0 0 0 0 0 0 0 1 1 
+        2 2 2 2 2 1 2 2 2 2 1 1 1
+        2 2 2 2 2 2 2 2 2 2 1
+      0 2 2 2 2 2 2 2 1 1 1 0
+
+      1 1 1 1 1 1 1 1 1 1 1 1 1 
+        2 2 2 2 2 1 2 2 2 2 1 1 1
+        2 2 2 2 2 2 2 2 2 2 1
+      0 2 2 2 2 2 2 2 1 1 1 0
+      |}
+       in
+       fun i -> Int.of_string s.(i) |> Swappability.of_int)
 ;;
 
-let swap ?on_swap (t : t) a b =
-  Option.iter on_swap ~f:(fun f -> f (a, b));
-  let _key_a, var_a = t.keys.(a) in
-  let _key_b, var_b = t.keys.(b) in
-  let vala = Incr.Var.value var_a in
-  let valb = Incr.Var.value var_b in
-  let tmp = vala in
-  Incr.Var.set var_a valb;
-  Incr.Var.set var_b tmp
+let layer_offset (t : t) i = i / t.num_keys_per_layer, i mod t.num_keys_per_layer
+let index (t : t) ~layer ~offset = (layer * t.num_keys_per_layer) + offset
+
+let tower (t : t) idx =
+  let _layer, offset = layer_offset t idx in
+  List.init t.num_layers ~f:(fun layer -> index t ~layer ~offset)
 ;;
 
-let scramble ?on_swap layout i =
+let%expect_test "tower" =
+  let layout = ortho42 () in
+  let t1 = tower layout 1 in
+  let t2 = tower layout 2 in
+  let t3 = tower layout 11 in
+  print_s ([%sexp_of: int list] t1);
+  print_s ([%sexp_of: int list] t2);
+  print_s ([%sexp_of: int list] t3);
+  [%expect {|
+    (1 43 85)
+    (2 44 86)
+    (11 53 95) |}]
+;;
+
+(* let swap ?on_swap (t : t) a b =
+   Option.iter on_swap ~f:(fun f -> f (a, b));
+   let _key_a, var_a = t.keys.(a) in
+   let _key_b, var_b = t.keys.(b) in
+   let vala = Incr.Var.value var_a in
+   let valb = Incr.Var.value var_b in
+   let tmp = vala in
+   Incr.Var.set var_a valb;
+   Incr.Var.set var_b tmp
+   ;; *)
+
+type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
+
+let swaps (t : t) i j =
+  let _k1, v1 = t.keys.(i) in
+  let _k2, v2 = t.keys.(j) in
+  let v1' = Incr.Var.value v1 in
+  let v2' = Incr.Var.value v2 in
+  if i = j
+  then []
+  else (
+    match v1'.swappability, v2'.swappability with
+    | Single, Single -> [ (i, v1), (j, v2) ]
+    | Noswap, _ | _, Noswap -> []
+    | Tower, _ | _, Tower ->
+      let ts =
+        List.zip_exn
+          (tower t i |> List.map ~f:(fun k -> t.keys.(k)) |> List.map ~f:(fun s -> i, s))
+          (tower t j |> List.map ~f:(fun k -> t.keys.(k)) |> List.map ~f:(fun s -> j, s))
+      in
+      (match
+         List.for_all ts ~f:(fun ((_i, (_k1, v1)), (_j, (_k2, v2))) ->
+           let v1' = Incr.Var.value v1 in
+           let v2' = Incr.Var.value v2 in
+           (* if String.equal (Code.to_string v1'.code) "b"
+              then printf "%s\n\n" (sexp_of_swap ((_i, v1), (_j, v2)) |> Sexp.to_string_hum); *)
+           match v1'.swappability, v2'.swappability with
+           | (Single | Tower), (Single | Tower) -> true
+           | Noswap, Noswap -> true
+           | Noswap, _ | _, Noswap -> false)
+       with
+       | true ->
+         List.filter_map ts ~f:(fun ((i, (_k1, v1)), (j, (_k2, v2))) ->
+           let v1' = Incr.Var.value v1 in
+           let v2' = Incr.Var.value v2 in
+           match v1'.swappability, v2'.swappability with
+           | (Single | Tower), (Single | Tower) -> Some ((i, v1), (j, v2))
+           | Noswap, _ | _, Noswap -> None)
+       | false -> []))
+;;
+
+let swap (swaps : swap list) =
+  List.iter swaps ~f:(fun ((_, s1), (_, s2)) ->
+    let v1 = Incr.Var.value s1 in
+    let v2 = Incr.Var.value s2 in
+    Incr.Var.set s1 v2;
+    Incr.Var.set s2 v1)
+;;
+
+let scramble layout i =
   for _ = 1 to i do
     let i, j = Random.int2 30 in
-    swap ?on_swap layout i j
+    let swaps = swaps layout i j in
+    swap swaps
   done
 ;;
 
@@ -458,133 +485,128 @@ let all =
   ]
 ;;
 
-let set (t : t) v =
-  let layout =
-    match v with
-    | `Layout layout -> layout
-    | `Name name ->
-      List.find_map_exn all ~f:(fun (name', layout) ->
-        if String.equal name name' then Some layout else None)
-  in
-  String.iteri layout ~f:(fun i c ->
-    let _key, var = t.keys.(i) in
-    Incr.Var.set var (`Char c))
-;;
+(* let valid_swaps (t : t) =
+   let module Int2 = struct
+   module T = struct
+   type t = Int.t * Int.t [@@deriving sexp, compare, hash, equal]
+   end
 
-let valid_swaps (t : t) =
-  let module Int2 = struct
-    module T = struct
-      type t = Int.t * Int.t [@@deriving sexp, compare, hash, equal]
-    end
+   include T
+   include Comparable.Make (T)
+   end
+   in
+   let single_swaps, _seen =
+   Array.foldi
+   t.keys
+   ~init:([], Set.empty (module Int2))
+   ~f:(fun i init (k1, v1) ->
+   let v1' = Incr.Var.value v1 in
+   if Swappability.equal v1'.swappability Single
+   then
+   Array.foldi t.keys ~init ~f:(fun j (acc, seen) (k2, v2) ->
+   let v2' = Incr.Var.value v2 in
+   if Swappability.equal v2'.swappability Single
+   then
+   if i = j
+   then acc, seen
+   else if not (Set.mem seen (i, j))
+   then (
+   (* printf
+   "%d\t%d\t%s\t%s\n"
+   i
+   j
+   (Incr.Var.value v1 |> Code.to_string)
+   (Incr.Var.value v2 |> Code.to_string); *)
+   let acc = (i, j) :: acc in
+   let seen = Set.add seen (i, j) in
+   let seen = Set.add seen (j, i) in
+   acc, seen)
+   else acc, seen
+   else acc, seen)
+   else init)
+   in
+   List.to_array single_swaps
+   ;;
 
-    include T
-    include Comparable.Make (T)
-  end
-  in
-  let acc, _seen =
-    Array.foldi
-      t.keys
-      ~init:([], Set.empty (module Int2))
-      ~f:(fun i init (k1, _v1) ->
-        Array.foldi t.keys ~init ~f:(fun j (acc, seen) (k2, _v2) ->
-          if i = j
-          then acc, seen
-          else if k1.swappable && k2.swappable && not (Set.mem seen (i, j))
-          then (
-            (* printf
-               "%d\t%d\t%s\t%s\n"
-               i
-               j
-               (Incr.Var.value v1 |> Code.to_string)
-               (Incr.Var.value v2 |> Code.to_string); *)
-            let acc = (i, j) :: acc in
-            let seen = Set.add seen (i, j) in
-            let seen = Set.add seen (j, i) in
-            acc, seen)
-          else acc, seen))
-  in
-  List.to_array acc
-;;
+   let valid_swaps2 (t : t) =
+   let module Int22 = struct
+   module T = struct
+   type t = (Int.t * Int.t) * (Int.t * Int.t) [@@deriving sexp, compare, hash, equal]
+   end
 
-let valid_swaps2 (t : t) =
-  let module Int22 = struct
-    module T = struct
-      type t = (Int.t * Int.t) * (Int.t * Int.t) [@@deriving sexp, compare, hash, equal]
-    end
-
-    include T
-    include Comparable.Make (T)
-  end
-  in
-  let valid_swaps = valid_swaps t in
-  printf "Valid Swaps 1: %d\n%!" (Array.length valid_swaps);
-  let acc, _seen =
-    Array.fold
-      valid_swaps
-      ~init:([], Set.empty (module Int22))
-      ~f:(fun init ((s1i, s1j) as s1) ->
-        Array.fold valid_swaps ~init ~f:(fun (acc, seen) ((s2i, s2j) as s2) ->
-          let uniq = Int.Set.of_array [| s1i; s1j; s2i; s2j |] in
-          if Set.mem seen (s1, s2)
-          then acc, seen
-          else (
-            match Set.length uniq with
-            | 4 ->
-              let a = s1i in
-              let b = s1j in
-              let c = s2i in
-              let d = s2j in
-              let seen = Set.add seen ((a, b), (c, d)) in
-              let seen = Set.add seen ((a, b), (d, c)) in
-              let seen = Set.add seen ((b, a), (c, d)) in
-              let seen = Set.add seen ((b, a), (d, c)) in
-              let seen = Set.add seen ((c, d), (a, b)) in
-              let seen = Set.add seen ((c, d), (b, a)) in
-              let seen = Set.add seen ((d, c), (a, b)) in
-              let seen = Set.add seen ((d, c), (b, a)) in
-              let acc = (s1, s2) :: acc in
-              acc, seen
-            | 3 ->
-              let a = s1i in
-              let b = s1j in
-              let c = s2j in
-              if s1i = s2i
-              then (
-                let seen = Set.add seen ((a, b), (a, c)) in
-                let seen = Set.add seen ((a, b), (c, a)) in
-                let seen = Set.add seen ((a, c), (b, c)) in
-                let seen = Set.add seen ((a, c), (c, b)) in
-                let seen = Set.add seen ((b, a), (a, c)) in
-                let seen = Set.add seen ((b, a), (c, a)) in
-                let seen = Set.add seen ((b, c), (a, b)) in
-                let seen = Set.add seen ((b, c), (b, a)) in
-                let seen = Set.add seen ((c, a), (b, c)) in
-                let seen = Set.add seen ((c, a), (c, b)) in
-                let seen = Set.add seen ((c, b), (a, b)) in
-                let seen = Set.add seen ((c, b), (b, a)) in
-                let acc = (s1, s2) :: acc in
-                acc, seen)
-              else if s1j = s2i
-              then (
-                let seen = Set.add seen ((a, b), (b, c)) in
-                let seen = Set.add seen ((a, b), (c, b)) in
-                let seen = Set.add seen ((a, c), (a, b)) in
-                let seen = Set.add seen ((a, c), (b, a)) in
-                let seen = Set.add seen ((b, a), (b, c)) in
-                let seen = Set.add seen ((b, a), (c, b)) in
-                let seen = Set.add seen ((b, c), (a, c)) in
-                let seen = Set.add seen ((b, c), (c, a)) in
-                let seen = Set.add seen ((c, a), (a, b)) in
-                let seen = Set.add seen ((c, a), (b, a)) in
-                let seen = Set.add seen ((c, b), (a, c)) in
-                let seen = Set.add seen ((c, b), (c, a)) in
-                let acc = (s1, s2) :: acc in
-                acc, seen)
-              else acc, seen
-            | _ -> acc, seen)))
-  in
-  List.to_array acc
-;;
+   include T
+   include Comparable.Make (T)
+   end
+   in
+   let valid_swaps = valid_swaps t in
+   printf "Valid Swaps 1: %d\n%!" (Array.length valid_swaps);
+   let acc, _seen =
+   Array.fold
+   valid_swaps
+   ~init:([], Set.empty (module Int22))
+   ~f:(fun init ((s1i, s1j) as s1) ->
+   Array.fold valid_swaps ~init ~f:(fun (acc, seen) ((s2i, s2j) as s2) ->
+   let uniq = Int.Set.of_array [| s1i; s1j; s2i; s2j |] in
+   if Set.mem seen (s1, s2)
+   then acc, seen
+   else (
+   match Set.length uniq with
+   | 4 ->
+   let a = s1i in
+   let b = s1j in
+   let c = s2i in
+   let d = s2j in
+   let seen = Set.add seen ((a, b), (c, d)) in
+   let seen = Set.add seen ((a, b), (d, c)) in
+   let seen = Set.add seen ((b, a), (c, d)) in
+   let seen = Set.add seen ((b, a), (d, c)) in
+   let seen = Set.add seen ((c, d), (a, b)) in
+   let seen = Set.add seen ((c, d), (b, a)) in
+   let seen = Set.add seen ((d, c), (a, b)) in
+   let seen = Set.add seen ((d, c), (b, a)) in
+   let acc = (s1, s2) :: acc in
+   acc, seen
+   | 3 ->
+   let a = s1i in
+   let b = s1j in
+   let c = s2j in
+   if s1i = s2i
+   then (
+   let seen = Set.add seen ((a, b), (a, c)) in
+   let seen = Set.add seen ((a, b), (c, a)) in
+   let seen = Set.add seen ((a, c), (b, c)) in
+   let seen = Set.add seen ((a, c), (c, b)) in
+   let seen = Set.add seen ((b, a), (a, c)) in
+   let seen = Set.add seen ((b, a), (c, a)) in
+   let seen = Set.add seen ((b, c), (a, b)) in
+   let seen = Set.add seen ((b, c), (b, a)) in
+   let seen = Set.add seen ((c, a), (b, c)) in
+   let seen = Set.add seen ((c, a), (c, b)) in
+   let seen = Set.add seen ((c, b), (a, b)) in
+   let seen = Set.add seen ((c, b), (b, a)) in
+   let acc = (s1, s2) :: acc in
+   acc, seen)
+   else if s1j = s2i
+   then (
+   let seen = Set.add seen ((a, b), (b, c)) in
+   let seen = Set.add seen ((a, b), (c, b)) in
+   let seen = Set.add seen ((a, c), (a, b)) in
+   let seen = Set.add seen ((a, c), (b, a)) in
+   let seen = Set.add seen ((b, a), (b, c)) in
+   let seen = Set.add seen ((b, a), (c, b)) in
+   let seen = Set.add seen ((b, c), (a, c)) in
+   let seen = Set.add seen ((b, c), (c, a)) in
+   let seen = Set.add seen ((c, a), (a, b)) in
+   let seen = Set.add seen ((c, a), (b, a)) in
+   let seen = Set.add seen ((c, b), (a, c)) in
+   let seen = Set.add seen ((c, b), (c, a)) in
+   let acc = (s1, s2) :: acc in
+   acc, seen)
+   else acc, seen
+   | _ -> acc, seen)))
+   in
+   List.to_array acc
+   ;; *)
 
 let pretty_string (t : t) =
   let arr =
@@ -592,8 +614,8 @@ let pretty_string (t : t) =
       Array.init t.num_rows ~f:(fun _ -> Array.init t.num_cols ~f:(fun _ -> " ")))
   in
   Array.iter t.keys ~f:(fun (key, var) ->
-    let code = Incr.Var.value var in
-    arr.(key.layer).(key.row).(key.col) <- Code.to_string code);
+    let var' = Incr.Var.value var in
+    arr.(key.layer).(key.row).(key.col) <- Code.to_string var'.code);
   arr
   |> Array.map ~f:(fun layer ->
     layer

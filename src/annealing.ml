@@ -5,8 +5,8 @@ let acceptance_probability old_cost new_cost temperature =
   let res =
     if new_cost < old_cost then 1. else Float.exp ((old_cost -. new_cost) /. temperature)
   in
-  (* if new_cost < old_cost
-     then printf "%.12f\t%.12f\t%.12f\t%.12f\n%!" old_cost new_cost res temperature; *)
+  if new_cost < old_cost
+  then printf "%.12f\t%.12f\t%.12f\t%.12f\n%!" old_cost new_cost res temperature;
   res
 ;;
 
@@ -42,20 +42,17 @@ let simulated_annealing
 ;;
 
 let run layout ~corpus ~weights =
-  let next_swap =
-    let valid_swaps = Layout.valid_swaps layout in
-    let len = Array.length valid_swaps in
-    fun () ->
-      let i = Random.int len in
-      valid_swaps.(i)
-  in
   let stats = Stats.make layout corpus in
   let score = Score.make stats ~weights in
   let observer = Incr.observe score in
   let make_next_solution save_state =
     Layout.load layout save_state;
-    let a, b = next_swap () in
-    Layout.swap layout a b;
+    let swaps = ref [] in
+    while List.is_empty !swaps do
+      let a, b = Random.int layout.num_keys, Random.int layout.num_keys in
+      swaps := Layout.swaps layout a b
+    done;
+    Layout.swap !swaps;
     Layout.save layout
   in
   let objective_function (save_state : Layout.save_state) =
