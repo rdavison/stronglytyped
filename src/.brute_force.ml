@@ -15,7 +15,7 @@ let run (layout : Layout.t) ~corpus ~weights =
   let best_score = ref (Incr.Observer.value_exn observer) in
   let iteration = ref 0 in
   printf "Generating list of valid swaps\n%!";
-  let valid_swaps = Layout.valid_swaps2 layout in
+  let valid_swaps = Layout.swaps layout in
   printf "Valid swaps: %d\n%!" (Array.length valid_swaps);
   let continue_ = ref true in
   while !continue_ do

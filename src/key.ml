@@ -11,8 +11,6 @@ module T = struct
     ; layer : int
     ; layer_trigger : int option
     ; modifier : bool
-    ; swappable : bool
-    ; locked_to : int list
     }
   [@@deriving sexp, compare, hash, equal]
 end

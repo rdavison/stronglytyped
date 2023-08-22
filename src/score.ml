@@ -7,10 +7,22 @@ type weights =
   ; sfbs : float
   ; sfs : Hand_finger.t -> float
   ; sfss : float
+  ; inrowlls : Hand.t -> float
+  ; inrowllss : float
+  ; outrowlls : Hand.t -> float
+  ; outrowllss : float
   }
 
 let default_weights : weights =
-  { sfb = Fn.const 1.; sfbs = 1.; sfs = Fn.const 1.; sfss = 1. }
+  { sfb = Fn.const 1.
+  ; sfbs = 1.
+  ; sfs = Fn.const 1.
+  ; sfss = 1.
+  ; inrowlls = Fn.const 1.
+  ; inrowllss = 1.
+  ; outrowlls = Fn.const 1.
+  ; outrowllss = 1.
+  }
 ;;
 
 let make (stats : Stats.t) ~(weights : weights) =
@@ -34,7 +46,27 @@ let make (stats : Stats.t) ~(weights : weights) =
     |> Incr.sum_float
     |> Incr.map ~f:(fun v -> v *. weights.sfss)
   in
-  Incr.sum_float [| sfbs; sfss |]
+  let inrowlls =
+    stats.inrowlls
+    |> Map.to_alist
+    |> List.to_array
+    |> Array.map ~f:(fun (hand, v) ->
+      let w = weights.inrowlls hand in
+      Incr.map v ~f:(fun v -> v *. w))
+    |> Incr.sum_float
+    |> Incr.map ~f:(fun v -> (1. -. v) *. weights.inrowllss)
+  in
+  let outrowlls =
+    stats.outrowlls
+    |> Map.to_alist
+    |> List.to_array
+    |> Array.map ~f:(fun (hand, v) ->
+      let w = weights.outrowlls hand in
+      Incr.map v ~f:(fun v -> v *. w))
+    |> Incr.sum_float
+    |> Incr.map ~f:(fun v -> (1. -. v) *. weights.outrowllss)
+  in
+  Incr.sum_float [| sfbs; sfss; inrowlls; outrowlls |]
 ;;
 
 let%expect_test "graphite" =
@@ -56,5 +88,5 @@ let%expect_test "graphite" =
   Incr.stabilize ();
   let score = Incr.Observer.value_exn observer in
   printf "%.4f" (score *. 100.);
-  [%expect {| 2.3570 |}]
+  [%expect {| 2.3581 |}]
 ;;

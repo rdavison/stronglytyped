@@ -1,15 +1,22 @@
 open! Import
 
+type var =
+  { swappability : Swappability.t
+  ; code : Code.t
+  }
+
 type t =
   { num_keys_per_layer : int
   ; num_layers : int
   ; num_cols : int
   ; num_rows : int
-  ; keys : (Key.t * Code.t Incr.Var.t) array
+  ; num_keys : int
+  ; keys : (Key.t * var Incr.Var.t) array
   }
 [@@deriving sexp_of]
 
-type save_state = Code.t array [@@deriving sexp]
+type save_state = var array [@@deriving sexp]
+type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
 
 val init
   :  int
@@ -22,18 +29,21 @@ val init
   -> layer:(int -> int)
   -> layer_trigger:(int -> hand:Hand.t -> int option)
   -> modifier:(int -> bool)
-  -> swappable:(int -> code:Code.t -> modifier:bool -> bool)
-  -> locked_to:(int -> int list)
+  -> swappability:(int -> Swappability.t)
   -> t
 
 val ortho42 : unit -> t
 val ansi : unit -> t
-val swap : ?on_swap:(int * int -> unit) -> t -> int -> int -> unit
-val scramble : ?on_swap:(int * int -> unit) -> t -> int -> unit
+val swap : swap list -> unit
+val swaps : t -> int -> int -> swap list
+val scramble : t -> int -> unit
 val all : (string * string) list
-val set : t -> [ `Name of string | `Layout of string ] -> unit
-val valid_swaps : t -> (int * int) array
-val valid_swaps2 : t -> ((int * int) * (int * int)) array
+
+(* val valid_swaps : t -> (int * int) array *)
+(* val valid_swaps2 : t -> ((int * int) * (int * int)) array *)
 val pretty_string : t -> string
 val save : t -> save_state
 val load : t -> save_state -> unit
+val layer_offset : t -> int -> int * int
+val index : t -> layer:int -> offset:int -> int
+val tower : t -> int -> int list
