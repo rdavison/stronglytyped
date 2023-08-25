@@ -6,7 +6,12 @@ let acceptance_probability old_cost new_cost temperature =
     if new_cost < old_cost then 1. else Float.exp ((old_cost -. new_cost) /. temperature)
   in
   if new_cost < old_cost
-  then printf "%.12f\t%.12f\t%.12f\t%.12f\n%!" old_cost new_cost res temperature;
+  then
+    printf
+      "%.20f\t%.20f\t%.12f\n%!"
+      new_cost
+      ((old_cost -. new_cost) /. temperature)
+      temperature;
   res
 ;;
 
@@ -66,6 +71,7 @@ let run layout ~corpus ~config =
   let initial_temperature = 100.0 in
   let cooling_rate = 0.99997 in
   let num_iterations = 1_000_000 in
+  (* let num_iterations = 0 in *)
   let best_solution, best_cost =
     simulated_annealing
       ~objective_function

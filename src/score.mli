@@ -14,22 +14,30 @@ type t =
   ; speed : info
   ; inrowlls : info
   ; outrowlls : info
+  ; scissors : float
+  ; lsb : float
+  ; slaps : float
   }
 [@@deriving sexp_of]
 
 type config =
-  { usage : Hand_finger.t -> float -> float
-  ; aggregate_usage : unweighted:float -> weighted:float -> float
-  ; sfb : Hand_finger.t -> float -> float
-  ; aggregate_sfb : unweighted:float -> weighted:float -> float
-  ; sfs : Hand_finger.t -> float -> float
-  ; aggregate_sfs : unweighted:float -> weighted:float -> float
-  ; speed : Hand_finger.t -> float -> float
-  ; aggregate_speed : unweighted:float -> weighted:float -> float
-  ; inrowlls : Hand.t -> float -> float
-  ; aggregate_inrowlls : unweighted:float -> weighted:float -> float
-  ; outrowlls : Hand.t -> float -> float
-  ; aggregate_outrowlls : unweighted:float -> weighted:float -> float
+  { usage : float Hand_finger.Map.t -> Hand_finger.t -> float -> float
+  ; aggregate_usage :
+      float Hand_finger.Map.t -> unweighted:float -> weighted:float -> float
+  ; sfb : float Hand_finger.Map.t -> Hand_finger.t -> float -> float
+  ; aggregate_sfb : float Hand_finger.Map.t -> unweighted:float -> weighted:float -> float
+  ; sfs : float Hand_finger.Map.t -> Hand_finger.t -> float -> float
+  ; aggregate_sfs : float Hand_finger.Map.t -> unweighted:float -> weighted:float -> float
+  ; speed : float Hand_finger.Map.t -> Hand_finger.t -> float -> float
+  ; aggregate_speed :
+      float Hand_finger.Map.t -> unweighted:float -> weighted:float -> float
+  ; inrowlls : float Hand.Map.t -> Hand.t -> float -> float
+  ; aggregate_inrowlls : float Hand.Map.t -> unweighted:float -> weighted:float -> float
+  ; outrowlls : float Hand.Map.t -> Hand.t -> float -> float
+  ; aggregate_outrowlls : float Hand.Map.t -> unweighted:float -> weighted:float -> float
+  ; scissors : float -> float
+  ; lsb : float -> float
+  ; slaps : float -> float
   }
 
 val make : Stats.t -> config:config -> t Incr.t

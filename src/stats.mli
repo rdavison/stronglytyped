@@ -7,6 +7,9 @@ type t =
   ; speed : float Incr.t Hand_finger.Map.t
   ; inrowlls : float Incr.t Hand.Map.t
   ; outrowlls : float Incr.t Hand.Map.t
+  ; scissors : float Incr.t
+  ; lsb : float Incr.t
+  ; slaps : float Incr.t
   }
 [@@deriving sexp_of]
 
