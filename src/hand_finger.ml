@@ -38,6 +38,18 @@ let of_int = function
   | _ -> assert false
 ;;
 
+let adjacent_no_thumb t1 t2 =
+  match t1, t2 with
+  | (`L, _), (`R, _) | (`R, _), (`L, _) -> false
+  | (_, `P), (_, `R)
+  | (_, `R), (_, `P)
+  | (_, `R), (_, `M)
+  | (_, `M), (_, `R)
+  | (_, `M), (_, `I)
+  | (_, `I), (_, `M) -> true
+  | (_, _), (_, _) -> false
+;;
+
 let to_string (h, f) = sprintf "%s%s" (Hand.to_string h) (Finger.to_string f)
 let all = List.cartesian_product Hand.all Finger.all
 
