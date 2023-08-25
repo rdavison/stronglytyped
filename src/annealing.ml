@@ -5,13 +5,13 @@ let acceptance_probability old_cost new_cost temperature =
   let res =
     if new_cost < old_cost then 1. else Float.exp ((old_cost -. new_cost) /. temperature)
   in
-  if new_cost < old_cost
-  then
-    printf
-      "%.20f\t%.20f\t%.12f\n%!"
-      new_cost
-      ((old_cost -. new_cost) /. temperature)
-      temperature;
+  (* if new_cost < old_cost
+     then
+     printf
+     "%.20f\t%.20f\t%.12f\n%!"
+     new_cost
+     ((old_cost -. new_cost) /. temperature)
+     temperature; *)
   res
 ;;
 
@@ -46,9 +46,9 @@ let simulated_annealing
   !best_solution, !best_cost
 ;;
 
-let run layout ~corpus ~config =
+let run layout ~corpus ~score =
   let stats = Stats.make layout corpus in
-  let score = Score.make stats ~config in
+  let score = score stats in
   let final_sum = Score.final_sum score in
   let observer = Incr.observe final_sum in
   let make_next_solution save_state =
