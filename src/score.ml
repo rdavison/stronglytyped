@@ -16,6 +16,8 @@ type t =
   ; scissors : info option
   ; lsb : info option
   ; slaps : info option
+  ; badredirs : info option
+  ; badtrills : info option
   }
 [@@deriving sexp_of]
 
@@ -29,6 +31,8 @@ let make
   ?scissors
   ?lsb
   ?slaps
+  ?badredirs
+  ?badtrills
   (stats : Stats.t)
   =
   let map param stat of_alist_exn =
@@ -55,8 +59,21 @@ let make
   and outrowlls = map outrowlls stats.outrowlls Hand.Map.of_alist_exn
   and scissors = simple scissors stats.scissors
   and lsb = simple lsb stats.lsb
-  and slaps = simple slaps stats.slaps in
-  { usage; sfb; sfs; speed; inrowlls; outrowlls; scissors; lsb; slaps }
+  and slaps = simple slaps stats.slaps
+  and badredirs = simple badredirs stats.badredirs
+  and badtrills = simple badtrills stats.badtrills in
+  { usage
+  ; sfb
+  ; sfs
+  ; speed
+  ; inrowlls
+  ; outrowlls
+  ; scissors
+  ; lsb
+  ; slaps
+  ; badredirs
+  ; badtrills
+  }
 ;;
 
 let default_config =
@@ -186,16 +203,36 @@ let default_config =
     ~slaps:(fun unweighted ->
       let weighted = 3. *. (1. -. unweighted) in
       { unweighted; weighted })
+    ~badredirs:(fun unweighted ->
+      let weighted = 3. *. unweighted in
+      { unweighted; weighted })
+    ~badtrills:(fun unweighted ->
+      let weighted = 3. *. unweighted in
+      { unweighted; weighted })
 ;;
 
 let final_sum (t : t Incr.t) =
   Incr.map
     t
-    ~f:(fun { usage; sfb; sfs; speed; inrowlls; outrowlls; scissors; lsb; slaps } ->
+    ~f:
+      (fun
+        { usage
+        ; sfb
+        ; sfs
+        ; speed
+        ; inrowlls
+        ; outrowlls
+        ; scissors
+        ; lsb
+        ; slaps
+        ; badredirs
+        ; badtrills
+        }
+      ->
       ignore sfs;
       ignore outrowlls;
       let sum =
-        [ usage; speed; sfb; scissors; inrowlls; lsb; slaps ]
+        [ usage; speed; sfb; scissors; inrowlls; lsb; slaps; badredirs; badtrills ]
         |> List.fold ~init:0. ~f:(fun acc info ->
           acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
       in

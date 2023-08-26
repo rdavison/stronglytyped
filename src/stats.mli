@@ -10,6 +10,8 @@ type t =
   ; scissors : float Incr.t
   ; lsb : float Incr.t
   ; slaps : float Incr.t
+  ; badredirs : float Incr.t
+  ; badtrills : float Incr.t
   }
 [@@deriving sexp_of]
 

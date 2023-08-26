@@ -10,6 +10,8 @@ type t =
   ; scissors : float Incr.t
   ; lsb : float Incr.t
   ; slaps : float Incr.t
+  ; badredirs : float Incr.t
+  ; badtrills : float Incr.t
   }
 [@@deriving sexp_of]
 
@@ -39,18 +41,36 @@ let finger_dist f1 f2 =
 
 let make (layout_ : Layout.t) (corpus : Corpus.t) =
   let layout = Array.map layout_.keys ~f:(fun (key, var) -> key, Incr.Var.watch var) in
-  let usage, (sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps) =
+  let ( usage
+      , ( sfbs
+        , sfss
+        , speed
+        , inrowlls
+        , outrowlls
+        , scissors
+        , lsb
+        , slaps
+        , (badredirs, badtrills) ) )
+    =
     let init =
       let usage = Hand_finger.Map.empty in
-      let sfbs = Hand_finger.Map.empty in
-      let sfss = Hand_finger.Map.empty in
-      let speed = Hand_finger.Map.empty in
-      let inrowlls = Hand.Map.empty in
-      let outrowlls = Hand.Map.empty in
-      let scissors = [] in
-      let lsb = [] in
-      let slaps = [] in
-      usage, (sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps)
+      let bigram_stats =
+        let sfbs = Hand_finger.Map.empty in
+        let sfss = Hand_finger.Map.empty in
+        let speed = Hand_finger.Map.empty in
+        let inrowlls = Hand.Map.empty in
+        let outrowlls = Hand.Map.empty in
+        let scissors = [] in
+        let lsb = [] in
+        let slaps = [] in
+        let trigram_stats =
+          let badredirs = [] in
+          let badtrills = [] in
+          badredirs, badtrills
+        in
+        sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps, trigram_stats
+      in
+      usage, bigram_stats
     in
     Array.foldi layout ~init ~f:(fun i (usage, bigrams_stats) (k1, var1) ->
       let _l1, o1 = Layout.layer_offset layout_ i in
@@ -69,7 +89,7 @@ let make (layout_ : Layout.t) (corpus : Corpus.t) =
           ~f:
             (fun
               j
-              (sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps)
+              (sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps, trigram_stats)
               (k2, var2)
             ->
             let _l2, o2 = Layout.layer_offset layout_ j in
@@ -157,15 +177,7 @@ let make (layout_ : Layout.t) (corpus : Corpus.t) =
                  && Float.equal dist 1.
                  && k1.layer = k2.layer
                  && k1.row = k2.row
-              then
-                Incr.map2 bigram freq_s1 ~f:(fun (c1, c2) v ->
-                  let bigram =
-                    Code.to_string c1 ^ Code.to_string c2 |> String.lowercase
-                  in
-                  match bigram with
-                  | "re" | "er" -> 0.
-                  | _ -> dist *. v)
-                :: slaps
+              then Incr.map freq_s1 ~f:(fun v -> dist *. v) :: slaps
               else slaps
             in
             let scissors =
@@ -186,7 +198,10 @@ let make (layout_ : Layout.t) (corpus : Corpus.t) =
                   else (
                     let slope_dir = slope_dir |> Float.to_int in
                     if slope_dir <> preferred_slope_dir
-                    then Incr.map freq_s1 ~f:(fun v -> v *. dist') :: scissors
+                    then
+                      Incr.map2 freq_s1 freq_s29 ~f:(fun freq_s1 freq_s29 ->
+                        (freq_s1 +. freq_s29) *. dist')
+                      :: scissors
                     else scissors))
               else scissors
             in
@@ -196,7 +211,56 @@ let make (layout_ : Layout.t) (corpus : Corpus.t) =
                 Incr.map freq_s1 ~f:(fun v -> (Float.abs (dist -. 1.) +. 1.) *. v) :: lsb
               else lsb
             in
-            sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps)
+            let trigram_stats =
+              Array.foldi
+                layout
+                ~init:trigram_stats
+                ~f:(fun k (badredirs, badtrills) (k3, var3) ->
+                  let _l3, _o3 = Layout.layer_offset layout_ k in
+                  let _hf3 = Key.hand_finger k3 in
+                  let _slope2 = (k3.y -. k2.y) /. (k3.x -. k2.x) in
+                  let _dist2 =
+                    Float.sqrt (((k2.y -. k3.y) ** 2.) +. ((k2.x -. k3.x) ** 2.))
+                  in
+                  let _dist'2 =
+                    Float.sqrt
+                      (((k2.y -. k3.y) ** 2.)
+                       +. ((k2.x
+                            -. k3.x
+                            -. (finger_dist k2.finger k3.finger
+                                |> Option.value ~default:0.))
+                           ** 2.))
+                  in
+                  let trigram =
+                    Incr.both bigram var3
+                    |> Incr.map ~f:(fun ((c1, c2), v3) -> c1, c2, v3.code)
+                  in
+                  let freq_tri =
+                    Incr.map trigram ~f:(Corpus.Lookup.freq3 ~data:corpus.triples)
+                  in
+                  let badredirs =
+                    if Hand.equal k1.hand k2.hand
+                       && Hand.equal k2.hand k3.hand
+                       &&
+                       match k1.finger, k2.finger, k3.finger with
+                       | `P, `M, `R | `R, `P, `M | `R, `M, `P | `M, `P, `R -> true
+                       | _, _, _ -> false
+                    then freq_tri :: badredirs
+                    else badredirs
+                  in
+                  let badtrills =
+                    if Hand.equal k1.hand k2.hand
+                       && Hand.equal k2.hand k3.hand
+                       &&
+                       match k1.finger, k2.finger, k3.finger with
+                       | `R, `M, `R | `M, `R, `M | `R, `P, `R | `P, `R, `P -> true
+                       | _, _, _ -> false
+                    then freq_tri :: badtrills
+                    else badtrills
+                  in
+                  badredirs, badtrills)
+            in
+            sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps, trigram_stats)
       in
       usage, bigrams_stats)
   in
@@ -213,5 +277,18 @@ let make (layout_ : Layout.t) (corpus : Corpus.t) =
   let scissors = scissors |> Array.of_list |> Incr.sum_float in
   let lsb = lsb |> Array.of_list |> Incr.sum_float in
   let slaps = slaps |> Array.of_list |> Incr.sum_float in
-  { usage; sfbs; sfss; inrowlls; speed; outrowlls; scissors; lsb; slaps }
+  let badredirs = badredirs |> Array.of_list |> Incr.sum_float in
+  let badtrills = badtrills |> Array.of_list |> Incr.sum_float in
+  { usage
+  ; sfbs
+  ; sfss
+  ; inrowlls
+  ; speed
+  ; outrowlls
+  ; scissors
+  ; lsb
+  ; slaps
+  ; badredirs
+  ; badtrills
+  }
 ;;
