@@ -16,6 +16,8 @@ type t =
   ; scissors : info option
   ; lsb : info option
   ; slaps : info option
+  ; badredirs : info option
+  ; badtrills : info option
   }
 [@@deriving sexp_of]
 
@@ -29,6 +31,8 @@ val make
   -> ?scissors:(float -> info)
   -> ?lsb:(float -> info)
   -> ?slaps:(float -> info)
+  -> ?badredirs:(float -> info)
+  -> ?badtrills:(float -> info)
   -> Stats.t
   -> t Incr.t
 
