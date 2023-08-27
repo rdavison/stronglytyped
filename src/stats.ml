@@ -449,4 +449,113 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     ; badtrills
     }
   ;;
+
+  let pretty_string
+    { usage
+    ; sfbs
+    ; sfss
+    ; inrowlls
+    ; speed
+    ; outrowlls
+    ; scissors
+    ; lsb
+    ; slaps
+    ; layer_transitions
+    ; layer_trigger_s129
+    ; badredirs
+    ; badtrills
+    }
+    =
+    let map stat of_alist_exn =
+      stat
+      |> Map.to_alist
+      |> List.map ~f:(fun (k, incr) -> Incr.map incr ~f:(fun v -> k, v))
+      |> Incr.all
+      |> Incr.map ~f:of_alist_exn
+    in
+    let%map_open.Incr usage = map usage Hand_finger.Map.of_alist_exn
+    and sfbs = map sfbs Hand_finger.Map.of_alist_exn
+    and sfss = map sfss Hand_finger.Map.of_alist_exn
+    and inrowlls = map inrowlls Hand.Map.of_alist_exn
+    and speed = map speed Hand_finger.Map.of_alist_exn
+    and outrowlls = map outrowlls Hand.Map.of_alist_exn
+    and scissors = scissors
+    and lsb = lsb
+    and slaps = slaps
+    and layer_transitions = layer_transitions
+    and layer_trigger_s129 = layer_trigger_s129
+    and badredirs = badredirs
+    and badtrills = badtrills in
+    let module T = Text_block in
+    let table data ~to_string ~all =
+      let cols =
+        all
+        |> List.map ~f:(fun key ->
+          let data =
+            data
+            |> List.map ~f:snd
+            |> List.map ~f:(fun map ->
+              match Map.find (fst map) key with
+              | None -> T.text "None"
+              | Some item -> item |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
+          in
+          T.text (to_string key) :: data, `Right)
+        |> List.cons
+             ( T.text "(total)"
+               :: List.map data ~f:(fun x ->
+                 x |> snd |> snd |> Float.( * ) 100. |> sprintf "%.2f" |> T.text)
+             , `Right )
+        |> List.cons (T.nil :: List.map data ~f:(Fn.compose T.text fst), `Right)
+      in
+      let (`Rows rows) = T.table (`Cols cols) in
+      T.vcat rows
+    in
+    let simple data =
+      let data =
+        List.map data ~f:(fun (name, total) -> name, (String.Map.empty, total))
+      in
+      table data ~to_string:Fn.id ~all:[]
+    in
+    let map_total map = Map.data map |> List.sum (module Float) ~f:Fn.id in
+    let map_row name map = name, (map, map_total map) in
+    let hf_table =
+      table
+        ~all:Hand_finger.all
+        ~to_string:Hand_finger.to_string
+        [ map_row "sfb" sfbs
+        ; map_row "sfs" sfss
+        ; map_row "speed" speed
+        ; map_row "usage" usage
+        ]
+    in
+    let hand_table =
+      table
+        ~all:Hand.all
+        ~to_string:Hand.to_string
+        [ map_row "inrowlls" inrowlls; map_row "outrowlls" outrowlls ]
+    in
+    let simple_table =
+      simple
+        [ "scissors", scissors
+        ; "lsb", lsb
+        ; "slaps", slaps
+        ; "layer_transitions", layer_transitions
+        ; "layer_trigger_s129", layer_trigger_s129
+        ; "badredirs", badredirs
+        ; "badtrills", badtrills
+        ]
+    in
+    let sections =
+      [ "hand-finger", hf_table; "hand", hand_table; "simple", simple_table ]
+    in
+    let t =
+      sections
+      |> List.map ~f:(fun (title, table) ->
+        let title = title |> T.text in
+        let table = table |> T.Boxed.cell |> T.boxed in
+        T.vcat [ title; table ])
+      |> T.vcat
+    in
+    T.render t
+  ;;
 end

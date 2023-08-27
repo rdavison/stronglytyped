@@ -51,7 +51,10 @@ let adjacent_no_thumb t1 t2 =
 ;;
 
 let to_string (h, f) = sprintf "%s%s" (Hand.to_string h) (Finger.to_string f)
-let all = List.cartesian_product Hand.all Finger.all
+
+let all : t list =
+  [ `L, `P; `L, `R; `L, `M; `L, `I; `L, `T; `R, `T; `R, `I; `R, `M; `R, `R; `R, `P ]
+;;
 
 let of_string s =
   match Int.equal (String.length s) 2 with

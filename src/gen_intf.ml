@@ -7,18 +7,12 @@ module type S = sig
   module Score : Score.S
 
   type t =
-    { score : float
-    ; pretty : string
+    { final_score : float
     ; save_state : Layout.save_state
     }
 
-  val bruteforce : Layout.t -> corpus:Corpus.t -> score:(Stats.t -> float Incr.t) -> t
-
-  val anneal
-    :  Layout.t
-    -> corpus:Corpus.t
-    -> score:(Stats.t -> Score.t Incr.t)
-    -> float * Stats.t * Score.t Incr.t * Layout.save_state
+  val bruteforce : Layout.t -> final_score_obs:float Incr.Observer.t -> t
+  val anneal : Layout.t -> final_score_obs:float Incr.Observer.t -> t
 end
 
 module type Intf = sig

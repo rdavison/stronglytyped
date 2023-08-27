@@ -1,5 +1,5 @@
 open! Import
-include Algorithm_intf
+include Gen_intf
 
 module Make
     (Incr : Incremental.S)
@@ -14,6 +14,11 @@ struct
   module Layout = Layout
   module Stats = Stats
   module Score = Score
+
+  type t =
+    { final_score : float
+    ; save_state : Layout.save_state
+    }
 
   let acceptance_probability old_cost new_cost temperature =
     let ( < ) = Float.( < ) in
@@ -61,11 +66,8 @@ struct
     !best_solution, !best_cost
   ;;
 
-  let anneal layout ~corpus ~score =
-    let stats = Stats.make layout corpus in
-    let score = score stats in
-    let final_sum = Score.final_sum score in
-    let observer = Incr.observe final_sum in
+  let anneal layout ~final_score_obs =
+    let observer = final_score_obs in
     let make_next_solution save_state =
       Layout.load layout save_state;
       let swaps = ref [] in
@@ -96,16 +98,10 @@ struct
         ~cooling_rate
         ~num_iterations
     in
-    best_cost, stats, score, best_solution
+    { final_score = best_cost; save_state = best_solution }
   ;;
 
-  type t =
-    { score : float
-    ; pretty : string
-    ; save_state : Layout.save_state
-    }
-
-  let bruteforce (layout : Layout.t) ~corpus ~score =
+  let bruteforce (layout : Layout.t) ~final_score_obs =
     let module SS = struct
       module T = struct
         type t = Layout.save_state [@@deriving sexp, compare, equal]
@@ -115,9 +111,7 @@ struct
       include Comparable.Make (T)
     end
     in
-    let stats = Stats.make layout corpus in
-    let score = score stats in
-    let observer = Incr.observe score in
+    let observer = final_score_obs in
     Incr.stabilize ();
     let best_save_state = ref (Layout.save layout) in
     let best_score = ref (Incr.Observer.value_exn observer) in
@@ -164,9 +158,6 @@ struct
     done;
     Incr.stabilize ();
     printf "Done brute forcing...\n%!";
-    { pretty = Layout.pretty_string layout
-    ; score = Incr.Observer.value_exn observer
-    ; save_state = Layout.save layout
-    }
+    { final_score = Incr.Observer.value_exn observer; save_state = Layout.save layout }
   ;;
 end
