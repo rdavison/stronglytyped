@@ -16,6 +16,8 @@ module type S = sig
     ; slaps : float Incr.t
     ; badredirs : float Incr.t
     ; badtrills : float Incr.t
+    ; layer_transitions : float Incr.t
+    ; layer_trigger_s129 : float Incr.t
     }
   [@@deriving sexp_of]
 

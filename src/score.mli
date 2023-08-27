@@ -23,6 +23,8 @@ module type S = sig
     ; slaps : info option
     ; badredirs : info option
     ; badtrills : info option
+    ; layer_transitions : info option
+    ; layer_trigger_s129 : info option
     }
   [@@deriving sexp_of]
 
@@ -38,6 +40,8 @@ module type S = sig
     -> ?slaps:(float -> info)
     -> ?badredirs:(float -> info)
     -> ?badtrills:(float -> info)
+    -> ?layer_transitions:(float -> info)
+    -> ?layer_trigger_s129:(float -> info)
     -> Stats.t
     -> t Incr.t
 

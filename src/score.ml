@@ -23,6 +23,8 @@ module type S = sig
     ; slaps : info option
     ; badredirs : info option
     ; badtrills : info option
+    ; layer_transitions : info option
+    ; layer_trigger_s129 : info option
     }
   [@@deriving sexp_of]
 
@@ -38,6 +40,8 @@ module type S = sig
     -> ?slaps:(float -> info)
     -> ?badredirs:(float -> info)
     -> ?badtrills:(float -> info)
+    -> ?layer_transitions:(float -> info)
+    -> ?layer_trigger_s129:(float -> info)
     -> Stats.t
     -> t Incr.t
 
@@ -72,6 +76,8 @@ module Make
     ; slaps : info option
     ; badredirs : info option
     ; badtrills : info option
+    ; layer_transitions : info option
+    ; layer_trigger_s129 : info option
     }
   [@@deriving sexp_of]
 
@@ -87,6 +93,8 @@ module Make
     ?slaps
     ?badredirs
     ?badtrills
+    ?layer_transitions
+    ?layer_trigger_s129
     (stats : Stats.t)
     =
     let map param stat of_alist_exn =
@@ -115,7 +123,9 @@ module Make
     and lsb = simple lsb stats.lsb
     and slaps = simple slaps stats.slaps
     and badredirs = simple badredirs stats.badredirs
-    and badtrills = simple badtrills stats.badtrills in
+    and badtrills = simple badtrills stats.badtrills
+    and layer_transitions = simple layer_transitions stats.layer_transitions
+    and layer_trigger_s129 = simple layer_trigger_s129 stats.layer_trigger_s129 in
     { usage
     ; sfb
     ; sfs
@@ -127,6 +137,8 @@ module Make
     ; slaps
     ; badredirs
     ; badtrills
+    ; layer_transitions
+    ; layer_trigger_s129
     }
   ;;
 
@@ -261,12 +273,26 @@ module Make
       ~slaps:(fun unweighted ->
         let weighted = 3. *. (1. -. unweighted) in
         { unweighted; weighted })
-      ~badredirs:(fun unweighted ->
-        let weighted = 3000. *. unweighted in
+      ~layer_transitions:(fun unweighted ->
+        let weighted = Float.exp (3. *. unweighted) in
         { unweighted; weighted })
-      ~badtrills:(fun unweighted ->
-        let weighted = 3000. *. unweighted in
+      ~layer_trigger_s129:(fun unweighted ->
+        let weighted = Float.exp (3. *. unweighted) in
         { unweighted; weighted })
+      ?badredirs:
+        (let _ =
+           fun unweighted ->
+           let weighted = 3000. *. unweighted in
+           { unweighted; weighted }
+         in
+         None)
+      ?badtrills:
+        (let _ =
+           fun unweighted ->
+           let weighted = 3000. *. unweighted in
+           { unweighted; weighted }
+         in
+         None)
   ;;
 
   let final_sum (t : t Incr.t) =
@@ -285,12 +311,25 @@ module Make
           ; slaps
           ; badredirs
           ; badtrills
+          ; layer_transitions
+          ; layer_trigger_s129
           }
         ->
         ignore sfs;
         ignore outrowlls;
         let sum =
-          [ usage; speed; sfb; scissors; inrowlls; lsb; slaps; badredirs; badtrills ]
+          [ usage
+          ; speed
+          ; sfb
+          ; scissors
+          ; inrowlls
+          ; lsb
+          ; slaps
+          ; badredirs
+          ; badtrills
+          ; layer_transitions
+          ; layer_trigger_s129
+          ]
           |> List.fold ~init:0. ~f:(fun acc info ->
             acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
         in

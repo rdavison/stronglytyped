@@ -16,6 +16,8 @@ module type S = sig
     ; slaps : float Incr.t
     ; badredirs : float Incr.t
     ; badtrills : float Incr.t
+    ; layer_transitions : float Incr.t
+    ; layer_trigger_s129 : float Incr.t
     }
   [@@deriving sexp_of]
 
@@ -39,6 +41,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     ; slaps : float Incr.t
     ; badredirs : float Incr.t
     ; badtrills : float Incr.t
+    ; layer_transitions : float Incr.t
+    ; layer_trigger_s129 : float Incr.t
     }
   [@@deriving sexp_of]
 
@@ -77,6 +81,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
           , scissors
           , lsb
           , slaps
+          , layer_transitions
+          , layer_trigger_s129
           , (badredirs, badtrills) ) )
       =
       let init =
@@ -90,12 +96,24 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
           let scissors = [] in
           let lsb = [] in
           let slaps = [] in
+          let layer_transitions = [] in
+          let layer_trigger_s129 = [] in
           let trigram_stats =
             let badredirs = [] in
             let badtrills = [] in
             badredirs, badtrills
           in
-          sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps, trigram_stats
+          ( sfbs
+          , sfss
+          , speed
+          , inrowlls
+          , outrowlls
+          , scissors
+          , lsb
+          , slaps
+          , layer_transitions
+          , layer_trigger_s129
+          , trigram_stats )
         in
         usage, bigram_stats
       in
@@ -124,6 +142,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                 , scissors
                 , lsb
                 , slaps
+                , layer_transitions
+                , layer_trigger_s129
                 , trigram_stats )
                 (k2, var2)
               ->
@@ -212,7 +232,58 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                    && Float.equal dist 1.
                    && k1.layer = k2.layer
                    && k1.row = k2.row
-                then Incr.map freq_s1 ~f:(fun v -> dist *. v) :: slaps
+                then
+                  Incr.map2 bigram freq_s1 ~f:(fun (c1, c2) v ->
+                    match k1.finger, k2.finger with
+                    | `P, `R | `R, `P | `R, `M | `M, `R ->
+                      (match
+                         Code.to_string c1 ^ Code.to_string c2 |> String.lowercase
+                       with
+                       | "mo"
+                       | "om"
+                       | "ar"
+                       | "ra"
+                       | "ec"
+                       | "ce"
+                       | "is"
+                       | "si"
+                       | "ey"
+                       | "ye"
+                       | "el"
+                       | "le"
+                       | "et"
+                       | "te"
+                       | "il"
+                       | "li"
+                       | "aw"
+                       | "wa"
+                       | "ta"
+                       | "at"
+                       | "de"
+                       | "ed"
+                       | "iv"
+                       | "vi"
+                       | "ag"
+                       | "ga"
+                       | "di"
+                       | "id"
+                       | "es"
+                       | "se"
+                       | "em"
+                       | "me"
+                       | "en"
+                       | "ne"
+                       | "it"
+                       | "ti"
+                       | "ni"
+                       | "in"
+                       | "ev"
+                       | "ve"
+                       | "er"
+                       | "re" -> 0.
+                       | _ -> dist *. v)
+                    | _ -> dist *. v)
+                  :: slaps
                 else slaps
               in
               let scissors =
@@ -246,6 +317,65 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                   Incr.map freq_s1 ~f:(fun v -> (Float.abs (dist -. 1.) +. 1.) *. v)
                   :: lsb
                 else lsb
+              in
+              let layer_transitions =
+                if k1.layer <> k2.layer
+                then
+                  Incr.map2 freq_s1 freq_s29 ~f:(fun f1 f29 -> f1 +. f29)
+                  :: layer_transitions
+                else layer_transitions
+              in
+              let layer_trigger_s129 =
+                match k1.layer_trigger, k2.layer_trigger with
+                | None, None -> layer_trigger_s129
+                | None, Some k2lti ->
+                  let k2lt, _incr = layout.(k2lti) in
+                  if Hand_finger.equal (Key.hand_finger k1) (Key.hand_finger k2lt)
+                  then (
+                    let dist =
+                      Float.sqrt (((k1.y -. k2lt.y) ** 2.) +. ((k1.x -. k2lt.x) ** 2.))
+                    in
+                    Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
+                      (freq_1 +. freq_29) *. dist)
+                    :: layer_trigger_s129)
+                  else layer_trigger_s129
+                | Some k1lti, None ->
+                  let k1lt, _incr = layout.(k1lti) in
+                  if Hand_finger.equal (Key.hand_finger k1lt) (Key.hand_finger k2)
+                  then (
+                    let dist =
+                      Float.sqrt (((k1lt.y -. k2.y) ** 2.) +. ((k1lt.x -. k2.x) ** 2.))
+                    in
+                    Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
+                      (freq_1 +. freq_29) *. dist)
+                    :: layer_trigger_s129)
+                  else layer_trigger_s129
+                | Some k1lti, Some k2lti ->
+                  let res1 =
+                    let k1lt, _incr = layout.(k1lti) in
+                    if Hand_finger.equal (Key.hand_finger k1lt) (Key.hand_finger k2)
+                    then (
+                      let dist =
+                        Float.sqrt (((k1lt.y -. k2.y) ** 2.) +. ((k1lt.x -. k2.x) ** 2.))
+                      in
+                      Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
+                        (freq_1 +. freq_29) *. dist)
+                      :: [])
+                    else []
+                  in
+                  let res2 =
+                    let k2lt, _incr = layout.(k2lti) in
+                    if Hand_finger.equal (Key.hand_finger k1) (Key.hand_finger k2lt)
+                    then (
+                      let dist =
+                        Float.sqrt (((k1.y -. k2lt.y) ** 2.) +. ((k1.x -. k2lt.x) ** 2.))
+                      in
+                      Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
+                        (freq_1 +. freq_29) *. dist)
+                      :: [])
+                    else []
+                  in
+                  res1 @ res2 @ layer_trigger_s129
               in
               let trigram_stats =
                 Array.foldi
@@ -296,7 +426,17 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                     in
                     badredirs, badtrills)
               in
-              sfbs, sfss, speed, inrowlls, outrowlls, scissors, lsb, slaps, trigram_stats)
+              ( sfbs
+              , sfss
+              , speed
+              , inrowlls
+              , outrowlls
+              , scissors
+              , lsb
+              , slaps
+              , layer_transitions
+              , layer_trigger_s129
+              , trigram_stats ))
         in
         usage, bigrams_stats)
     in
@@ -313,6 +453,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     let scissors = scissors |> Array.of_list |> Incr.sum_float in
     let lsb = lsb |> Array.of_list |> Incr.sum_float in
     let slaps = slaps |> Array.of_list |> Incr.sum_float in
+    let layer_transitions = layer_transitions |> Array.of_list |> Incr.sum_float in
+    let layer_trigger_s129 = layer_trigger_s129 |> Array.of_list |> Incr.sum_float in
     let badredirs = badredirs |> Array.of_list |> Incr.sum_float in
     let badtrills = badtrills |> Array.of_list |> Incr.sum_float in
     { usage
@@ -324,6 +466,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     ; scissors
     ; lsb
     ; slaps
+    ; layer_transitions
+    ; layer_trigger_s129
     ; badredirs
     ; badtrills
     }

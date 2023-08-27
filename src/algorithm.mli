@@ -1,17 +1,6 @@
 open! Import
 
-module type S = sig
-  module Incr : Incremental.S
-  module Layout : Layout.S
-  module Stats : Stats.S
-  module Score : Score.S
-
-  val run
-    :  Layout.t
-    -> corpus:Corpus.t
-    -> score:(Stats.t -> Score.t Incr.t)
-    -> float * Stats.t * Score.t Incr.t * Layout.save_state
-end
+module type S = Algorithm_intf.S
 
 module Make
     (Incr : Incremental.S)

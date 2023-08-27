@@ -2,23 +2,27 @@ open! Import
 
 let main pool ~corpus =
   let res =
-    List.init (Domainslib.Task.get_num_domains pool) ~f:(fun _ ->
-      Domainslib.Task.async pool (fun () ->
-        let module Incr = Incremental.Make () in
-        let module Layout = Layout.Make (Incr) in
-        let module Stats = Stats.Make (Incr) (Layout) in
-        let module Score = Score.Make (Incr) (Layout) (Stats) in
-        let module Annealing = Annealing.Make (Incr) (Layout) (Stats) (Score) in
-        let corpus = Corpus.load_corpus corpus in
-        let layout = Layout.ansi () in
-        let score = Score.default_config in
-        let final_score, stats, score, save_state = Annealing.run layout ~corpus ~score in
-        Layout.load layout save_state;
-        Incr.stabilize ();
-        ( Stats.sexp_of_t stats |> Sexp.to_string_hum
-        , [%sexp_of: Score.t Incr.t] score |> Sexp.to_string_hum
-        , final_score
-        , Layout.pretty_string layout )))
+    List.init
+      (Domainslib.Task.get_num_domains pool - 1)
+      ~f:(fun _ ->
+        Domainslib.Task.async pool (fun () ->
+          let module Incr = Incremental.Make () in
+          let module Layout = Layout.Make (Incr) in
+          let module Stats = Stats.Make (Incr) (Layout) in
+          let module Score = Score.Make (Incr) (Layout) (Stats) in
+          let module Algorithm = Algorithm.Make (Incr) (Layout) (Stats) (Score) in
+          let corpus = Corpus.load_corpus corpus in
+          let layout = Layout.ansi () in
+          let score = Score.default_config in
+          let final_score, stats, score, save_state =
+            Algorithm.anneal layout ~corpus ~score
+          in
+          Layout.load layout save_state;
+          Incr.stabilize ();
+          ( Stats.sexp_of_t stats |> Sexp.to_string_hum
+          , [%sexp_of: Score.t Incr.t] score |> Sexp.to_string_hum
+          , final_score
+          , Layout.pretty_string layout )))
   in
   List.map res ~f:(Domainslib.Task.await pool)
 ;;
@@ -64,28 +68,37 @@ let cmd =
           ~num_domains:(Domain.recommended_domain_count () - 1)
           ()
       in
-      Domainslib.Task.run pool (fun () -> main pool ~corpus)
-      |> List.sort ~compare:(fun (_, _, x, _) (_, _, y, _) -> Float.compare x y)
-      |> List.rev
-      |> List.iter ~f:(fun (stats, score, final_score, layout) ->
-        printf
-          "STATS\n\
-           ==========\n\
-           %s\n\n\
-           SCORE\n\
-           ==========\n\
-           %s\n\n\
-           FINAL SCORE\n\
-           ==========\n\
-           %.12f\n\n\
-           LAYOUT\n\
-           ==========\n\
-           %s\n\
-           %!"
-          stats
-          score
-          final_score
-          layout);
+      let best = ref [] in
+      while true do
+        let res = Domainslib.Task.run pool (fun () -> main pool ~corpus) in
+        best := res @ !best;
+        !best
+        |> List.sort ~compare:(fun (_, _, x, _) (_, _, y, _) -> Float.compare x y)
+        |> (fun l -> List.take l 10)
+        |> (fun l ->
+             best := l;
+             !best)
+        |> List.rev
+        |> List.iter ~f:(fun (stats, score, final_score, layout) ->
+          printf
+            "STATS\n\
+             ==========\n\
+             %s\n\n\
+             SCORE\n\
+             ==========\n\
+             %s\n\n\
+             FINAL SCORE\n\
+             ==========\n\
+             %.12f\n\n\
+             LAYOUT\n\
+             ==========\n\
+             %s\n\
+             %!"
+            stats
+            score
+            final_score
+            layout)
+      done;
       Domainslib.Task.teardown_pool pool
   in
   Command.basic ~summary:"Generate layouts" param
