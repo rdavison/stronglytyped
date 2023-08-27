@@ -1,13 +1,18 @@
 open! Import
 
-module type S = sig
-  module Incr : Incremental.S
-
+module S0 = struct
   type var =
     { swappability : Swappability.t
     ; code : Code.t
     }
   [@@deriving sexp, compare, equal]
+
+  type save_state = var array [@@deriving sexp, compare, equal]
+end
+
+module type S = sig
+  module Incr : Incremental.S
+  include module type of S0
 
   type t =
     { num_keys_per_layer : int
@@ -19,7 +24,6 @@ module type S = sig
     }
   [@@deriving sexp_of]
 
-  type save_state = var array [@@deriving sexp, compare, equal]
   type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
 
   val init
@@ -54,7 +58,10 @@ module type S = sig
 end
 
 module type Intf = sig
+  include module type of S0
+
   module type S = S
 
-  module Make (Incr : Incremental.S) : S with module Incr = Incr
+  module Make (Incr : Incremental.S) :
+    S with module Incr = Incr and type var = var and type save_state = save_state
 end
