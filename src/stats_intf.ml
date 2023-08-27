@@ -22,6 +22,7 @@ module type S = sig
   [@@deriving sexp_of]
 
   val make : Layout.t -> Corpus.t -> t
+  val pretty_string : t -> string Incr.t
 end
 
 module type Intf = sig
