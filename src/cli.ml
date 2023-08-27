@@ -59,9 +59,25 @@ module Worker = struct
   ;;
 end
 
-let main ~corpus =
+let main_single ~corpus =
+  let best = ref [] in
+  while true do
+    let res = Worker.run ~corpus in
+    best := res :: !best;
+    !best
+    |> List.sort ~compare:(fun w1 w2 -> Float.compare w1.final_score w2.final_score)
+    |> (fun l -> List.take l 10)
+    |> (fun l ->
+         best := l;
+         !best)
+    |> List.rev
+    |> List.iter ~f:(Fn.compose (printf "%s\n%!") Worker.to_string)
+  done
+;;
+
+let main_par ~threads ~corpus =
   let module T = Domainslib.Task in
-  let pool = T.setup_pool ~num_domains:(Domain.recommended_domain_count () - 1) () in
+  let pool = T.setup_pool ~num_domains:threads () in
   let best = ref [] in
   while true do
     let res =
@@ -83,11 +99,24 @@ let main ~corpus =
   T.teardown_pool pool
 ;;
 
+module Default = struct
+  let threads = Domain.recommended_domain_count () - 1
+end
+
 let cmd =
   let param =
     let open Command.Let_syntax in
-    let%map_open corpus = return "typeracer" in
-    fun () -> main ~corpus
+    let%map_open corpus = return "typeracer"
+    and threads =
+      flag
+        "-t"
+        (optional_with_default Default.threads int)
+        ~doc:(sprintf "INT Number of threads to use. Default: %d" Default.threads)
+    in
+    fun () ->
+      match threads with
+      | 1 -> main_single ~corpus
+      | _ -> main_par ~threads ~corpus
   in
   Command.basic ~summary:"Generate layouts" param
 ;;
