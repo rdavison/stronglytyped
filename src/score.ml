@@ -1,261 +1,320 @@
 open! Import
 
-type info =
-  { unweighted : float
-  ; weighted : float
-  }
-[@@deriving sexp_of]
+module type S = sig
+  module Incr : Incremental.S
+  module Layout : Layout.S
+  module Stats : Stats.S
 
-type t =
-  { usage : info option
-  ; sfb : info option
-  ; sfs : info option
-  ; speed : info option
-  ; inrowlls : info option
-  ; outrowlls : info option
-  ; scissors : info option
-  ; lsb : info option
-  ; slaps : info option
-  ; badredirs : info option
-  ; badtrills : info option
-  }
-[@@deriving sexp_of]
+  type info =
+    { unweighted : float
+    ; weighted : float
+    }
+  [@@deriving sexp_of]
 
-let make
-  ?usage
-  ?sfb
-  ?sfs
-  ?speed
-  ?inrowlls
-  ?outrowlls
-  ?scissors
-  ?lsb
-  ?slaps
-  ?badredirs
-  ?badtrills
-  (stats : Stats.t)
-  =
-  let map param stat of_alist_exn =
-    match param with
-    | None -> Incr.return None
-    | Some f ->
-      stat
-      |> Map.to_alist
-      |> List.map ~f:(fun (k, incr) -> Incr.map incr ~f:(fun v -> k, v))
-      |> Incr.all
-      |> Incr.map ~f:of_alist_exn
-      |> Incr.map ~f:(Fn.compose Option.some f)
-  in
-  let simple param stat =
-    match param with
-    | None -> Incr.return None
-    | Some f -> Incr.map stat ~f:(Fn.compose Option.some f)
-  in
-  let%map_open.Incr usage = map usage stats.usage Hand_finger.Map.of_alist_exn
-  and sfb = map sfb stats.sfbs Hand_finger.Map.of_alist_exn
-  and sfs = map sfs stats.sfss Hand_finger.Map.of_alist_exn
-  and speed = map speed stats.speed Hand_finger.Map.of_alist_exn
-  and inrowlls = map inrowlls stats.inrowlls Hand.Map.of_alist_exn
-  and outrowlls = map outrowlls stats.outrowlls Hand.Map.of_alist_exn
-  and scissors = simple scissors stats.scissors
-  and lsb = simple lsb stats.lsb
-  and slaps = simple slaps stats.slaps
-  and badredirs = simple badredirs stats.badredirs
-  and badtrills = simple badtrills stats.badtrills in
-  { usage
-  ; sfb
-  ; sfs
-  ; speed
-  ; inrowlls
-  ; outrowlls
-  ; scissors
-  ; lsb
-  ; slaps
-  ; badredirs
-  ; badtrills
-  }
-;;
+  type t =
+    { usage : info option
+    ; sfb : info option
+    ; sfs : info option
+    ; speed : info option
+    ; inrowlls : info option
+    ; outrowlls : info option
+    ; scissors : info option
+    ; lsb : info option
+    ; slaps : info option
+    ; badredirs : info option
+    ; badtrills : info option
+    }
+  [@@deriving sexp_of]
 
-let default_config =
-  make
-    ~usage:(fun map ->
-      let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-      let weighted =
-        Map.fold map ~init:0. ~f:(fun ~key:(hand, finger) ~data:v acc ->
-          let w =
-            match hand, finger with
-            | `L, `P -> 1.1
-            | `L, `R -> 1.
-            | `L, `M -> 1.
-            | `L, `I -> 1.
-            | `L, `T -> 1.
-            | `R, `T -> 1.
-            | `R, `I -> 1.
-            | `R, `M -> 1.
-            | `R, `R -> 1.
-            | `R, `P -> 1.1
-          in
-          acc +. (v *. w))
-      in
-      let final =
-        let get hf = Map.find map hf |> Option.value ~default:0. in
-        let f p a b =
-          let a = get a in
-          let b = get b in
-          if p a b then 0. else Float.abs (a -. b)
-        in
-        let lt a b = f Float.( < ) a b in
-        let gt a b = f Float.( > ) a b in
-        let res =
-          [ lt (`L, `P) (`L, `R)
-          ; lt (`L, `R) (`L, `M)
-          ; gt (`L, `M) (`L, `I)
-          ; lt (`R, `P) (`R, `R)
-          ; lt (`R, `R) (`R, `M)
-          ; gt (`R, `M) (`R, `I)
-          ; lt (`L, `P) (`R, `R)
-          ; lt (`L, `R) (`R, `M)
-          ; gt (`L, `M) (`R, `I)
-          ; lt (`R, `P) (`L, `R)
-          ; lt (`R, `R) (`L, `M)
-          ; gt (`R, `M) (`L, `I)
-          ]
-        in
-        let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
-        Float.exp (mu *. weighted)
-      in
-      { unweighted; weighted = final })
-    ~sfb:(fun map ->
-      let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-      let weighted =
-        Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc ->
-          acc +. (v *. if Float.( > ) v 0.00229 then 10. else 3.))
-      in
-      let final =
-        if Float.( > ) unweighted 0.013 then Float.exp (10. *. weighted) else weighted
-      in
-      { unweighted; weighted = final })
-    ?sfs:
-      (let _ =
-         fun map ->
-         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-         let weighted = unweighted in
-         { unweighted; weighted }
-       in
-       None)
-    ~speed:(fun map ->
-      let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-      let weighted =
-        Map.fold map ~init:0. ~f:(fun ~key:(_hand, finger) ~data:v acc ->
-          let w =
-            match finger with
-            | `P -> if Float.( > ) v 0.0023 then 10. else 3.
-            | _ -> if Float.( > ) v 0.00872 then 10. else 3.
-          in
-          acc +. (v *. w))
-      in
-      let final =
-        let get hf = Map.find map hf |> Option.value ~default:0. in
-        let f p a b =
-          let a = get a in
-          let b = get b in
-          if p a b then 0. else Float.abs (a -. b)
-        in
-        let lt a b = f Float.( < ) a b in
-        let gt a b = f Float.( > ) a b in
-        let res =
-          [ lt (`L, `P) (`L, `R)
-          ; lt (`L, `R) (`L, `M)
-          ; gt (`L, `M) (`L, `I)
-          ; lt (`R, `P) (`R, `R)
-          ; lt (`R, `R) (`R, `M)
-          ; gt (`R, `M) (`R, `I)
-          ; lt (`L, `P) (`R, `R)
-          ; lt (`L, `R) (`R, `M)
-          ; gt (`L, `M) (`R, `I)
-          ; lt (`R, `P) (`L, `R)
-          ; lt (`R, `R) (`L, `M)
-          ; gt (`R, `M) (`L, `I)
-          ]
-        in
-        let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
-        Float.exp (2. *. mu *. weighted)
-      in
-      { unweighted; weighted = final })
-    ~inrowlls:(fun map ->
-      let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-      let final = 1. -. unweighted in
-      { unweighted; weighted = final })
-    ?outrowlls:
-      (let _ =
-         fun map ->
-         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-         let final = 1. -. unweighted in
-         { unweighted; weighted = final }
-       in
-       None)
-    ~scissors:(fun unweighted ->
-      let weighted = 3. *. unweighted in
-      { unweighted; weighted })
-    ~lsb:(fun unweighted ->
-      let weighted = 3. *. unweighted in
-      { unweighted; weighted })
-    ~slaps:(fun unweighted ->
-      let weighted = 3. *. (1. -. unweighted) in
-      { unweighted; weighted })
-    ~badredirs:(fun unweighted ->
-      let weighted = 3. *. unweighted in
-      { unweighted; weighted })
-    ~badtrills:(fun unweighted ->
-      let weighted = 3. *. unweighted in
-      { unweighted; weighted })
-;;
+  val make
+    :  ?usage:(float Hand_finger.Map.t -> info)
+    -> ?sfb:(float Hand_finger.Map.t -> info)
+    -> ?sfs:(float Hand_finger.Map.t -> info)
+    -> ?speed:(float Hand_finger.Map.t -> info)
+    -> ?inrowlls:(float Hand.Map.t -> info)
+    -> ?outrowlls:(float Hand.Map.t -> info)
+    -> ?scissors:(float -> info)
+    -> ?lsb:(float -> info)
+    -> ?slaps:(float -> info)
+    -> ?badredirs:(float -> info)
+    -> ?badtrills:(float -> info)
+    -> Stats.t
+    -> t Incr.t
 
-let final_sum (t : t Incr.t) =
-  Incr.map
-    t
-    ~f:
-      (fun
-        { usage
-        ; sfb
-        ; sfs
-        ; speed
-        ; inrowlls
-        ; outrowlls
-        ; scissors
-        ; lsb
-        ; slaps
-        ; badredirs
-        ; badtrills
-        }
-      ->
-      ignore sfs;
-      ignore outrowlls;
-      let sum =
-        [ usage; speed; sfb; scissors; inrowlls; lsb; slaps; badredirs; badtrills ]
-        |> List.fold ~init:0. ~f:(fun acc info ->
-          acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
-      in
-      sum)
-;;
+  val final_sum : t Incr.t -> float Incr.t
+  val default_config : Stats.t -> t Incr.t
+end
 
-let%expect_test "graphite" =
-  let corpus =
-    let data =
-      In_channel.read_all
-        (match Sites.Sites.corpus with
-         | [ path ] -> path ^/ "typeracer"
-         | _ -> failwith "No path to corpus")
+module Make
+    (Incr : Incremental.S)
+    (Layout : Layout.S with module Incr = Incr)
+    (Stats : Stats.S with module Incr = Incr and module Layout = Layout) :
+  S with module Incr = Incr and module Layout = Layout and module Stats = Stats = struct
+  module Incr = Incr
+  module Layout = Layout
+  module Stats = Stats
+
+  type info =
+    { unweighted : float
+    ; weighted : float
+    }
+  [@@deriving sexp_of]
+
+  type t =
+    { usage : info option
+    ; sfb : info option
+    ; sfs : info option
+    ; speed : info option
+    ; inrowlls : info option
+    ; outrowlls : info option
+    ; scissors : info option
+    ; lsb : info option
+    ; slaps : info option
+    ; badredirs : info option
+    ; badtrills : info option
+    }
+  [@@deriving sexp_of]
+
+  let make
+    ?usage
+    ?sfb
+    ?sfs
+    ?speed
+    ?inrowlls
+    ?outrowlls
+    ?scissors
+    ?lsb
+    ?slaps
+    ?badredirs
+    ?badtrills
+    (stats : Stats.t)
+    =
+    let map param stat of_alist_exn =
+      match param with
+      | None -> Incr.return None
+      | Some f ->
+        stat
+        |> Map.to_alist
+        |> List.map ~f:(fun (k, incr) -> Incr.map incr ~f:(fun v -> k, v))
+        |> Incr.all
+        |> Incr.map ~f:of_alist_exn
+        |> Incr.map ~f:(Fn.compose Option.some f)
     in
-    let sexp = Sexp.of_string data in
-    Corpus.t_of_sexp sexp
-  in
-  let layout = Layout.ortho42 () in
-  let stats = Stats.make layout corpus in
-  let score = final_sum (default_config stats) in
-  let observer = Incr.observe score in
-  Incr.stabilize ();
-  let score = Incr.Observer.value_exn observer in
-  printf "%.4f" (score *. 100.);
-  [%expect {| 2.3581 |}]
-;;
+    let simple param stat =
+      match param with
+      | None -> Incr.return None
+      | Some f -> Incr.map stat ~f:(Fn.compose Option.some f)
+    in
+    let%map_open.Incr usage = map usage stats.usage Hand_finger.Map.of_alist_exn
+    and sfb = map sfb stats.sfbs Hand_finger.Map.of_alist_exn
+    and sfs = map sfs stats.sfss Hand_finger.Map.of_alist_exn
+    and speed = map speed stats.speed Hand_finger.Map.of_alist_exn
+    and inrowlls = map inrowlls stats.inrowlls Hand.Map.of_alist_exn
+    and outrowlls = map outrowlls stats.outrowlls Hand.Map.of_alist_exn
+    and scissors = simple scissors stats.scissors
+    and lsb = simple lsb stats.lsb
+    and slaps = simple slaps stats.slaps
+    and badredirs = simple badredirs stats.badredirs
+    and badtrills = simple badtrills stats.badtrills in
+    { usage
+    ; sfb
+    ; sfs
+    ; speed
+    ; inrowlls
+    ; outrowlls
+    ; scissors
+    ; lsb
+    ; slaps
+    ; badredirs
+    ; badtrills
+    }
+  ;;
+
+  let default_config =
+    make
+      ~usage:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted =
+          Map.fold map ~init:0. ~f:(fun ~key:(hand, finger) ~data:v acc ->
+            let w =
+              match hand, finger with
+              | `L, `P -> 1.1
+              | `L, `R -> 1.
+              | `L, `M -> 1.
+              | `L, `I -> 1.
+              | `L, `T -> 1.
+              | `R, `T -> 1.
+              | `R, `I -> 1.
+              | `R, `M -> 1.
+              | `R, `R -> 1.
+              | `R, `P -> 1.1
+            in
+            acc +. (v *. w))
+        in
+        let final =
+          let get hf = Map.find map hf |> Option.value ~default:0. in
+          let f p a b =
+            let a = get a in
+            let b = get b in
+            if p a b then 0. else Float.abs (a -. b)
+          in
+          let lt a b = f Float.( < ) a b in
+          let gt a b = f Float.( > ) a b in
+          let res =
+            [ lt (`L, `P) (`L, `R)
+            ; lt (`L, `R) (`L, `M)
+            ; gt (`L, `M) (`L, `I)
+            ; lt (`R, `P) (`R, `R)
+            ; lt (`R, `R) (`R, `M)
+            ; gt (`R, `M) (`R, `I)
+            ; lt (`L, `P) (`R, `R)
+            ; lt (`L, `R) (`R, `M)
+            ; gt (`L, `M) (`R, `I)
+            ; lt (`R, `P) (`L, `R)
+            ; lt (`R, `R) (`L, `M)
+            ; gt (`R, `M) (`L, `I)
+            ]
+          in
+          let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
+          Float.exp (mu *. weighted)
+        in
+        { unweighted; weighted = final })
+      ~sfb:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted =
+          Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc ->
+            acc +. (v *. if Float.( > ) v 0.00229 then 10. else 3.))
+        in
+        let final =
+          if Float.( > ) unweighted 0.013 then Float.exp (10. *. weighted) else weighted
+        in
+        { unweighted; weighted = final })
+      ?sfs:
+        (let _ =
+           fun map ->
+           let unweighted =
+             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
+           in
+           let weighted = unweighted in
+           { unweighted; weighted }
+         in
+         None)
+      ~speed:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted =
+          Map.fold map ~init:0. ~f:(fun ~key:(_hand, finger) ~data:v acc ->
+            let w =
+              match finger with
+              | `P -> if Float.( > ) v 0.0023 then 10. else 3.
+              | _ -> if Float.( > ) v 0.00872 then 10. else 3.
+            in
+            acc +. (v *. w))
+        in
+        let final =
+          let get hf = Map.find map hf |> Option.value ~default:0. in
+          let f p a b =
+            let a = get a in
+            let b = get b in
+            if p a b then 0. else Float.abs (a -. b)
+          in
+          let lt a b = f Float.( < ) a b in
+          let gt a b = f Float.( > ) a b in
+          let res =
+            [ lt (`L, `P) (`L, `R)
+            ; lt (`L, `R) (`L, `M)
+            ; gt (`L, `M) (`L, `I)
+            ; lt (`R, `P) (`R, `R)
+            ; lt (`R, `R) (`R, `M)
+            ; gt (`R, `M) (`R, `I)
+            ; lt (`L, `P) (`R, `R)
+            ; lt (`L, `R) (`R, `M)
+            ; gt (`L, `M) (`R, `I)
+            ; lt (`R, `P) (`L, `R)
+            ; lt (`R, `R) (`L, `M)
+            ; gt (`R, `M) (`L, `I)
+            ]
+          in
+          let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
+          Float.exp (2. *. mu *. weighted)
+        in
+        { unweighted; weighted = final })
+      ~inrowlls:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let final = 1. -. unweighted in
+        { unweighted; weighted = final })
+      ?outrowlls:
+        (let _ =
+           fun map ->
+           let unweighted =
+             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
+           in
+           let final = 1. -. unweighted in
+           { unweighted; weighted = final }
+         in
+         None)
+      ~scissors:(fun unweighted ->
+        let weighted = 3. *. unweighted in
+        { unweighted; weighted })
+      ~lsb:(fun unweighted ->
+        let weighted = 3. *. unweighted in
+        { unweighted; weighted })
+      ~slaps:(fun unweighted ->
+        let weighted = 3. *. (1. -. unweighted) in
+        { unweighted; weighted })
+      ~badredirs:(fun unweighted ->
+        let weighted = 3. *. unweighted in
+        { unweighted; weighted })
+      ~badtrills:(fun unweighted ->
+        let weighted = 3. *. unweighted in
+        { unweighted; weighted })
+  ;;
+
+  let final_sum (t : t Incr.t) =
+    Incr.map
+      t
+      ~f:
+        (fun
+          { usage
+          ; sfb
+          ; sfs
+          ; speed
+          ; inrowlls
+          ; outrowlls
+          ; scissors
+          ; lsb
+          ; slaps
+          ; badredirs
+          ; badtrills
+          }
+        ->
+        ignore sfs;
+        ignore outrowlls;
+        let sum =
+          [ usage; speed; sfb; scissors; inrowlls; lsb; slaps; badredirs; badtrills ]
+          |> List.fold ~init:0. ~f:(fun acc info ->
+            acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
+        in
+        sum)
+  ;;
+
+  let%expect_test "graphite" =
+    let corpus =
+      let data =
+        In_channel.read_all
+          (match Sites.Sites.corpus with
+           | [ path ] -> path ^/ "typeracer"
+           | _ -> failwith "No path to corpus")
+      in
+      let sexp = Sexp.of_string data in
+      Corpus.t_of_sexp sexp
+    in
+    let layout = Layout.ortho42 () in
+    let stats = Stats.make layout corpus in
+    let score = final_sum (default_config stats) in
+    let observer = Incr.observe score in
+    Incr.stabilize ();
+    let score = Incr.Observer.value_exn observer in
+    printf "%.4f" (score *. 100.);
+    [%expect {| 2.3581 |}]
+  ;;
+end
