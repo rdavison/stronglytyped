@@ -262,10 +262,10 @@ module Make
         let weighted = 3. *. (1. -. unweighted) in
         { unweighted; weighted })
       ~badredirs:(fun unweighted ->
-        let weighted = 3. *. unweighted in
+        let weighted = 3000. *. unweighted in
         { unweighted; weighted })
       ~badtrills:(fun unweighted ->
-        let weighted = 3. *. unweighted in
+        let weighted = 3000. *. unweighted in
         { unweighted; weighted })
   ;;
 
