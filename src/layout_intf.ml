@@ -52,3 +52,9 @@ module type S = sig
   val index : t -> layer:int -> offset:int -> int
   val tower : t -> int -> int list
 end
+
+module type Intf = sig
+  module type S = S
+
+  module Make (Incr : Incremental.S) : S with module Incr = Incr
+end

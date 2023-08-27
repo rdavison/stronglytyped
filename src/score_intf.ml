@@ -48,3 +48,13 @@ module type S = sig
   val final_sum : t Incr.t -> float Incr.t
   val default_config : Stats.t -> t Incr.t
 end
+
+module type Intf = sig
+  module type S = S
+
+  module Make
+      (Incr : Incremental.S)
+      (Layout : Layout.S with module Incr = Incr)
+      (Stats : Stats.S with module Incr = Incr and module Layout = Layout) :
+    S with module Incr = Incr and module Layout = Layout and module Stats = Stats
+end

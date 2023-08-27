@@ -23,3 +23,10 @@ module type S = sig
 
   val make : Layout.t -> Corpus.t -> t
 end
+
+module type Intf = sig
+  module type S = S
+
+  module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
+    S with module Incr = Incr and module Layout = Layout
+end
