@@ -7,6 +7,7 @@ module type S = sig
     { swappability : Swappability.t
     ; code : Code.t
     }
+  [@@deriving sexp, compare, equal]
 
   type t =
     { num_keys_per_layer : int
@@ -18,7 +19,7 @@ module type S = sig
     }
   [@@deriving sexp_of]
 
-  type save_state = var array [@@deriving sexp]
+  type save_state = var array [@@deriving sexp, compare, equal]
   type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
 
   val init

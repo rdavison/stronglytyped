@@ -1,17 +1,5 @@
 open! Import
-
-module type S = sig
-  module Incr : Incremental.S
-  module Layout : Layout.S
-  module Stats : Stats.S
-  module Score : Score.S
-
-  val run
-    :  Layout.t
-    -> corpus:Corpus.t
-    -> score:(Stats.t -> Score.t Incr.t)
-    -> float * Stats.t * Score.t Incr.t * Layout.save_state
-end
+include Algorithm_intf
 
 module Make
     (Incr : Incremental.S)
@@ -32,13 +20,13 @@ struct
     let res =
       if new_cost < old_cost then 1. else Float.exp ((old_cost -. new_cost) /. temperature)
     in
-    if new_cost < old_cost
-    then
-      printf
-        "%.20f\t%.20f\t%.12f\n%!"
-        new_cost
-        ((old_cost -. new_cost) /. temperature)
-        temperature;
+    (* if new_cost < old_cost
+       then
+       printf
+       "%.20f\t%.20f\t%.12f\n%!"
+       new_cost
+       ((old_cost -. new_cost) /. temperature)
+       temperature; *)
     res
   ;;
 
@@ -73,7 +61,7 @@ struct
     !best_solution, !best_cost
   ;;
 
-  let run layout ~corpus ~score =
+  let anneal layout ~corpus ~score =
     let stats = Stats.make layout corpus in
     let score = score stats in
     let final_sum = Score.final_sum score in
@@ -109,5 +97,76 @@ struct
         ~num_iterations
     in
     best_cost, stats, score, best_solution
+  ;;
+
+  type t =
+    { score : float
+    ; pretty : string
+    ; save_state : Layout.save_state
+    }
+
+  let bruteforce (layout : Layout.t) ~corpus ~score =
+    let module SS = struct
+      module T = struct
+        type t = Layout.save_state [@@deriving sexp, compare, equal]
+      end
+
+      include T
+      include Comparable.Make (T)
+    end
+    in
+    let stats = Stats.make layout corpus in
+    let score = score stats in
+    let observer = Incr.observe score in
+    Incr.stabilize ();
+    let best_save_state = ref (Layout.save layout) in
+    let best_score = ref (Incr.Observer.value_exn observer) in
+    let iteration = ref 0 in
+    let continue_ = ref true in
+    while !continue_ do
+      continue_ := false;
+      incr iteration;
+      printf "Brute Force Round %d...\n%!" !iteration;
+      let save_states =
+        let seen = ref SS.Set.empty in
+        for i = 0 to layout.num_keys - 2 do
+          for j = i + 1 to layout.num_keys - 1 do
+            let swaps = Layout.swaps layout i j in
+            Layout.swap swaps;
+            seen := Set.add !seen (Layout.save layout);
+            Layout.swap (List.rev swaps)
+          done
+        done;
+        Set.to_list !seen
+      in
+      let current_best_score, current_best_save_state =
+        (* TODO: Figure out how to parallelize this. *)
+        save_states
+        |> List.map ~f:(fun save_state ->
+          Layout.load layout save_state;
+          Incr.stabilize ();
+          let score = Incr.Observer.value_exn observer in
+          score, save_state)
+        |> List.sort ~compare:(fun (a, _) (b, _) -> Float.compare a b * -1)
+        |> List.hd_exn
+      in
+      if Float.(current_best_score < !best_score)
+      then (
+        continue_ := true;
+        best_save_state := current_best_save_state;
+        best_score := current_best_score;
+        printf
+          "Brute Force Round %d Improvement...\n%f\n%s\n%!"
+          !iteration
+          !best_score
+          (Layout.pretty_string layout));
+      Layout.load layout !best_save_state
+    done;
+    Incr.stabilize ();
+    printf "Done brute forcing...\n%!";
+    { pretty = Layout.pretty_string layout
+    ; score = Incr.Observer.value_exn observer
+    ; save_state = Layout.save layout
+    }
   ;;
 end
