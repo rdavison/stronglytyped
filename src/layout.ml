@@ -1,14 +1,10 @@
 open! Import
 include Layout_intf
+include S0
 
 module Make (Incr : Incremental.S) = struct
   module Incr = Incr
-
-  type var =
-    { swappability : Swappability.t
-    ; code : Code.t
-    }
-  [@@deriving sexp, hash, compare, equal]
+  include S0
 
   type t =
     { num_keys_per_layer : int
@@ -19,8 +15,6 @@ module Make (Incr : Incremental.S) = struct
     ; keys : (Key.t * var Incr.Var.t) array
     }
   [@@deriving sexp_of]
-
-  type save_state = var array [@@deriving sexp, compare, equal]
 
   let init
     n
