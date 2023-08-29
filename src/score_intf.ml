@@ -20,6 +20,7 @@ module type S = sig
     ; outrowlls : info option
     ; scissors : info option
     ; lsb : info option
+    ; termi : info option
     ; slaps : info option
     ; badredirs : info option
     ; badtrills : info option
@@ -37,6 +38,7 @@ module type S = sig
     -> ?outrowlls:(float Hand.Map.t -> info)
     -> ?scissors:(float -> info)
     -> ?lsb:(float -> info)
+    -> ?termi:(float -> info)
     -> ?slaps:(float -> info)
     -> ?badredirs:(float -> info)
     -> ?badtrills:(float -> info)

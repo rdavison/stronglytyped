@@ -11,7 +11,12 @@ module type S = sig
     ; save_state : Layout.save_state
     }
 
-  val bruteforce : Layout.t -> final_score_obs:float Incr.Observer.t -> t
+  val bruteforce
+    :  Layout.t
+    -> final_score_obs:float Incr.Observer.t
+    -> mode:[ `Fast | `Slow ]
+    -> t
+
   val anneal : Layout.t -> final_score_obs:float Incr.Observer.t -> t
 end
 

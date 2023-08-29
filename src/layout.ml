@@ -466,9 +466,50 @@ module Make (Incr : Incremental.S) = struct
       Incr.Var.set s2 v1)
   ;;
 
+  let _swaps_hf : t -> Hand_finger.t -> Hand_finger.t -> swap list array =
+    let module Hand_finger2 = struct
+      module T = struct
+        type t = Hand_finger.t * Hand_finger.t [@@deriving sexp, compare, hash, equal]
+      end
+
+      include T
+      include Comparable.Make (T)
+    end
+    in
+    let cache = ref Hand_finger2.Map.empty in
+    fun (t : t) hf1 hf2 ->
+      match Map.find !cache (hf1, hf2) with
+      | Some x -> x
+      | None ->
+        let s =
+          Array.filter_mapi t.keys ~f:(fun i (k, _v) ->
+            let hf = Key.hand_finger k in
+            if Hand_finger.equal hf hf1 || Hand_finger.equal hf hf2
+            then Some (i, k)
+            else None)
+        in
+        let cols1, cols2 =
+          Array.partition_tf s ~f:(fun (_i, k) ->
+            Hand_finger.equal (Key.hand_finger k) hf1)
+        in
+        let s =
+          if Array.length cols1 = Array.length cols2
+          then Some (Array.zip_exn cols1 cols2)
+          else None
+        in
+        let res =
+          match s with
+          | None -> [||]
+          | Some s -> Array.map s ~f:(fun ((i, _), (j, _)) -> swaps t i j)
+        in
+        cache := Map.add_exn !cache ~key:(hf1, hf2) ~data:res;
+        cache := Map.add_exn !cache ~key:(hf2, hf1) ~data:res;
+        res
+  ;;
+
   let scramble layout i =
     for _ = 1 to i do
-      let i, j = Random.int2 30 in
+      let i, j = Random.int2 layout.num_keys in
       let swaps = swaps layout i j in
       swap swaps
     done

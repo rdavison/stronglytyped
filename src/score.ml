@@ -25,6 +25,7 @@ module Make
     ; outrowlls : info option
     ; scissors : info option
     ; lsb : info option
+    ; termi : info option
     ; slaps : info option
     ; badredirs : info option
     ; badtrills : info option
@@ -42,6 +43,7 @@ module Make
     ?outrowlls
     ?scissors
     ?lsb
+    ?termi
     ?slaps
     ?badredirs
     ?badtrills
@@ -73,6 +75,7 @@ module Make
     and outrowlls = map outrowlls stats.outrowlls Hand.Map.of_alist_exn
     and scissors = simple scissors stats.scissors
     and lsb = simple lsb stats.lsb
+    and termi = simple termi stats.termi
     and slaps = simple slaps stats.slaps
     and badredirs = simple badredirs stats.badredirs
     and badtrills = simple badtrills stats.badtrills
@@ -86,6 +89,7 @@ module Make
     ; outrowlls
     ; scissors
     ; lsb
+    ; termi
     ; slaps
     ; badredirs
     ; badtrills
@@ -222,6 +226,9 @@ module Make
       ~lsb:(fun unweighted ->
         let weighted = 3. *. unweighted in
         { unweighted; weighted })
+      ~termi:(fun unweighted ->
+        let weighted = 3. *. (1. -. unweighted) in
+        { unweighted; weighted })
       ~slaps:(fun unweighted ->
         let weighted = 3. *. (1. -. unweighted) in
         { unweighted; weighted })
@@ -260,6 +267,7 @@ module Make
           ; outrowlls
           ; scissors
           ; lsb
+          ; termi
           ; slaps
           ; badredirs
           ; badtrills
@@ -276,6 +284,7 @@ module Make
           ; scissors
           ; inrowlls
           ; lsb
+          ; termi
           ; slaps
           ; badredirs
           ; badtrills
