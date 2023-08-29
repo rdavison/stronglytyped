@@ -19,3 +19,4 @@ val all : t list
 val to_string : t -> string
 val of_char : char -> t option
 val of_string : string -> t option
+val gap : t -> t -> int

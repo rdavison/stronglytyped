@@ -13,6 +13,7 @@ module type S = sig
     ; outrowlls : float Incr.t Hand.Map.t
     ; scissors : float Incr.t
     ; lsb : float Incr.t
+    ; termi : float Incr.t
     ; slaps : float Incr.t
     ; badredirs : float Incr.t
     ; badtrills : float Incr.t

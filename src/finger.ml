@@ -64,3 +64,22 @@ let of_string s =
   | "t" | "thumb" -> Some `T
   | _ -> None
 ;;
+
+let gap t1 t2 =
+  match t1, t2 with
+  | `P, `R | `R, `P -> 1
+  | `R, `M | `M, `R -> 1
+  | `M, `I | `I, `M -> 1
+  | `I, `T | `T, `I -> 1
+  | `P, `M | `M, `P -> 2
+  | `R, `I | `I, `R -> 2
+  | `M, `T | `T, `M -> 2
+  | `P, `I | `I, `P -> 3
+  | `R, `T | `T, `R -> 3
+  | `P, `T | `T, `P -> 4
+  | `P, `P -> 0
+  | `R, `R -> 0
+  | `M, `M -> 0
+  | `I, `I -> 0
+  | `T, `T -> 0
+;;

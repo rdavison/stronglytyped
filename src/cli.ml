@@ -39,14 +39,14 @@ module Worker = struct
     let module Gen = Gen.Make (Incr) (Layout) (Stats) (Score) in
     let corpus = Corpus.load_corpus corpus in
     let layout = Layout.ansi () in
+    Layout.scramble layout 30;
     let stats = Stats.make layout corpus in
     let score = Score.default_config stats in
-    let stats = Stats.make layout corpus in
     let final_score_obs = Incr.observe (Score.final_sum score) in
     let gen = Gen.anneal layout ~final_score_obs in
     Layout.load layout gen.save_state;
     Incr.stabilize ();
-    let gen = Gen.bruteforce layout ~final_score_obs in
+    let gen = Gen.bruteforce layout ~final_score_obs ~mode:`Slow in
     Layout.load layout gen.save_state;
     let pretty_stats_obs = Incr.observe (Stats.pretty_string stats) in
     Incr.stabilize ();
@@ -106,7 +106,7 @@ end
 let cmd =
   let param =
     let open Command.Let_syntax in
-    let%map_open corpus = return "typeracer"
+    let%map_open corpus = anon ("corpus" %: string)
     and threads =
       flag
         "-t"

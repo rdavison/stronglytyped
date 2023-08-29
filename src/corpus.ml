@@ -17,10 +17,10 @@ type t =
 
 let load_corpus name =
   let data =
-    In_channel.read_all
-      (match Sites.Sites.corpus with
+    In_channel.read_all name
+    (* (match Sites.Sites.corpus with
        | [ path ] -> path ^/ name
-       | _ -> failwith "No path to corpus")
+       | _ -> failwith "No path to corpus") *)
   in
   let sexp = Sexp.of_string data in
   t_of_sexp sexp
