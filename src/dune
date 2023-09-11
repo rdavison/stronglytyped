@@ -1,0 +1,18 @@
+(library
+ (name stronglytyped_analyzer)
+ (public_name stronglytyped.analyzer)
+ (libraries
+  dune-site
+  core
+  domainslib
+  incremental
+  textutils_kernel.text_block
+  incr_map)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane))
+ (flags :standard -open Core))
+
+(generate_sites_module
+ (module sites)
+ (sites stronglytyped))

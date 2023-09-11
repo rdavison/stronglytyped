@@ -1,15 +1,6 @@
 (executable
  (name main)
- (libraries
-  async.async_command
-  core_unix.command_unix
-  core_unix.sys_unix
-  stronglytyped.analyzer
-  stronglytyped.generator)
+ (libraries core core_unix.command_unix stronglytyped.analyzer)
  (preprocess
   (pps ppx_jane))
- (modules main sites))
-
-(generate_sites_module
- (module sites)
- (sites stronglytyped))
+ (modules main))
