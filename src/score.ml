@@ -51,6 +51,62 @@ module Make
     ?layer_trigger_s129
     (stats : Stats.t)
     =
+    let usage =
+      ignore usage;
+      None
+    in
+    (* let sfb =
+       ignore sfb;
+       None
+       in *)
+    (* let sfs =
+       ignore sfs;
+       None
+       in *)
+    (* let speed =
+       ignore speed;
+       None
+       in *)
+    let inrowlls =
+      ignore inrowlls;
+      None
+    in
+    let outrowlls =
+      ignore outrowlls;
+      None
+    in
+    let scissors =
+      ignore scissors;
+      None
+    in
+    let lsb =
+      ignore lsb;
+      None
+    in
+    let termi =
+      ignore termi;
+      None
+    in
+    let slaps =
+      ignore slaps;
+      None
+    in
+    let badredirs =
+      ignore badredirs;
+      None
+    in
+    let badtrills =
+      ignore badtrills;
+      None
+    in
+    let layer_transitions =
+      ignore layer_transitions;
+      None
+    in
+    let layer_trigger_s129 =
+      ignore layer_trigger_s129;
+      None
+    in
     let map param stat of_alist_exn =
       match param with
       | None -> Incr.return None
@@ -153,20 +209,14 @@ module Make
           Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc ->
             acc +. (v *. if Float.( > ) v 0.00229 then 10. else 3.))
         in
-        let final =
+        let _final =
           if Float.( > ) unweighted 0.013 then Float.exp (10. *. weighted) else weighted
         in
-        { unweighted; weighted = final })
-      ?sfs:
-        (let _ =
-           fun map ->
-           let unweighted =
-             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
-           in
-           let weighted = unweighted in
-           { unweighted; weighted }
-         in
-         None)
+        { unweighted; weighted = unweighted })
+      ~sfs:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = if Float.( > ) unweighted 0.05 then unweighted +. 1. else 0. in
+        { unweighted; weighted })
       ~speed:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
         let weighted =
@@ -178,7 +228,7 @@ module Make
             in
             acc +. (v *. w))
         in
-        let final =
+        let _final =
           let get hf = Map.find map hf |> Option.value ~default:0. in
           let f p a b =
             let a = get a in
@@ -205,21 +255,15 @@ module Make
           let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
           Float.exp (2. *. mu *. weighted)
         in
-        { unweighted; weighted = final })
+        { unweighted; weighted = unweighted })
       ~inrowlls:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
         let final = 1. -. unweighted in
         { unweighted; weighted = final })
-      ?outrowlls:
-        (let _ =
-           fun map ->
-           let unweighted =
-             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
-           in
-           let final = 1. -. unweighted in
-           { unweighted; weighted = final }
-         in
-         None)
+      ~outrowlls:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let final = 1. -. unweighted in
+        { unweighted; weighted = final })
       ~scissors:(fun unweighted ->
         let weighted = 3. *. unweighted in
         { unweighted; weighted })
@@ -238,20 +282,12 @@ module Make
       ~layer_trigger_s129:(fun unweighted ->
         let weighted = Float.exp (3. *. unweighted) in
         { unweighted; weighted })
-      ?badredirs:
-        (let _ =
-           fun unweighted ->
-           let weighted = 3000. *. unweighted in
-           { unweighted; weighted }
-         in
-         None)
-      ?badtrills:
-        (let _ =
-           fun unweighted ->
-           let weighted = 3000. *. unweighted in
-           { unweighted; weighted }
-         in
-         None)
+      ~badredirs:(fun unweighted ->
+        let weighted = 3000. *. unweighted in
+        { unweighted; weighted })
+      ~badtrills:(fun unweighted ->
+        let weighted = 3000. *. unweighted in
+        { unweighted; weighted })
   ;;
 
   let final_sum (t : t Incr.t) =
@@ -275,21 +311,35 @@ module Make
           ; layer_trigger_s129
           }
         ->
+        ignore usage;
+        ignore sfb;
         ignore sfs;
+        ignore speed;
+        ignore inrowlls;
         ignore outrowlls;
+        ignore scissors;
+        ignore lsb;
+        ignore termi;
+        ignore slaps;
+        ignore badredirs;
+        ignore badtrills;
+        ignore layer_transitions;
+        ignore layer_trigger_s129;
         let sum =
-          [ usage
-          ; speed
-          ; sfb
-          ; scissors
-          ; inrowlls
-          ; lsb
-          ; termi
-          ; slaps
-          ; badredirs
-          ; badtrills
-          ; layer_transitions
-          ; layer_trigger_s129
+          [ sfb
+          ; sfs
+            (* usage
+               ; speed
+               ; sfb
+               ; scissors
+               ; inrowlls
+               ; lsb
+               ; termi
+               ; slaps
+               ; badredirs
+               ; badtrills
+               ; layer_transitions
+               ; layer_trigger_s129 *)
           ]
           |> List.fold ~init:0. ~f:(fun acc info ->
             acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)

@@ -20,6 +20,8 @@ struct
     ; save_state : Layout.save_state
     }
 
+  let i = ref 0
+
   let acceptance_probability old_cost new_cost temperature =
     let ( < ) = Float.( < ) in
     let res =
@@ -36,13 +38,15 @@ struct
                    )
                    +. 1.)))
     in
-    (* if new_cost < old_cost && Random.int 10 = 1
+    (* if new_cost < old_cost && Random.int 100000 = 1
        then
        printf
-       "%.20f\t%.20f\t%.12f\n%!"
+       "%d\t%.20f\t%.20f\t%.12f\n%!"
+       !i
        new_cost
        ((old_cost -. new_cost) /. temperature)
        temperature; *)
+    incr i;
     res
   ;;
 
@@ -112,8 +116,8 @@ struct
     in
     let initial_solution = Layout.save layout in
     let initial_temperature = 100.0 in
-    let cooling_rate = 0.9997 in
-    let num_iterations = 1_00_000 in
+    let cooling_rate = 0.999998 in
+    let num_iterations = 1_000_000 in
     (* let num_iterations = 0 in *)
     let best_solution, best_cost =
       simulated_annealing
@@ -147,7 +151,7 @@ struct
     while !continue_ do
       continue_ := false;
       incr iteration;
-      printf "Brute Force Round %d...\n%!" !iteration;
+      (* printf "Brute Force Round %d...\n%!" !iteration; *)
       let save_states =
         let seen = ref SS.Set.empty in
         (match mode with
@@ -178,7 +182,7 @@ struct
            done);
         Set.to_list !seen
       in
-      printf "Seen: %d...\n%!" (List.length save_states);
+      (* printf "Seen: %d...\n%!" (List.length save_states); *)
       let current_best_score, current_best_save_state =
         save_states
         |> List.mapi ~f:(fun _i save_state ->
@@ -195,12 +199,12 @@ struct
       then (
         continue_ := true;
         best_save_state := current_best_save_state;
-        best_score := current_best_score;
-        printf
-          "Brute Force Round %d Improvement...\n%f\n%s\n%!"
-          !iteration
-          !best_score
-          (Layout.pretty_string layout));
+        best_score := current_best_score
+        (* printf
+           "Brute Force Round %d Improvement...\n%f\n%s\n%!"
+           !iteration
+           !best_score
+           (Layout.pretty_string layout) *));
       Layout.load layout !best_save_state
     done;
     Incr.stabilize ();

@@ -40,6 +40,7 @@ module type S = sig
     -> swappability:(int -> Swappability.t)
     -> t
 
+  val k3x10 : unit -> t
   val ortho42 : unit -> t
   val ansi : unit -> t
   val swap : swap list -> unit
