@@ -61,6 +61,101 @@ module Make (Incr : Incremental.S) = struct
     { num_keys_per_layer; num_cols; num_rows; num_layers; num_keys = n; keys }
   ;;
 
+  let k3x10 () =
+    let layers = 1 in
+    let keys = 30 in
+    let layer_offset i = i / keys, i mod keys in
+    let parse s =
+      s
+      |> String.split_lines
+      |> List.filter ~f:(function
+        | "" -> false
+        | _ -> true)
+      |> List.concat_map ~f:(fun line ->
+        line |> String.strip ~drop:(fun c -> Char.equal c ' ') |> String.split ~on:' ')
+      |> List.to_array
+    in
+    init
+      (layers * keys)
+      ~code:
+        (let s =
+           parse
+             {|
+    q w e r t y u i o p
+    a s d f g h j k l ;
+    z x c v b n m , . '
+    |}
+         in
+         fun i -> `Char s.(i).[0])
+      ~finger:
+        (let s =
+           parse
+             {|
+    0 1 2 3 3 3 3 2 1 0
+    0 1 2 3 3 3 3 2 1 0
+    0 1 2 3 3 3 3 2 1 0
+    |}
+         in
+         fun i -> Int.of_string s.(i) |> Finger.of_int)
+      ~hand:
+        (let s =
+           parse
+             {|
+       1 1 1 1 1 2 2 2 2 2
+       1 1 1 1 1 2 2 2 2 2
+       1 1 1 1 1 2 2 2 2 2
+ |}
+         in
+         fun i -> Int.of_string s.(i) |> Hand.of_int)
+      ~pos:(fun i ->
+        let y =
+          if i < 10
+          then 3.
+          else if i >= 10 && i < 20
+          then 2.
+          else if i >= 20 && i < 30
+          then 1.
+          else 0.
+        in
+        let x = Float.of_int (i mod 10) in
+        x, y)
+      ~col:
+        (let s =
+           parse
+             {|
+       0 1 2 3 4 5 6 7 8 9
+       0 1 2 3 4 5 6 7 8 9
+       0 1 2 3 4 5 6 7 8 9
+ |}
+         in
+         fun i -> Int.of_string s.(i))
+      ~row:
+        (let s =
+           parse
+             {|
+       2 2 2 2 2 2 2 2 2 2
+       1 1 1 1 1 1 1 1 1 1
+       0 0 0 0 0 0 0 0 0 0
+ |}
+         in
+         fun i -> Int.of_string s.(i))
+      ~layer:(fun i ->
+        let layer, _offset = layer_offset i in
+        layer)
+      ~layer_trigger:(fun _ ~hand:_ -> None)
+      ~modifier:(fun _ -> false)
+      ~swappability:
+        (let s =
+           parse
+             {|
+      1 1 1 1 1 1 1 1 1 1
+      1 1 1 1 1 1 1 1 1 1
+      1 1 1 1 1 1 1 1 1 1
+      |}
+         in
+         fun i -> Int.of_string s.(i) |> Swappability.of_int)
+  ;;
+
   let ortho42 () =
     let layers = 3 in
     let keys = 42 in

@@ -37,8 +37,7 @@ module Worker = struct
     let module Stats = Stats.Make (Incr) (Layout) in
     let module Score = Score.Make (Incr) (Layout) (Stats) in
     let module Gen = Gen.Make (Incr) (Layout) (Stats) (Score) in
-    let corpus = Corpus.load_corpus corpus in
-    let layout = Layout.ansi () in
+    let layout = Layout.k3x10 () in
     Layout.scramble layout 30;
     let stats = Stats.make layout corpus in
     let score = Score.default_config stats in
@@ -113,6 +112,7 @@ let cmd =
         (optional_with_default Default.threads int)
         ~doc:(sprintf "INT Number of threads to use. Default: %d" Default.threads)
     in
+    let corpus = Corpus.load_corpus corpus in
     fun () ->
       match threads with
       | 1 -> main_single ~corpus
