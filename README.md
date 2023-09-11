@@ -1,4 +1,4 @@
-# StronglyTyped Keyboard Layout Analyzer and Generator
+# StronglyTyped Keyboard Layout Analyzer and Generator (WIP)
 
 ## Developer Setup
 
