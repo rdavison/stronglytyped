@@ -1,5 +1,5 @@
 /_build
-/_esy
+/_opam
 /node_modules
 /tmp
 .DS_Store
