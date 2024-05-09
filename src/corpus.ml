@@ -47,17 +47,17 @@ let of_string s =
   let sn = [| s1; s2; s3; s4; s5; s6; s7; s8; s9 |] in
   let sn_len = Array.length sn in
   for i = 0 to len - 1 do
-    let c1 = Char.lowercase s.[i] in
+    let c1 = s.[i] in
     Hashtbl.update singles c1 ~f:(function
       | Some v -> v +. 1.
       | None -> 1.);
     for j = 0 to sn_len - 1 do
       if i + j + 1 < len
       then (
-        let c2 = Char.lowercase s.[i + j + 1] in
+        let c2 = s.[i + j + 1] in
         if i + j + 2 < len
         then (
-          let c3 = Char.lowercase s.[i + j + 2] in
+          let c3 = s.[i + j + 2] in
           Hashtbl.update
             triples
             (String.of_char_list [ c1; c2; c3 ])

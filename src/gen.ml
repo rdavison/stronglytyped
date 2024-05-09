@@ -92,7 +92,7 @@ struct
     !best_solution, !best_cost
   ;;
 
-  let anneal layout ~final_score_obs =
+  let anneal layout ~final_score_obs ~initial_temperature ~cooling_rate ~num_iterations =
     let observer = final_score_obs in
     let make_next_solution save_state =
       Layout.load layout save_state;
@@ -111,10 +111,6 @@ struct
       score
     in
     let initial_solution = Layout.save layout in
-    let initial_temperature = 100.0 in
-    let cooling_rate = 0.9997 in
-    let num_iterations = 1_00_000 in
-    (* let num_iterations = 0 in *)
     let best_solution, best_cost =
       simulated_annealing
         ~objective_function

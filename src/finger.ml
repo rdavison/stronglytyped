@@ -83,3 +83,5 @@ let gap t1 t2 =
   | `I, `I -> 0
   | `T, `T -> 0
 ;;
+
+let adjacent f1 f2 = Int.equal (gap f1 f2) 1

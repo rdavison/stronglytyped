@@ -249,14 +249,14 @@ module Make (Incr : Incremental.S) = struct
            parse
              {|
     ` 1 2 3 4 5 6 7 8 9 0 [ ] 
-      b l d w z ' f o u j ; = \
-      n r t s g y h a e i ,
-    ¥ x q m c v p k . - / ¥
+      b l c m v j f o u ' - = \
+      n r s t d y h e i a ,
+    ¥ x q w g z p k / . ; ¥
 
     ~ ! @ # $ % ^ & * ( ) { } 
-      B L D W Z _ F O U J : + |
-      N R T S G Y H A E I ?
-    ¥ X Q M C V P K > " < ¥
+      B L C M V J F O U < : > |
+      N R S T D Y H E I A "
+    ¥ X Q W G Z P K + _ ? ¥
     |}
          in
          fun i -> `Char s.(i).[0])
@@ -264,15 +264,15 @@ module Make (Incr : Incremental.S) = struct
         (let s =
            parse
              {|
-    0 0 1 2 3 3 3 3 2 1 0 0 0
-      0 1 2 3 3 3 3 2 1 0 0 0 0
+    1 1 1 2 2 2 3 3 2 2 1 2 1
+      0 1 2 2 3 3 3 2 1 0 0 0 0
       0 1 2 3 3 3 3 2 1 0 0
-    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 3 3 3 3 3 2 1 0 0
 
-    0 0 1 2 3 3 3 3 2 1 0 0 0
-      0 1 2 3 3 3 3 2 1 0 0 0 0
+    1 1 1 2 2 2 3 3 2 2 1 2 1
+      0 1 2 2 3 3 3 2 1 0 0 0 0
       0 1 2 3 3 3 3 2 1 0 0
-    0 0 1 2 3 3 3 3 2 1 0 0
+    0 0 1 3 3 3 3 3 2 1 0 0
     |}
          in
          fun i -> Int.of_string s.(i) |> Finger.of_int)
@@ -371,14 +371,14 @@ module Make (Incr : Incremental.S) = struct
         (let s =
            parse
              {|
-      1 0 0 0 0 0 0 0 0 0 0 1 1 
-        2 2 2 2 2 1 2 2 2 2 1 1 1
-        2 2 2 2 2 2 2 2 2 2 1
-      0 2 2 2 2 2 2 2 1 1 1 0
+      0 0 0 0 0 0 0 0 0 0 0 0 0
+        2 2 2 2 2 2 2 0 0 0 0 0 0
+        0 0 0 0 2 2 2 0 0 0 0
+      0 2 2 2 2 2 2 2 0 0 0 0
 
-      1 1 1 1 1 1 1 1 1 1 1 1 1 
-        2 2 2 2 2 1 2 2 2 2 1 1 1
-        2 2 2 2 2 2 2 2 2 2 1
+      0 0 0 0 0 0 0 0 0 0 0 0 0
+        2 2 2 2 2 2 2 0 0 1 1 0 0
+        0 0 0 0 2 2 2 0 0 0 1
       0 2 2 2 2 2 2 2 1 1 1 0
       |}
          in

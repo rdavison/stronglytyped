@@ -5,20 +5,19 @@ module type S = sig
   module Layout : Layout.S
 
   type t =
-    { usage : float Incr.t Hand_finger.Map.t
-    ; sfbs : float Incr.t Hand_finger.Map.t
-    ; sfss : float Incr.t Hand_finger.Map.t
-    ; speed : float Incr.t Hand_finger.Map.t
-    ; inrowlls : float Incr.t Hand.Map.t
-    ; outrowlls : float Incr.t Hand.Map.t
-    ; scissors : float Incr.t
-    ; lsb : float Incr.t
-    ; termi : float Incr.t
-    ; slaps : float Incr.t
-    ; badredirs : float Incr.t
-    ; badtrills : float Incr.t
-    ; layer_transitions : float Incr.t
-    ; layer_trigger_s129 : float Incr.t
+    { usage : float Incr.t Hand_finger.Map.t (* finger usage*)
+    ; sfb : float Incr.t Hand_finger.Map.t (* same finger bigram *)
+    ; shb : float Incr.t Hand.Map.t (* same hand bigram *)
+    ; sfs : float Incr.t Hand_finger.Map.t (* same finger skipgram *)
+    ; shs : float Incr.t Hand.Map.t (* same hand skipgram *)
+    ; speed : float Incr.t Hand_finger.Map.t (* finger speed *)
+    ; fsb : float Incr.t Hand_finger2.Map.t (* full scissor bigram *)
+    ; hsb : float Incr.t Hand_finger2.Map.t (* half scissor bigram *)
+    ; fss : float Incr.t Hand_finger2.Map.t (* full scissor skipgram *)
+    ; hss : float Incr.t Hand_finger2.Map.t (* half scissor skipgram *)
+    ; lsb : float Incr.t Hand_finger2.Map.t (* lateral stretch bigram *)
+    ; lss : float Incr.t Hand_finger2.Map.t (* lateral scretch skipgram *)
+    ; srb : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
     }
   [@@deriving sexp_of]
 

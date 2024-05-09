@@ -17,7 +17,13 @@ module type S = sig
     -> mode:[ `Fast | `Slow ]
     -> t
 
-  val anneal : Layout.t -> final_score_obs:float Incr.Observer.t -> t
+  val anneal
+    :  Layout.t
+    -> final_score_obs:float Incr.Observer.t
+    -> initial_temperature:float
+    -> cooling_rate:float
+    -> num_iterations:int
+    -> t
 end
 
 module type Intf = sig
