@@ -14,36 +14,34 @@ module type S = sig
   type t =
     { usage : info option
     ; sfb : info option
+    ; shb : info option
     ; sfs : info option
+    ; shs : info option
     ; speed : info option
-    ; inrowlls : info option
-    ; outrowlls : info option
-    ; scissors : info option
+    ; fsb : info option
+    ; hsb : info option
+    ; fss : info option
+    ; hss : info option
     ; lsb : info option
-    ; termi : info option
-    ; slaps : info option
-    ; badredirs : info option
-    ; badtrills : info option
-    ; layer_transitions : info option
-    ; layer_trigger_s129 : info option
+    ; lss : info option
+    ; srb : info option
     }
   [@@deriving sexp_of]
 
   val make
     :  ?usage:(float Hand_finger.Map.t -> info)
     -> ?sfb:(float Hand_finger.Map.t -> info)
+    -> ?shb:(float Hand.Map.t -> info)
     -> ?sfs:(float Hand_finger.Map.t -> info)
+    -> ?shs:(float Hand.Map.t -> info)
     -> ?speed:(float Hand_finger.Map.t -> info)
-    -> ?inrowlls:(float Hand.Map.t -> info)
-    -> ?outrowlls:(float Hand.Map.t -> info)
-    -> ?scissors:(float -> info)
-    -> ?lsb:(float -> info)
-    -> ?termi:(float -> info)
-    -> ?slaps:(float -> info)
-    -> ?badredirs:(float -> info)
-    -> ?badtrills:(float -> info)
-    -> ?layer_transitions:(float -> info)
-    -> ?layer_trigger_s129:(float -> info)
+    -> ?fsb:(float Hand_finger2.Map.t -> info)
+    -> ?hsb:(float Hand_finger2.Map.t -> info)
+    -> ?fss:(float Hand_finger2.Map.t -> info)
+    -> ?hss:(float Hand_finger2.Map.t -> info)
+    -> ?lsb:(float Hand_finger2.Map.t -> info)
+    -> ?lss:(float Hand_finger2.Map.t -> info)
+    -> ?srb:(float Hand_finger2.Map.t -> info)
     -> Stats.t
     -> t Incr.t
 

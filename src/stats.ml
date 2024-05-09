@@ -7,500 +7,345 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
   module Layout = Layout
 
   type t =
-    { usage : float Incr.t Hand_finger.Map.t
-    ; sfbs : float Incr.t Hand_finger.Map.t
-    ; sfss : float Incr.t Hand_finger.Map.t
-    ; speed : float Incr.t Hand_finger.Map.t
-    ; inrowlls : float Incr.t Hand.Map.t
-    ; outrowlls : float Incr.t Hand.Map.t
-    ; scissors : float Incr.t
-    ; lsb : float Incr.t
-    ; termi : float Incr.t
-    ; slaps : float Incr.t
-    ; badredirs : float Incr.t
-    ; badtrills : float Incr.t
-    ; layer_transitions : float Incr.t
-    ; layer_trigger_s129 : float Incr.t
+    { usage : float Incr.t Hand_finger.Map.t (* finger usage*)
+    ; sfb : float Incr.t Hand_finger.Map.t (* same finger bigram *)
+    ; shb : float Incr.t Hand.Map.t (* same hand bigram *)
+    ; sfs : float Incr.t Hand_finger.Map.t (* same finger skipgram *)
+    ; shs : float Incr.t Hand.Map.t (* same hand skipgram *)
+    ; speed : float Incr.t Hand_finger.Map.t (* finger speed *)
+    ; fsb : float Incr.t Hand_finger2.Map.t (* full scissor bigram *)
+    ; hsb : float Incr.t Hand_finger2.Map.t (* half scissor bigram *)
+    ; fss : float Incr.t Hand_finger2.Map.t (* full scissor skipgram *)
+    ; hss : float Incr.t Hand_finger2.Map.t (* half scissor skipgram *)
+    ; lsb : float Incr.t Hand_finger2.Map.t (* lateral stretch bigram *)
+    ; lss : float Incr.t Hand_finger2.Map.t (* lateral scretch skipgram *)
+    ; srb : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
     }
   [@@deriving sexp_of]
 
   let s29 = Hashtbl.create (module String)
 
-  let preferred_rowchange_slope_dir f1 f2 =
-    match f1, f2 with
-    | `P, `R | `R, `P -> Some 1
-    | `P, `M | `M, `P -> Some 1
-    | `P, `I | `I, `P -> Some (-1)
-    | `R, `M | `M, `R -> Some 1
-    | `R, `I | `I, `R -> Some (-1)
-    | `M, `I | `I, `M -> Some (-1)
-    | (_ : Finger.t), (_ : Finger.t) -> None
-  ;;
-
-  let finger_dist f1 f2 =
-    match f1, f2 with
-    | `P, `R | `R, `P -> Some 1.
-    | `P, `M | `M, `P -> Some 2.
-    | `P, `I | `I, `P -> Some 3.
-    | `R, `M | `M, `R -> Some 1.
-    | `R, `I | `I, `R -> Some 2.
-    | `M, `I | `I, `M -> Some 1.
-    | (_ : Finger.t), (_ : Finger.t) -> None
-  ;;
+  (* let finger_dist f1 f2 =
+     match f1, f2 with
+     | `P, `R | `R, `P -> Some 1.
+     | `P, `M | `M, `P -> Some 2.
+     | `P, `I | `I, `P -> Some 3.
+     | `R, `M | `M, `R -> Some 1.
+     | `R, `I | `I, `R -> Some 2.
+     | `M, `I | `I, `M -> Some 1.
+     | (_ : Finger.t), (_ : Finger.t) -> None
+     ;; *)
 
   let make (layout_ : Layout.t) (corpus : Corpus.t) =
-    let layout = Array.map layout_.keys ~f:(fun (key, var) -> key, Incr.Var.watch var) in
-    let ( usage
-        , ( sfbs
-          , sfss
-          , speed
-          , inrowlls
-          , outrowlls
-          , scissors
-          , lsb
-          , termi
-          , slaps
-          , layer_transitions
-          , layer_trigger_s129
-          , (badredirs, badtrills) ) )
-      =
-      let init =
-        let usage = Hand_finger.Map.empty in
-        let bigram_stats =
-          let sfbs = Hand_finger.Map.empty in
-          let sfss = Hand_finger.Map.empty in
-          let speed = Hand_finger.Map.empty in
-          let inrowlls = Hand.Map.empty in
-          let outrowlls = Hand.Map.empty in
-          let scissors = [] in
-          let lsb = [] in
-          let termi = [] in
-          let slaps = [] in
-          let layer_transitions = [] in
-          let layer_trigger_s129 = [] in
-          let trigram_stats =
-            let badredirs = [] in
-            let badtrills = [] in
-            badredirs, badtrills
+    let module M = struct
+      type t =
+        { usage : float Incr.t list Hand_finger.Table.t
+        ; sfb : float Incr.t list Hand_finger.Table.t
+        ; shb : float Incr.t list Hand.Table.t
+        ; sfs : float Incr.t list Hand_finger.Table.t
+        ; shs : float Incr.t list Hand.Table.t
+        ; speed : float Incr.t list Hand_finger.Table.t
+        ; fsb : float Incr.t list Hand_finger2.Table.t
+        ; hsb : float Incr.t list Hand_finger2.Table.t
+        ; fss : float Incr.t list Hand_finger2.Table.t
+        ; hss : float Incr.t list Hand_finger2.Table.t
+        ; lsb : float Incr.t list Hand_finger2.Table.t
+        ; lss : float Incr.t list Hand_finger2.Table.t
+        ; srb : float Incr.t list Hand_finger2.Table.t
+        }
+
+      let empty () =
+        { usage = Hand_finger.Table.create ()
+        ; sfb = Hand_finger.Table.create ()
+        ; shb = Hand.Table.create ()
+        ; sfs = Hand_finger.Table.create ()
+        ; shs = Hand.Table.create ()
+        ; speed = Hand_finger.Table.create ()
+        ; fsb = Hand_finger2.Table.create ()
+        ; hsb = Hand_finger2.Table.create ()
+        ; fss = Hand_finger2.Table.create ()
+        ; hss = Hand_finger2.Table.create ()
+        ; lsb = Hand_finger2.Table.create ()
+        ; lss = Hand_finger2.Table.create ()
+        ; srb = Hand_finger2.Table.create ()
+        }
+      ;;
+
+      let v =
+        let layout =
+          Array.map layout_.keys ~f:(fun (key, var) -> key, Incr.Var.watch var)
+        in
+        let acc = empty () in
+        Array.iteri layout ~f:(fun i (k1, var1) ->
+          let _l1, o1 = Layout.layer_offset layout_ i in
+          let ((h1, f1) as hf1) = Key.hand_finger k1 in
+          let monogram = Incr.map var1 ~f:(fun v1 -> v1.code) in
+          let freq_mono =
+            Incr.map monogram ~f:(Corpus.Lookup.freq1 ~data:corpus.singles)
           in
-          ( sfbs
-          , sfss
-          , speed
-          , inrowlls
-          , outrowlls
-          , scissors
-          , lsb
-          , termi
-          , slaps
-          , layer_transitions
-          , layer_trigger_s129
-          , trigram_stats )
-        in
-        usage, bigram_stats
-      in
-      Array.foldi layout ~init ~f:(fun i (usage, bigrams_stats) (k1, var1) ->
-        let _l1, o1 = Layout.layer_offset layout_ i in
-        let hf1 = Key.hand_finger k1 in
-        let monogram = Incr.map var1 ~f:(fun v1 -> v1.code) in
-        let freq_mono = Incr.map monogram ~f:(Corpus.Lookup.freq1 ~data:corpus.singles) in
-        let usage =
-          Map.update usage hf1 ~f:(function
-            | None -> [ freq_mono ]
-            | Some freq -> freq_mono :: freq)
-        in
-        let bigrams_stats =
-          Array.foldi
-            layout
-            ~init:bigrams_stats
-            ~f:
-              (fun
-                j
-                ( sfbs
-                , sfss
-                , speed
-                , inrowlls
-                , outrowlls
-                , scissors
-                , lsb
-                , termi
-                , slaps
-                , layer_transitions
-                , layer_trigger_s129
-                , trigram_stats )
-                (k2, var2)
-              ->
-              let _l2, o2 = Layout.layer_offset layout_ j in
-              let hf2 = Key.hand_finger k2 in
-              let slope = (k2.y -. k1.y) /. (k2.x -. k1.x) in
-              let dist = Float.sqrt (((k1.y -. k2.y) ** 2.) +. ((k1.x -. k2.x) ** 2.)) in
-              let dist' =
-                Float.sqrt
-                  (((k1.y -. k2.y) ** 2.)
-                   +. ((k1.x
-                        -. k2.x
-                        -. (finger_dist k1.finger k2.finger |> Option.value ~default:0.))
-                       ** 2.))
-              in
-              let bigram =
-                Incr.both var1 var2 |> Incr.map ~f:(fun (v1, v2) -> v1.code, v2.code)
-              in
-              let freq_s1 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s1) in
-              let freq_s29 =
-                Incr.map bigram ~f:(fun ((c1, c2) as bigram) ->
-                  let bigram' = Code.to_string c1 ^ Code.to_string c2 in
-                  Hashtbl.find_or_add s29 bigram' ~default:(fun () ->
-                    [ Corpus.Lookup.freq2 bigram ~data:corpus.s2
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s3
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s4
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s5
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s6
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s7
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s8
-                    ; Corpus.Lookup.freq2 bigram ~data:corpus.s9
-                    ]
-                    |> List.foldi ~init:0. ~f:(fun i acc sn ->
-                      acc +. (sn /. Float.exp (Float.of_int (i + 1))))))
-              in
-              let freq_s129 = Incr.map2 freq_s1 freq_s29 ~f:(fun s1 s29 -> s1 +. s29) in
-              let sfbs =
-                if Hand_finger.Infix.(hf1 = hf2) && o1 <> o2
-                then
-                  Map.update sfbs hf1 ~f:(function
-                    | None -> [ freq_s1 ]
-                    | Some freqs -> freq_s1 :: freqs)
-                else sfbs
-              in
-              let sfss =
-                if Hand_finger.Infix.(hf1 = hf2) && o1 <> o2
-                then
-                  Map.update sfss hf1 ~f:(function
-                    | None -> [ freq_s29 ]
-                    | Some freqs -> freq_s29 :: freqs)
-                else sfss
-              in
-              let speed =
-                if Hand_finger.Infix.(hf1 = hf2) && o1 <> o2
-                then (
-                  let speed' =
-                    Incr.map freq_s129 ~f:(fun freq_s129 -> dist *. freq_s129)
+          let (* usage *) () =
+            Hashtbl.update acc.usage hf1 ~f:(function
+              | None -> [ freq_mono ]
+              | Some freq -> freq_mono :: freq)
+          in
+          (* bigram stats *)
+          Array.iteri layout ~f:(fun j (k2, var2) ->
+            let _l2, o2 = Layout.layer_offset layout_ j in
+            let h2, f2 = Key.hand_finger k2 in
+            let dx = k2.x -. k1.x in
+            let dy = k2.y -. k2.y in
+            let dist = Float.sqrt ((dy ** 2.) +. (dx ** 2.)) in
+            let bigram =
+              Incr.both var1 var2 |> Incr.map ~f:(fun (v1, v2) -> v1.code, v2.code)
+            in
+            let freq_s1 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s1) in
+            let freq_s29 =
+              Incr.map bigram ~f:(fun ((c1, c2) as bigram) ->
+                let bigram' = Code.to_string c1 ^ Code.to_string c2 in
+                Hashtbl.find_or_add s29 bigram' ~default:(fun () ->
+                  [ Corpus.Lookup.freq2 bigram ~data:corpus.s2
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s3
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s4
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s5
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s6
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s7
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s8
+                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s9
+                  ]
+                  |> List.foldi ~init:0. ~f:(fun i acc sn ->
+                    acc +. (sn /. Float.exp (Float.of_int (i + 1))))))
+            in
+            let freq_s129 = Incr.map2 freq_s1 freq_s29 ~f:(fun s1 s29 -> s1 +. s29) in
+            if Hand.Infix.(h1 = h2)
+            then (
+              (* shb *)
+              Hashtbl.update acc.shb h1 ~f:(function
+                | None -> [ freq_s1 ]
+                | Some freqs -> freq_s1 :: freqs);
+              (* shs *)
+              Hashtbl.update acc.shs h1 ~f:(function
+                | None -> [ freq_s29 ]
+                | Some freqs -> freq_s29 :: freqs);
+              (* same finger *)
+              if o1 = o2
+              then ()
+              else if Finger.Infix.(f1 = f2)
+              then (
+                (* sfb *)
+                Hashtbl.update acc.sfb hf1 ~f:(function
+                  | None -> [ freq_s1 ]
+                  | Some freqs -> freq_s1 :: freqs);
+                (* sfs *)
+                Hashtbl.update acc.sfs hf1 ~f:(function
+                  | None -> [ freq_s29 ]
+                  | Some freqs -> freq_s29 :: freqs);
+                (* speed *)
+                let speed = Incr.map freq_s129 ~f:(fun freq_s129 -> dist *. freq_s129) in
+                Hashtbl.update acc.speed hf1 ~f:(function
+                  | None -> [ speed ]
+                  | Some speeds -> speed :: speeds))
+              else (
+                match f1, f2 with
+                | `T, _ | _, `T -> ()
+                | _, _ ->
+                  let fs () =
+                    (* fsb *)
+                    Hashtbl.update acc.fsb (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s1 ]
+                      | Some fsb -> freq_s1 :: fsb);
+                    (* fss *)
+                    Hashtbl.update acc.fss (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s29 ]
+                      | Some fss -> freq_s29 :: fss)
                   in
-                  Map.update speed hf1 ~f:(function
-                    | None -> [ speed' ]
-                    | Some speeds -> speed' :: speeds))
-                else speed
-              in
-              let inrowlls =
-                if Hand.equal k1.hand k2.hand
-                   && k1.row = k2.row
-                   && Finger.to_int k1.finger < Finger.to_int k2.finger
-                then
-                  Map.update inrowlls k1.hand ~f:(function
-                    | None -> [ freq_s129 ]
-                    | Some freqs -> freq_s129 :: freqs)
-                else inrowlls
-              in
-              let outrowlls =
-                if Hand.equal k1.hand k2.hand
-                   && k1.row = k2.row
-                   && Finger.to_int k1.finger > Finger.to_int k2.finger
-                then
-                  Map.update outrowlls k1.hand ~f:(function
-                    | None -> [ freq_s129 ]
-                    | Some freqs -> freq_s129 :: freqs)
-                else outrowlls
-              in
-              let slaps =
-                if Hand_finger.adjacent_no_thumb hf1 hf2
-                   && Float.equal dist 1.
-                   && k1.layer = k2.layer
-                   && k1.row = k2.row
-                then
-                  Incr.map2 bigram freq_s129 ~f:(fun (c1, c2) v ->
-                    match k1.finger, k2.finger with
-                    | `P, `R | `R, `P | `R, `M | `M, `R ->
-                      (match
-                         Code.to_string c1 ^ Code.to_string c2 |> String.lowercase
-                       with
-                       | "mo"
-                       | "om"
-                       | "ar"
-                       | "ra"
-                       | "ec"
-                       | "ce"
-                       | "is"
-                       | "si"
-                       | "ey"
-                       | "ye"
-                       | "el"
-                       | "le"
-                       | "et"
-                       | "te"
-                       | "il"
-                       | "li"
-                       | "aw"
-                       | "wa"
-                       | "ta"
-                       | "at"
-                       | "de"
-                       | "ed"
-                       | "iv"
-                       | "vi"
-                       | "ag"
-                       | "ga"
-                       | "di"
-                       | "id"
-                       | "es"
-                       | "se"
-                       | "em"
-                       | "me"
-                       | "en"
-                       | "ne"
-                       | "it"
-                       | "ti"
-                       | "ni"
-                       | "in"
-                       | "ev"
-                       | "ve"
-                       | "er"
-                       | "re" -> 0.
-                       | _ -> dist *. v)
-                    | _ -> dist *. v)
-                  :: slaps
-                else slaps
-              in
-              let scissors =
-                if Hand.Infix.(k1.hand = k2.hand)
-                   && (not (Float.equal slope Float.zero))
-                   && o1 <> o2
-                then (
-                  match preferred_rowchange_slope_dir k1.finger k2.finger with
-                  | None -> scissors
-                  | Some preferred_slope_dir ->
-                    let preferred_slope_dir =
-                      preferred_slope_dir * if Hand.equal k1.hand `L then 1 else -1
-                    in
-                    let slope_dir = Float.abs slope /. slope in
-                    if Float.is_nan slope_dir
-                    then scissors
-                    else (
-                      let slope_dir = slope_dir |> Float.to_int in
-                      match slope_dir = preferred_slope_dir with
-                      | true ->
-                        (match k1.finger, k2.finger with
-                         | `P, `R | `R, `P ->
-                           if Int.abs (k1.row - k2.row) > 1
-                           then
-                             Incr.map freq_s129 ~f:(fun freq_s129 -> freq_s129 *. dist')
-                             :: scissors
-                           else scissors
-                         | _ -> scissors)
-                      | false ->
-                        Incr.map freq_s129 ~f:(fun freq_s129 -> freq_s129 *. dist')
-                        :: scissors))
-                else scissors
-              in
-              let lsb =
-                if Hand_finger.adjacent_no_thumb hf1 hf2 && not (Float.equal dist 1.)
-                then
-                  Incr.map freq_s129 ~f:(fun v -> (Float.abs (dist -. 1.) +. 1.) *. v)
-                  :: lsb
-                else lsb
-              in
-              let termi =
-                if Hand.equal k1.hand k2.hand
-                   && (not (Finger.equal k1.finger k2.finger))
-                   && Finger.equal k2.finger `I
-                then freq_s129 :: termi
-                else termi
-              in
-              let layer_transitions =
-                if k1.layer <> k2.layer
-                then freq_s129 :: layer_transitions
-                else layer_transitions
-              in
-              let layer_trigger_s129 =
-                match k1.layer_trigger, k2.layer_trigger with
-                | None, None -> layer_trigger_s129
-                | None, Some k2lti ->
-                  let k2lt, _incr = layout.(k2lti) in
-                  if Hand_finger.equal (Key.hand_finger k1) (Key.hand_finger k2lt)
+                  let hs () =
+                    (* hsb *)
+                    Hashtbl.update acc.hsb (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s1 ]
+                      | Some hsb -> freq_s1 :: hsb);
+                    (* hss *)
+                    Hashtbl.update acc.hss (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s29 ]
+                      | Some hss -> freq_s29 :: hss)
+                  in
+                  let is_ls = Finger.adjacent f1 f2 && Float.( > ) (Float.abs dx) 1.5 in
+                  let is_inner (k : Key.t) = k.col = 5 || k.col = 6 in
+                  let is_left =
+                    match k1.hand with
+                    | `L -> true
+                    | `R -> false
+                  in
+                  (* lateral stretch *)
+                  if is_ls
                   then (
-                    let dist =
-                      Float.sqrt (((k1.y -. k2lt.y) ** 2.) +. ((k1.x -. k2lt.x) ** 2.))
-                    in
-                    Incr.map freq_s129 ~f:(fun freq_129 -> freq_129 *. dist)
-                    :: layer_trigger_s129)
-                  else layer_trigger_s129
-                | Some k1lti, None ->
-                  let k1lt, _incr = layout.(k1lti) in
-                  if Hand_finger.equal (Key.hand_finger k1lt) (Key.hand_finger k2)
-                  then (
-                    let dist =
-                      Float.sqrt (((k1lt.y -. k2.y) ** 2.) +. ((k1lt.x -. k2.x) ** 2.))
-                    in
-                    Incr.map freq_s129 ~f:(fun freq_129 -> freq_129 *. dist)
-                    :: layer_trigger_s129)
-                  else layer_trigger_s129
-                | Some k1lti, Some k2lti ->
-                  let res1 =
-                    let k1lt, _incr = layout.(k1lti) in
-                    if Hand_finger.equal (Key.hand_finger k1lt) (Key.hand_finger k2)
-                    then (
-                      let dist =
-                        Float.sqrt (((k1lt.y -. k2.y) ** 2.) +. ((k1lt.x -. k2.x) ** 2.))
-                      in
-                      Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
-                        (freq_1 +. freq_29) *. dist)
-                      :: [])
-                    else []
-                  in
-                  let res2 =
-                    let k2lt, _incr = layout.(k2lti) in
-                    if Hand_finger.equal (Key.hand_finger k1) (Key.hand_finger k2lt)
-                    then (
-                      let dist =
-                        Float.sqrt (((k1.y -. k2lt.y) ** 2.) +. ((k1.x -. k2lt.x) ** 2.))
-                      in
-                      Incr.map2 freq_s1 freq_s29 ~f:(fun freq_1 freq_29 ->
-                        (freq_1 +. freq_29) *. dist)
-                      :: [])
-                    else []
-                  in
-                  res1 @ res2 @ layer_trigger_s129
-              in
-              let trigram_stats =
-                Array.foldi
-                  layout
-                  ~init:trigram_stats
-                  ~f:(fun k (badredirs, badtrills) (k3, var3) ->
-                    let _l3, _o3 = Layout.layer_offset layout_ k in
-                    let _hf3 = Key.hand_finger k3 in
-                    let _slope2 = (k3.y -. k2.y) /. (k3.x -. k2.x) in
-                    let _dist2 =
-                      Float.sqrt (((k2.y -. k3.y) ** 2.) +. ((k2.x -. k3.x) ** 2.))
-                    in
-                    let _dist'2 =
-                      Float.sqrt
-                        (((k2.y -. k3.y) ** 2.)
-                         +. ((k2.x
-                              -. k3.x
-                              -. (finger_dist k2.finger k3.finger
-                                  |> Option.value ~default:0.))
-                             ** 2.))
-                    in
-                    let trigram =
-                      Incr.both bigram var3
-                      |> Incr.map ~f:(fun ((c1, c2), v3) -> c1, c2, v3.code)
-                    in
-                    let freq_tri =
-                      Incr.map trigram ~f:(Corpus.Lookup.freq3 ~data:corpus.triples)
-                    in
-                    let badredirs =
-                      if Hand.equal k1.hand k2.hand
-                         && Hand.equal k2.hand k3.hand
-                         &&
-                         match k1.finger, k2.finger, k3.finger with
-                         | `P, `M, `R | `R, `P, `M | `R, `M, `P | `M, `P, `R -> true
-                         | _, _, _ -> false
-                      then freq_tri :: badredirs
-                      else badredirs
-                    in
-                    let badtrills =
-                      if Hand.equal k1.hand k2.hand
-                         && Hand.equal k2.hand k3.hand
-                         &&
-                         match k1.finger, k2.finger, k3.finger with
-                         | `R, `M, `R | `M, `R, `M | `R, `P, `R | `P, `R, `P -> true
-                         | _, _, _ -> false
-                      then freq_tri :: badtrills
-                      else badtrills
-                    in
-                    badredirs, badtrills)
-              in
-              ( sfbs
-              , sfss
-              , speed
-              , inrowlls
-              , outrowlls
-              , scissors
-              , lsb
-              , termi
-              , slaps
-              , layer_transitions
-              , layer_trigger_s129
-              , trigram_stats ))
-        in
-        usage, bigrams_stats)
+                    (* lsb *)
+                    Hashtbl.update acc.lsb (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s1 ]
+                      | Some lsb -> freq_s1 :: lsb);
+                    (* lss *)
+                    Hashtbl.update acc.lss (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s29 ]
+                      | Some lss -> freq_s29 :: lss));
+                  (* scissors *)
+                  (match f1, f2 with
+                   | `P, `P | `R, `R | `M, `M | `I, `I | `T, _ | _, `T -> ()
+                   | `P, `R ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> ()
+                      | 0 -> ()
+                      | 1 -> hs ()
+                      | 2 -> fs ()
+                      | _ -> ())
+                   | `P, `M ->
+                     (match k1.row - k2.row with
+                      | -2 -> hs ()
+                      | -1 -> ()
+                      | 0 -> ()
+                      | 1 -> hs ()
+                      | 2 -> fs ()
+                      | _ -> ())
+                   | `P, `I ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> ()
+                      | 0 -> ()
+                      | 1 -> ()
+                      | 2 -> ()
+                      | _ -> ())
+                   | `R, `P ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> hs ()
+                      | 0 -> ()
+                      | 1 -> ()
+                      | 2 -> fs ()
+                      | _ -> ())
+                   | `R, `M ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> hs ()
+                      | 0 -> ()
+                      | 1 -> if is_left then if k2.row = 0 then fs () else hs () else ()
+                      | 2 -> if is_left then if k2.row = 0 then fs () else hs () else ()
+                      | _ -> ())
+                   | `R, `I ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> (if is_inner k2 then fs else hs) ()
+                      | 0 -> ()
+                      | 1 ->
+                        if is_left
+                        then
+                          if is_inner k2 then if k2.row = 0 then fs () else hs () else ()
+                        else ()
+                      | 2 ->
+                        if is_left
+                        then
+                          if is_inner k2
+                          then if k2.row = 0 then fs () else hs ()
+                          else hs ()
+                        else ()
+                      | _ -> ())
+                   | `M, `P ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> hs ()
+                      | 0 -> ()
+                      | 1 -> ()
+                      | 2 -> hs ()
+                      | _ -> ())
+                   | `M, `R ->
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 -> hs ()
+                      | 0 -> ()
+                      | 1 -> if is_left then if k2.row = 0 then fs () else hs () else ()
+                      | 2 -> if is_left then if k2.row = 0 then fs () else hs () else ()
+                      | _ -> ())
+                   | `M, `I ->
+                     if Hand.equal h1 `L && k1.col - k2.col > 0 then fs ();
+                     (match k1.row - k2.row with
+                      | -2 -> fs ()
+                      | -1 ->
+                        (match h1 with
+                         | `L -> (if is_ls then fs else hs) ()
+                         | `R -> if is_ls then fs ())
+                      | 0 -> ()
+                      | 1 -> if Hand.equal h1 `L then if is_ls then hs ()
+                      | 2 -> if Hand.equal h1 `L then (if is_ls then fs else hs) ()
+                      | _ -> ())
+                   | `I, `P ->
+                     (match k1.row - k2.row with
+                      | -2 -> ()
+                      | -1 -> ()
+                      | 0 -> ()
+                      | 1 -> hs ()
+                      | 2 -> fs ()
+                      | _ -> ())
+                   | `I, `R ->
+                     (match k1.row - k2.row with
+                      | -2 ->
+                        if is_left
+                        then
+                          if is_inner k1 then if k1.row = 0 then fs () else hs () else ()
+                        else ()
+                      | -1 ->
+                        if is_left
+                        then
+                          if is_inner k1 then if k1.row = 0 then fs () else hs () else ()
+                        else ()
+                      | 0 -> ()
+                      | 1 -> (if is_inner k1 then fs else hs) ()
+                      | 2 -> fs ()
+                      | _ -> ())
+                   | `I, `M ->
+                     if Hand.equal h1 `L && k1.col - k2.col < 0 then fs ();
+                     (match k1.row - k2.row with
+                      | -2 -> if Hand.equal h1 `L then (if is_ls then fs else hs) ()
+                      | -1 -> if Hand.equal h1 `L then if is_ls then hs ()
+                      | 0 -> ()
+                      | 1 ->
+                        (match h1 with
+                         | `L -> (if is_ls then fs else hs) ()
+                         | `R -> if is_ls then fs ())
+                      | 2 -> fs ()
+                      | _ -> ()));
+                  (* srb*)
+                  if k1.row = k2.row && not is_ls
+                  then
+                    Hashtbl.update acc.srb (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s1 ]
+                      | Some srb -> freq_s1 :: srb)))));
+        acc
+      ;;
+    end
     in
-    let f _name x =
-      (* Array.length x |> printf "%s: %d\n%!" name; *)
-      x
+    let f of_alist_exn data =
+      of_alist_exn (Hashtbl.to_alist data)
+      |> Map.map ~f:(fun lst -> Array.of_list lst |> Incr.sum_float)
     in
-    let usage =
-      Map.map usage ~f:(fun lst -> lst |> Array.of_list |> f "usage" |> Incr.sum_float)
-    in
-    let sfbs =
-      Map.map sfbs ~f:(fun lst -> lst |> Array.of_list |> f "sfbs" |> Incr.sum_float)
-    in
-    let sfss =
-      Map.map sfss ~f:(fun lst -> lst |> Array.of_list |> f "sfs" |> Incr.sum_float)
-    in
-    let speed =
-      Map.map speed ~f:(fun lst -> lst |> Array.of_list |> f "speed" |> Incr.sum_float)
-    in
-    let inrowlls =
-      Map.map inrowlls ~f:(fun lst ->
-        lst |> Array.of_list |> f "inrowlls" |> Incr.sum_float)
-    in
-    let outrowlls =
-      Map.map outrowlls ~f:(fun lst ->
-        lst |> Array.of_list |> f "outrolls" |> Incr.sum_float)
-    in
-    let scissors = scissors |> Array.of_list |> f "scissors" |> Incr.sum_float in
-    let lsb = lsb |> Array.of_list |> f "lsb" |> Incr.sum_float in
-    let termi = termi |> Array.of_list |> f "termi" |> Incr.sum_float in
-    let slaps = slaps |> Array.of_list |> f "slaps" |> Incr.sum_float in
-    let layer_transitions =
-      layer_transitions |> Array.of_list |> f "layer_transitions" |> Incr.sum_float
-    in
-    let layer_trigger_s129 =
-      layer_trigger_s129 |> Array.of_list |> f "layer_triggers" |> Incr.sum_float
-    in
-    let badredirs = badredirs |> Array.of_list |> f "badredirs" |> Incr.sum_float in
-    let badtrills = badtrills |> Array.of_list |> f "badtrills" |> Incr.sum_float in
-    { usage
-    ; sfbs
-    ; sfss
-    ; inrowlls
-    ; speed
-    ; outrowlls
-    ; scissors
-    ; lsb
-    ; termi
-    ; slaps
-    ; layer_transitions
-    ; layer_trigger_s129
-    ; badredirs
-    ; badtrills
+    let hand_finger = f Hand_finger.Map.of_alist_exn in
+    let hand_finger2 = f Hand_finger2.Map.of_alist_exn in
+    let hand = f Hand.Map.of_alist_exn in
+    { usage = hand_finger M.v.usage
+    ; sfb = hand_finger M.v.sfb
+    ; shb = hand M.v.shb
+    ; sfs = hand_finger M.v.sfs
+    ; shs = hand M.v.shs
+    ; speed = hand_finger M.v.speed
+    ; fsb = hand_finger2 M.v.fsb
+    ; hsb = hand_finger2 M.v.hsb
+    ; fss = hand_finger2 M.v.fss
+    ; hss = hand_finger2 M.v.hss
+    ; lsb = hand_finger2 M.v.lsb
+    ; lss = hand_finger2 M.v.lss
+    ; srb = hand_finger2 M.v.srb
     }
   ;;
 
   let pretty_string
-    { usage
-    ; sfbs
-    ; sfss
-    ; inrowlls
-    ; speed
-    ; outrowlls
-    ; scissors
-    ; lsb
-    ; termi
-    ; slaps
-    ; layer_transitions
-    ; layer_trigger_s129
-    ; badredirs
-    ; badtrills
-    }
+    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb }
     =
     let map stat of_alist_exn =
       stat
@@ -510,19 +355,18 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
       |> Incr.map ~f:of_alist_exn
     in
     let%map_open.Incr usage = map usage Hand_finger.Map.of_alist_exn
-    and sfbs = map sfbs Hand_finger.Map.of_alist_exn
-    and sfss = map sfss Hand_finger.Map.of_alist_exn
-    and inrowlls = map inrowlls Hand.Map.of_alist_exn
+    and sfb = map sfb Hand_finger.Map.of_alist_exn
+    and shb = map shb Hand.Map.of_alist_exn
+    and sfs = map sfs Hand_finger.Map.of_alist_exn
+    and shs = map shs Hand.Map.of_alist_exn
     and speed = map speed Hand_finger.Map.of_alist_exn
-    and outrowlls = map outrowlls Hand.Map.of_alist_exn
-    and scissors = scissors
-    and lsb = lsb
-    and termi = termi
-    and slaps = slaps
-    and layer_transitions = layer_transitions
-    and layer_trigger_s129 = layer_trigger_s129
-    and badredirs = badredirs
-    and badtrills = badtrills in
+    and fsb = map fsb Hand_finger2.Map.of_alist_exn
+    and hsb = map hsb Hand_finger2.Map.of_alist_exn
+    and fss = map fss Hand_finger2.Map.of_alist_exn
+    and hss = map hss Hand_finger2.Map.of_alist_exn
+    and lsb = map lsb Hand_finger2.Map.of_alist_exn
+    and lss = map lss Hand_finger2.Map.of_alist_exn
+    and srb = map srb Hand_finger2.Map.of_alist_exn in
     let module T = Text_block in
     let table data ~to_string ~all =
       let cols =
@@ -547,7 +391,7 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
       let (`Rows rows) = T.table (`Cols cols) in
       T.vcat rows
     in
-    let simple data =
+    let _simple data =
       let data =
         List.map data ~f:(fun (name, total) -> name, (String.Map.empty, total))
       in
@@ -559,8 +403,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
       table
         ~all:Hand_finger.all
         ~to_string:Hand_finger.to_string
-        [ map_row "sfb" sfbs
-        ; map_row "sfs" sfss
+        [ map_row "sfb" sfb
+        ; map_row "sfs" sfs
         ; map_row "speed" speed
         ; map_row "usage" usage
         ]
@@ -569,22 +413,23 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
       table
         ~all:Hand.all
         ~to_string:Hand.to_string
-        [ map_row "inrowlls" inrowlls; map_row "outrowlls" outrowlls ]
+        [ map_row "shb" shb; map_row "shs" shs ]
     in
-    let simple_table =
-      simple
-        [ "scissors", scissors
-        ; "lsb", lsb
-        ; "termi", termi
-        ; "slaps", slaps
-        ; "layer_transitions", layer_transitions
-        ; "layer_trigger_s129", layer_trigger_s129
-        ; "badredirs", badredirs
-        ; "badtrills", badtrills
+    let hf2_table =
+      table
+        ~all:Hand_finger2.all
+        ~to_string:Hand_finger2.to_string
+        [ map_row "fsb" fsb
+        ; map_row "hsb" hsb
+        ; map_row "fss" fss
+        ; map_row "hss" hss
+        ; map_row "lsb" lsb
+        ; map_row "lss" lss
+        ; map_row "srb" srb
         ]
     in
     let sections =
-      [ "hand-finger", hf_table; "hand", hand_table; "simple", simple_table ]
+      [ "hand-finger", hf_table; "hand", hand_table; "hand-finger2", hf2_table ]
     in
     let t =
       sections

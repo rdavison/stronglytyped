@@ -19,36 +19,34 @@ module Make
   type t =
     { usage : info option
     ; sfb : info option
+    ; shb : info option
     ; sfs : info option
+    ; shs : info option
     ; speed : info option
-    ; inrowlls : info option
-    ; outrowlls : info option
-    ; scissors : info option
+    ; fsb : info option
+    ; hsb : info option
+    ; fss : info option
+    ; hss : info option
     ; lsb : info option
-    ; termi : info option
-    ; slaps : info option
-    ; badredirs : info option
-    ; badtrills : info option
-    ; layer_transitions : info option
-    ; layer_trigger_s129 : info option
+    ; lss : info option
+    ; srb : info option
     }
   [@@deriving sexp_of]
 
   let make
     ?usage
     ?sfb
+    ?shb
     ?sfs
+    ?shs
     ?speed
-    ?inrowlls
-    ?outrowlls
-    ?scissors
+    ?fsb
+    ?hsb
+    ?fss
+    ?hss
     ?lsb
-    ?termi
-    ?slaps
-    ?badredirs
-    ?badtrills
-    ?layer_transitions
-    ?layer_trigger_s129
+    ?lss
+    ?srb
     (stats : Stats.t)
     =
     let map param stat of_alist_exn =
@@ -62,63 +60,31 @@ module Make
         |> Incr.map ~f:of_alist_exn
         |> Incr.map ~f:(Fn.compose Option.some f)
     in
-    let simple param stat =
+    let _simple param stat =
       match param with
       | None -> Incr.return None
       | Some f -> Incr.map stat ~f:(Fn.compose Option.some f)
     in
     let%map_open.Incr usage = map usage stats.usage Hand_finger.Map.of_alist_exn
-    and sfb = map sfb stats.sfbs Hand_finger.Map.of_alist_exn
-    and sfs = map sfs stats.sfss Hand_finger.Map.of_alist_exn
+    and sfb = map sfb stats.sfb Hand_finger.Map.of_alist_exn
+    and shb = map shb stats.shb Hand.Map.of_alist_exn
+    and sfs = map sfs stats.sfs Hand_finger.Map.of_alist_exn
+    and shs = map shs stats.shs Hand.Map.of_alist_exn
     and speed = map speed stats.speed Hand_finger.Map.of_alist_exn
-    and inrowlls = map inrowlls stats.inrowlls Hand.Map.of_alist_exn
-    and outrowlls = map outrowlls stats.outrowlls Hand.Map.of_alist_exn
-    and scissors = simple scissors stats.scissors
-    and lsb = simple lsb stats.lsb
-    and termi = simple termi stats.termi
-    and slaps = simple slaps stats.slaps
-    and badredirs = simple badredirs stats.badredirs
-    and badtrills = simple badtrills stats.badtrills
-    and layer_transitions = simple layer_transitions stats.layer_transitions
-    and layer_trigger_s129 = simple layer_trigger_s129 stats.layer_trigger_s129 in
-    { usage
-    ; sfb
-    ; sfs
-    ; speed
-    ; inrowlls
-    ; outrowlls
-    ; scissors
-    ; lsb
-    ; termi
-    ; slaps
-    ; badredirs
-    ; badtrills
-    ; layer_transitions
-    ; layer_trigger_s129
-    }
+    and fsb = map fsb stats.fsb Hand_finger2.Map.of_alist_exn
+    and hsb = map hsb stats.hsb Hand_finger2.Map.of_alist_exn
+    and fss = map fss stats.fss Hand_finger2.Map.of_alist_exn
+    and hss = map hss stats.hss Hand_finger2.Map.of_alist_exn
+    and lsb = map lsb stats.lsb Hand_finger2.Map.of_alist_exn
+    and lss = map lss stats.lss Hand_finger2.Map.of_alist_exn
+    and srb = map srb stats.srb Hand_finger2.Map.of_alist_exn in
+    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb }
   ;;
 
   let default_config =
     make
       ~usage:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let weighted =
-          Map.fold map ~init:0. ~f:(fun ~key:(hand, finger) ~data:v acc ->
-            let w =
-              match hand, finger with
-              | `L, `P -> 1.1
-              | `L, `R -> 1.
-              | `L, `M -> 1.
-              | `L, `I -> 1.
-              | `L, `T -> 1.
-              | `R, `T -> 1.
-              | `R, `I -> 1.
-              | `R, `M -> 1.
-              | `R, `R -> 1.
-              | `R, `P -> 1.1
-            in
-            acc +. (v *. w))
-        in
         let final =
           let get hf = Map.find map hf |> Option.value ~default:0. in
           let f p a b =
@@ -126,58 +92,35 @@ module Make
             let b = get b in
             if p a b then 0. else Float.abs (a -. b)
           in
-          let lt a b = f Float.( < ) a b in
-          let gt a b = f Float.( > ) a b in
+          let lt_f a b = f Float.( < ) a b in
+          let lt_q a b =
+            let a = get a in
+            if Float.( < ) a b then 0. else 1. +. Float.abs (a -. b)
+          in
+          (* let gt a b = f Float.( > ) a b in *)
           let res =
-            [ lt (`L, `P) (`L, `R)
-            ; lt (`L, `R) (`L, `M)
-            ; gt (`L, `M) (`L, `I)
-            ; lt (`R, `P) (`R, `R)
-            ; lt (`R, `R) (`R, `M)
-            ; gt (`R, `M) (`R, `I)
-            ; lt (`L, `P) (`R, `R)
-            ; lt (`L, `R) (`R, `M)
-            ; gt (`L, `M) (`R, `I)
-            ; lt (`R, `P) (`L, `R)
-            ; lt (`R, `R) (`L, `M)
-            ; gt (`R, `M) (`L, `I)
+            [ lt_f (`L, `P) (`L, `R)
+            ; lt_f (`L, `P) (`L, `M)
+            ; lt_f (`L, `P) (`L, `I)
+            ; lt_f (`L, `R) (`L, `M)
+            ; lt_f (`L, `R) (`L, `I)
+            ; lt_f (`R, `P) (`R, `R)
+            ; lt_f (`R, `P) (`R, `M)
+            ; lt_f (`R, `P) (`R, `I)
+            ; lt_f (`R, `R) (`R, `M)
+            ; lt_f (`R, `R) (`R, `I)
+            ; lt_q (`L, `P) 0.08
+            ; lt_q (`R, `P) 0.08
+            ; lt_q (`L, `R) 0.1
+            ; lt_q (`R, `R) 0.1
+            ; lt_q (`L, `M) 0.11
             ]
           in
-          let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
-          Float.exp (mu *. weighted)
+          Float.exp (1. +. List.sum (module Float) res ~f:Fn.id)
         in
         { unweighted; weighted = final })
       ~sfb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let weighted =
-          Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc ->
-            acc +. (v *. if Float.( > ) v 0.00229 then 10. else 3.))
-        in
-        let final =
-          if Float.( > ) unweighted 0.013 then Float.exp (10. *. weighted) else weighted
-        in
-        { unweighted; weighted = final })
-      ?sfs:
-        (let _ =
-           fun map ->
-           let unweighted =
-             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
-           in
-           let weighted = unweighted in
-           { unweighted; weighted }
-         in
-         None)
-      ~speed:(fun map ->
-        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let weighted =
-          Map.fold map ~init:0. ~f:(fun ~key:(_hand, finger) ~data:v acc ->
-            let w =
-              match finger with
-              | `P -> if Float.( > ) v 0.0023 then 10. else 3.
-              | _ -> if Float.( > ) v 0.00872 then 10. else 3.
-            in
-            acc +. (v *. w))
-        in
         let final =
           let get hf = Map.find map hf |> Option.value ~default:0. in
           let f p a b =
@@ -185,112 +128,136 @@ module Make
             let b = get b in
             if p a b then 0. else Float.abs (a -. b)
           in
-          let lt a b = f Float.( < ) a b in
-          let gt a b = f Float.( > ) a b in
+          let lt_f a b = f Float.( < ) a b in
+          let lt_q (h, f) b =
+            let a = get (h, f) in
+            if Float.( < ) a b then 0. else 1. +. Float.abs (a -. b)
+          in
+          (* let gt a b = f Float.( > ) a b in *)
           let res =
-            [ lt (`L, `P) (`L, `R)
-            ; lt (`L, `R) (`L, `M)
-            ; gt (`L, `M) (`L, `I)
-            ; lt (`R, `P) (`R, `R)
-            ; lt (`R, `R) (`R, `M)
-            ; gt (`R, `M) (`R, `I)
-            ; lt (`L, `P) (`R, `R)
-            ; lt (`L, `R) (`R, `M)
-            ; gt (`L, `M) (`R, `I)
-            ; lt (`R, `P) (`L, `R)
-            ; lt (`R, `R) (`L, `M)
-            ; gt (`R, `M) (`L, `I)
+            [ lt_f (`L, `P) (`L, `R)
+            ; lt_f (`L, `P) (`L, `M)
+            ; lt_f (`L, `P) (`L, `I)
+            ; lt_q (`L, `M) 0.0022
+            ; lt_q (`L, `I) 0.0022
+            ; lt_q (`R, `I) 0.0022
+            ; lt_q (`R, `P) 0.0022
             ]
           in
-          let mu = 1. +. List.sum (module Float) res ~f:Fn.id in
-          Float.exp (2. *. mu *. weighted)
+          Float.exp ((1. +. List.sum (module Float) res ~f:Fn.id) *. 2.)
         in
         { unweighted; weighted = final })
-      ~inrowlls:(fun map ->
+      ~shb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let final = 1. -. unweighted in
+        let weighted = Float.exp (1. +. unweighted) in
+        { unweighted; weighted })
+      ~sfs:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let final =
+          let get hf = Map.find map hf |> Option.value ~default:0. in
+          let f p a b =
+            let a = get a in
+            let b = get b in
+            if p a b then 0. else Float.abs (a -. b)
+          in
+          let lt_f a b = f Float.( < ) a b in
+          let lt_q (h, f) b =
+            let a = get (h, f) in
+            if Float.( < ) a b then 0. else 1. +. Float.abs (a -. b)
+          in
+          (* let gt a b = f Float.( > ) a b in *)
+          let res =
+            [ lt_f (`L, `P) (`L, `R)
+            ; lt_f (`L, `P) (`L, `M)
+            ; lt_f (`L, `P) (`L, `I)
+            ; lt_q (`L, `P) 0.001
+            ; lt_q (`L, `R) 0.0021
+            ; lt_q (`L, `M) 0.0033
+            ; lt_q (`L, `I) 0.0093
+            ]
+          in
+          Float.exp (1. +. List.sum (module Float) res ~f:Fn.id)
+        in
         { unweighted; weighted = final })
-      ?outrowlls:
-        (let _ =
-           fun map ->
-           let unweighted =
-             Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v)
-           in
-           let final = 1. -. unweighted in
-           { unweighted; weighted = final }
-         in
-         None)
-      ~scissors:(fun unweighted ->
-        let weighted = 3. *. unweighted in
+      ~shs:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = Float.exp (1. +. (1. -. unweighted)) in
         { unweighted; weighted })
-      ~lsb:(fun unweighted ->
-        let weighted = 3. *. unweighted in
+      ~speed:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let final =
+          let get hf = Map.find map hf |> Option.value_exn in
+          let f p a b =
+            let a = get a in
+            let b = get b in
+            if p a b then 0. else Float.abs (a -. b)
+          in
+          let lt_f a b = f Float.( < ) a b in
+          let lt_q a b =
+            let a = get a in
+            if Float.( < ) a b then 0. else 1. +. Float.abs (a -. b)
+          in
+          (* let gt a b = f Float.( > ) a b in *)
+          let res =
+            [ lt_f (`L, `P) (`L, `R)
+            ; lt_f (`L, `R) (`L, `M)
+            ; lt_f (`L, `M) (`L, `I)
+            ; lt_f (`L, `P) (`R, `R)
+            ; lt_f (`L, `R) (`R, `M)
+            ; lt_f (`L, `M) (`R, `I)
+            ; lt_f (`R, `P) (`L, `R)
+            ; lt_f (`R, `R) (`L, `M)
+            ; lt_f (`R, `M) (`L, `I)
+            ; lt_f (`R, `P) (`R, `R)
+            ; lt_f (`R, `R) (`R, `M)
+            ; lt_f (`R, `M) (`R, `I)
+            ; lt_q (`L, `I) 0.50
+            ; lt_q (`R, `I) 0.50
+              (* ; lt_q (`L, `P) 0.0004
+                 ; lt_q (`L, `R) 0.0012
+                 ; lt_q (`L, `M) 0.0024
+                 ; lt_q (`L, `I) 0.0077 *)
+            ]
+          in
+          Float.exp (1. +. List.sum (module Float) res ~f:Fn.id)
+        in
+        { unweighted; weighted = final })
+      ~hsb:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = 2. *. Float.exp (1. +. unweighted) in
         { unweighted; weighted })
-      ~termi:(fun unweighted ->
-        let weighted = 3. *. (1. -. unweighted) in
+      ~hss:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = 1. *. Float.exp (1. +. unweighted) in
         { unweighted; weighted })
-      ~slaps:(fun unweighted ->
-        let weighted = 3. *. (1. -. unweighted) in
+      ~fsb:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = 4. *. Float.exp (1. +. unweighted) in
         { unweighted; weighted })
-      ~layer_transitions:(fun unweighted ->
-        let weighted = Float.exp (3. *. unweighted) in
+      ~fss:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = 3. *. Float.exp (1. +. unweighted) in
         { unweighted; weighted })
-      ~layer_trigger_s129:(fun unweighted ->
-        let weighted = Float.exp (3. *. unweighted) in
+      ~lsb:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = Float.exp (1. +. unweighted) in
         { unweighted; weighted })
-      ?badredirs:
-        (let _ =
-           fun unweighted ->
-           let weighted = 3000. *. unweighted in
-           { unweighted; weighted }
-         in
-         None)
-      ?badtrills:
-        (let _ =
-           fun unweighted ->
-           let weighted = 3000. *. unweighted in
-           { unweighted; weighted }
-         in
-         None)
+      ~lss:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = 0.5 *. Float.exp (1. +. unweighted) in
+        { unweighted; weighted })
+      ~srb:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = Float.exp (1. +. (1. -. unweighted)) in
+        { unweighted; weighted })
   ;;
 
   let final_sum (t : t Incr.t) =
     Incr.map
       t
-      ~f:
-        (fun
-          { usage
-          ; sfb
-          ; sfs
-          ; speed
-          ; inrowlls
-          ; outrowlls
-          ; scissors
-          ; lsb
-          ; termi
-          ; slaps
-          ; badredirs
-          ; badtrills
-          ; layer_transitions
-          ; layer_trigger_s129
-          }
-        ->
-        ignore sfs;
-        ignore outrowlls;
+      ~f:(fun { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb } ->
         let sum =
-          [ usage
-          ; speed
-          ; sfb
-          ; scissors
-          ; inrowlls
-          ; lsb
-          ; termi
-          ; slaps
-          ; badredirs
-          ; badtrills
-          ; layer_transitions
-          ; layer_trigger_s129
-          ]
+          [ usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb ]
           |> List.fold ~init:0. ~f:(fun acc info ->
             acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
         in
