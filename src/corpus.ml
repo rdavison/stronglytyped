@@ -1,17 +1,24 @@
 open! Import
 
+type 'a info =
+  { s1 : 'a String.Table.t * 'a
+  ; s2 : 'a String.Table.t * 'a
+  ; s3 : 'a String.Table.t * 'a
+  ; s4 : 'a String.Table.t * 'a
+  ; s5 : 'a String.Table.t * 'a
+  ; s6 : 'a String.Table.t * 'a
+  ; s7 : 'a String.Table.t * 'a
+  ; s8 : 'a String.Table.t * 'a
+  ; s9 : 'a String.Table.t * 'a
+  ; singles : 'a Char.Table.t * 'a
+  ; triples : 'a String.Table.t * 'a
+  ; words : 'a String.Table.t * 'a
+  }
+[@@deriving sexp]
+
 type t =
-  { s1 : float String.Table.t
-  ; s2 : float String.Table.t
-  ; s3 : float String.Table.t
-  ; s4 : float String.Table.t
-  ; s5 : float String.Table.t
-  ; s6 : float String.Table.t
-  ; s7 : float String.Table.t
-  ; s8 : float String.Table.t
-  ; s9 : float String.Table.t
-  ; singles : float Char.Table.t
-  ; triples : float String.Table.t
+  { freqs : float info
+  ; counts : Bignum.t info
   }
 [@@deriving sexp]
 
@@ -27,8 +34,14 @@ let load_corpus name =
 ;;
 
 let n tbl =
-  let total = List.sum (module Float) (Hashtbl.data tbl) ~f:Fn.id in
-  Hashtbl.map tbl ~f:(fun v -> v /. total)
+  let total = List.sum (module Bignum) (Hashtbl.data tbl) ~f:Fn.id in
+  ( Hashtbl.map tbl ~f:(fun v -> Bignum.(v / total) |> Bignum.to_float)
+  , Bignum.to_float total )
+;;
+
+let c tbl =
+  let total = List.sum (module Bignum) (Hashtbl.data tbl) ~f:Fn.id in
+  tbl, total
 ;;
 
 let of_string s =
@@ -49,8 +62,8 @@ let of_string s =
   for i = 0 to len - 1 do
     let c1 = s.[i] in
     Hashtbl.update singles c1 ~f:(function
-      | Some v -> v +. 1.
-      | None -> 1.);
+      | Some v -> Bignum.(v + one)
+      | None -> Bignum.one);
     for j = 0 to sn_len - 1 do
       if i + j + 1 < len
       then (
@@ -62,17 +75,23 @@ let of_string s =
             triples
             (String.of_char_list [ c1; c2; c3 ])
             ~f:(function
-              | Some v -> v +. 1.
-              | None -> 1.);
+              | Some v -> Bignum.(v + one)
+              | None -> Bignum.one);
           Hashtbl.update
             sn.(j)
             (String.of_char_list [ c1; c2 ])
             ~f:(function
-              | Some v -> v +. 1.
-              | None -> 1.)))
+              | Some v -> Bignum.(v + one)
+              | None -> Bignum.one)))
     done
   done;
-  let res =
+  let words_table = String.Table.create () in
+  let words = String.split_on_chars s ~on:[ ' '; '\n'; '\r'; '\t' ] in
+  List.iter words ~f:(fun word ->
+    Hashtbl.update words_table word ~f:(function
+      | None -> Bignum.one
+      | Some count -> Bignum.(count + one)));
+  let freqs =
     { s1 = n s1
     ; s2 = n s2
     ; s3 = n s3
@@ -84,8 +103,25 @@ let of_string s =
     ; s9 = n s9
     ; singles = n singles
     ; triples = n triples
+    ; words = n words_table
     }
   in
+  let counts =
+    { s1 = c s1
+    ; s2 = c s2
+    ; s3 = c s3
+    ; s4 = c s4
+    ; s5 = c s5
+    ; s6 = c s6
+    ; s7 = c s7
+    ; s8 = c s8
+    ; s9 = c s9
+    ; singles = c singles
+    ; triples = c triples
+    ; words = c words_table
+    }
+  in
+  let res = { freqs; counts } in
   let same =
     let s = sexp_of_t res |> Sexp.to_string_mach in
     let v = Sexp.of_string s |> t_of_sexp in

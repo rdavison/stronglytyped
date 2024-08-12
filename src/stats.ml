@@ -20,6 +20,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     ; lsb : float Incr.t Hand_finger2.Map.t (* lateral stretch bigram *)
     ; lss : float Incr.t Hand_finger2.Map.t (* lateral scretch skipgram *)
     ; srb : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
+    ; srs : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
+    ; srspeed : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
     }
   [@@deriving sexp_of]
 
@@ -52,6 +54,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
         ; lsb : float Incr.t list Hand_finger2.Table.t
         ; lss : float Incr.t list Hand_finger2.Table.t
         ; srb : float Incr.t list Hand_finger2.Table.t
+        ; srs : float Incr.t list Hand_finger2.Table.t
+        ; srspeed : float Incr.t list Hand_finger2.Table.t
         }
 
       let empty () =
@@ -68,6 +72,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
         ; lsb = Hand_finger2.Table.create ()
         ; lss = Hand_finger2.Table.create ()
         ; srb = Hand_finger2.Table.create ()
+        ; srs = Hand_finger2.Table.create ()
+        ; srspeed = Hand_finger2.Table.create ()
         }
       ;;
 
@@ -77,11 +83,12 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
         in
         let acc = empty () in
         Array.iteri layout ~f:(fun i (k1, var1) ->
-          let _l1, o1 = Layout.layer_offset layout_ i in
+          let info = Layout.info_of_id layout_.id in
+          let _l1, o1 = Layout.layer_offset info i in
           let ((h1, f1) as hf1) = Key.hand_finger k1 in
           let monogram = Incr.map var1 ~f:(fun v1 -> v1.code) in
           let freq_mono =
-            Incr.map monogram ~f:(Corpus.Lookup.freq1 ~data:corpus.singles)
+            Incr.map monogram ~f:(Corpus.Lookup.freq1 ~data:(fst corpus.freqs.singles))
           in
           let (* usage *) () =
             Hashtbl.update acc.usage hf1 ~f:(function
@@ -90,7 +97,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
           in
           (* bigram stats *)
           Array.iteri layout ~f:(fun j (k2, var2) ->
-            let _l2, o2 = Layout.layer_offset layout_ j in
+            let info = Layout.info_of_id layout_.id in
+            let _l2, o2 = Layout.layer_offset info j in
             let h2, f2 = Key.hand_finger k2 in
             let dx = k2.x -. k1.x in
             let dy = k2.y -. k2.y in
@@ -98,24 +106,27 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
             let bigram =
               Incr.both var1 var2 |> Incr.map ~f:(fun (v1, v2) -> v1.code, v2.code)
             in
-            let freq_s1 = Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:corpus.s1) in
+            let freq_s1 =
+              Incr.map bigram ~f:(Corpus.Lookup.freq2 ~data:(fst corpus.freqs.s1))
+            in
             let freq_s29 =
               Incr.map bigram ~f:(fun ((c1, c2) as bigram) ->
                 let bigram' = Code.to_string c1 ^ Code.to_string c2 in
                 Hashtbl.find_or_add s29 bigram' ~default:(fun () ->
-                  [ Corpus.Lookup.freq2 bigram ~data:corpus.s2
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s3
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s4
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s5
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s6
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s7
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s8
-                  ; Corpus.Lookup.freq2 bigram ~data:corpus.s9
+                  [ Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s2)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s3)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s4)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s5)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s6)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s7)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s8)
+                  ; Corpus.Lookup.freq2 bigram ~data:(fst corpus.freqs.s9)
                   ]
                   |> List.foldi ~init:0. ~f:(fun i acc sn ->
                     acc +. (sn /. Float.exp (Float.of_int (i + 1))))))
             in
             let freq_s129 = Incr.map2 freq_s1 freq_s29 ~f:(fun s1 s29 -> s1 +. s29) in
+            let speed = Incr.map freq_s129 ~f:(fun freq_s129 -> dist *. freq_s129) in
             if Hand.Infix.(h1 = h2)
             then (
               (* shb *)
@@ -140,7 +151,6 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                   | None -> [ freq_s29 ]
                   | Some freqs -> freq_s29 :: freqs);
                 (* speed *)
-                let speed = Incr.map freq_s129 ~f:(fun freq_s129 -> dist *. freq_s129) in
                 Hashtbl.update acc.speed hf1 ~f:(function
                   | None -> [ speed ]
                   | Some speeds -> speed :: speeds))
@@ -175,6 +185,20 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                     | `L -> true
                     | `R -> false
                   in
+                  if k1.row = k2.row
+                  then (
+                    (* srb*)
+                    Hashtbl.update acc.srb (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s1 ]
+                      | Some srb -> freq_s1 :: srb);
+                    (* srs*)
+                    Hashtbl.update acc.srs (h1, f1, f2) ~f:(function
+                      | None -> [ freq_s29 ]
+                      | Some srs -> freq_s29 :: srs);
+                    (* srspeed*)
+                    Hashtbl.update acc.srspeed (h1, f1, f2) ~f:(function
+                      | None -> [ speed ]
+                      | Some speeds -> speed :: speeds));
                   (* lateral stretch *)
                   if is_ls
                   then (
@@ -310,13 +334,7 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
                          | `L -> (if is_ls then fs else hs) ()
                          | `R -> if is_ls then fs ())
                       | 2 -> fs ()
-                      | _ -> ()));
-                  (* srb*)
-                  if k1.row = k2.row && not is_ls
-                  then
-                    Hashtbl.update acc.srb (h1, f1, f2) ~f:(function
-                      | None -> [ freq_s1 ]
-                      | Some srb -> freq_s1 :: srb)))));
+                      | _ -> ()))))));
         acc
       ;;
     end
@@ -341,11 +359,13 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     ; lsb = hand_finger2 M.v.lsb
     ; lss = hand_finger2 M.v.lss
     ; srb = hand_finger2 M.v.srb
+    ; srs = hand_finger2 M.v.srs
+    ; srspeed = hand_finger2 M.v.srspeed
     }
   ;;
 
   let pretty_string
-    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb }
+    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb; srs; srspeed }
     =
     let map stat of_alist_exn =
       stat
@@ -366,7 +386,9 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
     and hss = map hss Hand_finger2.Map.of_alist_exn
     and lsb = map lsb Hand_finger2.Map.of_alist_exn
     and lss = map lss Hand_finger2.Map.of_alist_exn
-    and srb = map srb Hand_finger2.Map.of_alist_exn in
+    and srb = map srb Hand_finger2.Map.of_alist_exn
+    and srs = map srs Hand_finger2.Map.of_alist_exn
+    and srspeed = map srspeed Hand_finger2.Map.of_alist_exn in
     let module T = Text_block in
     let table data ~to_string ~all =
       let cols =
@@ -426,6 +448,8 @@ module Make (Incr : Incremental.S) (Layout : Layout.S with module Incr = Incr) :
         ; map_row "lsb" lsb
         ; map_row "lss" lss
         ; map_row "srb" srb
+        ; map_row "srs" srs
+        ; map_row "srspeed" srspeed
         ]
     in
     let sections =

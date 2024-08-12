@@ -14,12 +14,27 @@ module type S = sig
   module Incr : Incremental.S
   include module type of S0
 
-  type t =
+  type info =
     { num_keys_per_layer : int
     ; num_layers : int
     ; num_cols : int
     ; num_rows : int
     ; num_keys : int
+    }
+  [@@deriving sexp]
+
+  type id =
+    [ `Ansi
+    | `Ortho42
+    | `Simple30
+    | `Custom of info
+    ]
+  [@@deriving sexp]
+
+  val info_of_id : id -> info
+
+  type t =
+    { id : id
     ; keys : (Key.t * var Incr.Var.t) array
     }
   [@@deriving sexp_of]
@@ -27,7 +42,7 @@ module type S = sig
   type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
 
   val init
-    :  int
+    :  id:id
     -> code:(int -> Code.t)
     -> finger:(int -> Finger.t)
     -> hand:(int -> Hand.t)
@@ -40,8 +55,10 @@ module type S = sig
     -> swappability:(int -> Swappability.t)
     -> t
 
+  (* val init_simple : ?finger_map:Fingermap.t -> string -> t *)
   val ortho42 : unit -> t
   val ansi : unit -> t
+  val simple30 : stagger:bool -> layout_str:string -> fingermap:Fingermap.t -> t
   val swap : swap list -> unit
   val swaps : t -> int -> int -> swap list
   val scramble : t -> int -> unit
@@ -52,9 +69,9 @@ module type S = sig
   val pretty_string : t -> string
   val save : t -> save_state
   val load : t -> save_state -> unit
-  val layer_offset : t -> int -> int * int
-  val index : t -> layer:int -> offset:int -> int
-  val tower : t -> int -> int list
+  val layer_offset : info -> int -> int * int
+  val index : info -> layer:int -> offset:int -> int
+  val tower : info -> int -> int list
 end
 
 module type Intf = sig

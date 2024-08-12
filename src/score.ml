@@ -1,37 +1,125 @@
 open! Import
 include Score_intf
 
+module T0 : S0 = struct
+  module Info = struct
+    type t =
+      { unweighted : float
+      ; weighted : float
+      }
+    [@@deriving sexp]
+
+    let weighted t = t.weighted
+    let unweighted t = t.unweighted
+    let compare_unweighted (i1 : t) (i2 : t) = Float.compare i1.unweighted i2.unweighted
+    let compare_weighted (i1 : t) (i2 : t) = Float.compare i1.weighted i2.weighted
+  end
+
+  type t =
+    { usage : Info.t option
+    ; sfb : Info.t option
+    ; shb : Info.t option
+    ; sfs : Info.t option
+    ; shs : Info.t option
+    ; speed : Info.t option
+    ; fsb : Info.t option
+    ; hsb : Info.t option
+    ; fss : Info.t option
+    ; hss : Info.t option
+    ; lsb : Info.t option
+    ; lss : Info.t option
+    ; srb : Info.t option
+    ; srs : Info.t option
+    ; srspeed : Info.t option
+    }
+  [@@deriving sexp]
+
+  let to_list
+    ({ usage = _
+     ; sfb = _
+     ; shb = _
+     ; sfs = _
+     ; shs = _
+     ; speed
+     ; fsb = _
+     ; hsb = _
+     ; fss = _
+     ; hss = _
+     ; lsb = _
+     ; lss = _
+     ; srb = _
+     ; srs = _
+     ; srspeed
+     } :
+      t)
+    =
+    [ speed; srspeed ]
+  ;;
+
+  let scalarize f (t : t) =
+    t
+    |> to_list
+    |> List.fold ~init:0. ~f:(fun acc info -> acc +. Option.value_map info ~f ~default:0.)
+  ;;
+
+  let compare_pareto f t1 t2 =
+    let all_less_than_or_equal, exists_less_than =
+      List.zip_exn (to_list t1) (to_list t2)
+      |> List.map ~f:(function
+        | None, None -> 0
+        | None, Some _ | Some _, None -> failwith "ERROR: Unable to compare scores"
+        | Some t1, Some t2 -> Float.compare (f t1) (f t2))
+      |> List.fold ~init:(true, false) ~f:(fun (all_leq, exists_le) x ->
+        all_leq && x <= 0, exists_le || x < 0)
+    in
+    match all_less_than_or_equal, exists_less_than with
+    | false, _ -> 1
+    | true, false -> 0
+    | true, true -> -1
+  ;;
+
+  let compare_scalarized f t1 t2 =
+    let s1 = scalarize f t1 in
+    let s2 = scalarize f t2 in
+    Float.compare s1 s2
+  ;;
+end
+
+include T0
+
 module Make
     (Incr : Incremental.S)
     (Layout : Layout.S with module Incr = Incr)
     (Stats : Stats.S with module Incr = Incr and module Layout = Layout) :
-  S with module Incr = Incr and module Layout = Layout and module Stats = Stats = struct
+  S
+    with module Incr = Incr
+     and module Layout = Layout
+     and module Stats = Stats
+     and module Info = Info
+     and type t = t = struct
   module Incr = Incr
   module Layout = Layout
   module Stats = Stats
+  module Info = Info
 
-  type info =
-    { unweighted : float
-    ; weighted : float
+  type nonrec t = t =
+    { usage : Info.t option
+    ; sfb : Info.t option
+    ; shb : Info.t option
+    ; sfs : Info.t option
+    ; shs : Info.t option
+    ; speed : Info.t option
+    ; fsb : Info.t option
+    ; hsb : Info.t option
+    ; fss : Info.t option
+    ; hss : Info.t option
+    ; lsb : Info.t option
+    ; lss : Info.t option
+    ; srb : Info.t option
+    ; srs : Info.t option
+    ; srspeed : Info.t option
     }
-  [@@deriving sexp_of]
-
-  type t =
-    { usage : info option
-    ; sfb : info option
-    ; shb : info option
-    ; sfs : info option
-    ; shs : info option
-    ; speed : info option
-    ; fsb : info option
-    ; hsb : info option
-    ; fss : info option
-    ; hss : info option
-    ; lsb : info option
-    ; lss : info option
-    ; srb : info option
-    }
-  [@@deriving sexp_of]
+  [@@deriving sexp]
 
   let make
     ?usage
@@ -47,6 +135,8 @@ module Make
     ?lsb
     ?lss
     ?srb
+    ?srs
+    ?srspeed
     (stats : Stats.t)
     =
     let map param stat of_alist_exn =
@@ -77,8 +167,10 @@ module Make
     and hss = map hss stats.hss Hand_finger2.Map.of_alist_exn
     and lsb = map lsb stats.lsb Hand_finger2.Map.of_alist_exn
     and lss = map lss stats.lss Hand_finger2.Map.of_alist_exn
-    and srb = map srb stats.srb Hand_finger2.Map.of_alist_exn in
-    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb }
+    and srb = map srb stats.srb Hand_finger2.Map.of_alist_exn
+    and srs = map srs stats.srs Hand_finger2.Map.of_alist_exn
+    and srspeed = map srspeed stats.srspeed Hand_finger2.Map.of_alist_exn in
+    { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb; srs; srspeed }
   ;;
 
   let default_config =
@@ -121,7 +213,7 @@ module Make
         { unweighted; weighted = final })
       ~sfb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let final =
+        let _final () =
           let get hf = Map.find map hf |> Option.value ~default:0. in
           let f p a b =
             let a = get a in
@@ -146,7 +238,7 @@ module Make
           in
           Float.exp ((1. +. List.sum (module Float) res ~f:Fn.id) *. 2.)
         in
-        { unweighted; weighted = final })
+        { unweighted; weighted = unweighted *. 8. })
       ~shb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
         let weighted = Float.exp (1. +. unweighted) in
@@ -185,7 +277,7 @@ module Make
         { unweighted; weighted })
       ~speed:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let final =
+        let _final () =
           let get hf = Map.find map hf |> Option.value_exn in
           let f p a b =
             let a = get a in
@@ -221,7 +313,7 @@ module Make
           in
           Float.exp (1. +. List.sum (module Float) res ~f:Fn.id)
         in
-        { unweighted; weighted = final })
+        { unweighted; weighted = unweighted })
       ~hsb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
         let weighted = 2. *. Float.exp (1. +. unweighted) in
@@ -248,21 +340,21 @@ module Make
         { unweighted; weighted })
       ~srb:(fun map ->
         let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
-        let weighted = Float.exp (1. +. (1. -. unweighted)) in
+        let weighted = -1. *. unweighted in
+        { unweighted; weighted })
+      ~srs:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = -1. *. unweighted in
+        { unweighted; weighted })
+      ~srspeed:(fun map ->
+        let unweighted = Map.fold map ~init:0. ~f:(fun ~key:_ ~data:v acc -> acc +. v) in
+        let weighted = -1. *. unweighted in
         { unweighted; weighted })
   ;;
 
-  let final_sum (t : t Incr.t) =
-    Incr.map
-      t
-      ~f:(fun { usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb } ->
-        let sum =
-          [ usage; sfb; shb; sfs; shs; speed; fsb; hsb; fss; hss; lsb; lss; srb ]
-          |> List.fold ~init:0. ~f:(fun acc info ->
-            acc +. Option.value_map info ~f:(fun info -> info.weighted) ~default:0.)
-        in
-        sum)
-  ;;
+  let compare_pareto = compare_pareto
+  let scalarize = scalarize
+  let compare_scalarized = compare_scalarized
 
   let%expect_test "graphite" =
     let corpus =
@@ -277,7 +369,7 @@ module Make
     in
     let layout = Layout.ortho42 () in
     let stats = Stats.make layout corpus in
-    let score = final_sum (default_config stats) in
+    let score = Incr.map (default_config stats) ~f:(scalarize Info.unweighted) in
     let observer = Incr.observe score in
     Incr.stabilize ();
     let score = Incr.Observer.value_exn observer in

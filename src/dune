@@ -7,10 +7,12 @@
   domainslib
   incremental
   textutils_kernel.text_block
-  incr_map)
+  jsonaf
+  incr_map
+  bignum)
  (inline_tests)
  (preprocess
-  (pps ppx_jane))
+  (pps ppx_jane ppx_jsonaf_conv))
  (flags :standard -open Core))
 
 (generate_sites_module
