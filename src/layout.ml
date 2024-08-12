@@ -6,18 +6,62 @@ module Make (Incr : Incremental.S) = struct
   module Incr = Incr
   include S0
 
-  type t =
+  type info =
     { num_keys_per_layer : int
     ; num_layers : int
     ; num_cols : int
     ; num_rows : int
     ; num_keys : int
+    }
+  [@@deriving sexp]
+
+  type id =
+    [ `Ansi
+    | `Ortho42
+    | `Simple30
+    | `Custom of info
+    ]
+  [@@deriving sexp]
+
+  let info_of_id = function
+    | `Ansi ->
+      let num_keys_per_layer = 49 in
+      let num_layers = 2 in
+      { num_keys_per_layer
+      ; num_layers
+      ; num_cols = 14
+      ; num_rows = 4
+      ; num_keys = num_keys_per_layer * num_layers
+      }
+    | `Ortho42 ->
+      let num_keys_per_layer = 42 in
+      let num_layers = 3 in
+      { num_keys_per_layer
+      ; num_layers
+      ; num_cols = 12
+      ; num_rows = 4
+      ; num_keys = num_keys_per_layer * num_layers
+      }
+    | `Simple30 ->
+      let num_keys_per_layer = 30 in
+      let num_layers = 2 in
+      { num_keys_per_layer
+      ; num_layers
+      ; num_cols = 10
+      ; num_rows = 3
+      ; num_keys = num_keys_per_layer * num_layers
+      }
+    | `Custom info -> info
+  ;;
+
+  type t =
+    { id : id
     ; keys : (Key.t * var Incr.Var.t) array
     }
   [@@deriving sexp_of]
 
   let init
-    n
+    ~id
     ~code
     ~finger
     ~hand
@@ -29,8 +73,9 @@ module Make (Incr : Incremental.S) = struct
     ~modifier
     ~swappability
     =
+    let info = info_of_id id in
     let keys =
-      Array.init n ~f:(fun i ->
+      Array.init info.num_keys ~f:(fun i ->
         let key =
           let finger = finger i in
           let hand = hand i in
@@ -45,25 +90,12 @@ module Make (Incr : Incremental.S) = struct
         let var = Incr.Var.create { swappability = swappability i; code = code i } in
         key, var)
     in
-    let num_cols, num_rows, num_layers, num_keys_per_layer =
-      let a, b, c, d =
-        Array.fold
-          keys
-          ~init:(0, 0, 0, 0)
-          ~f:(fun (max_col, max_row, max_layer, keys_per_layer) (key, _var) ->
-            ( Int.max max_col key.col
-            , Int.max max_row key.row
-            , Int.max max_layer key.layer
-            , keys_per_layer + if key.layer = 0 then 1 else 0 ))
-      in
-      a + 1, b + 1, c + 1, d
-    in
-    { num_keys_per_layer; num_cols; num_rows; num_layers; num_keys = n; keys }
+    { id; keys }
   ;;
 
   let ortho42 () =
-    let layers = 3 in
-    let keys = 42 in
+    let layout_info = info_of_id `Ortho42 in
+    let keys = layout_info.num_keys in
     let layer_offset i = i / keys, i mod keys in
     let parse s =
       s
@@ -76,7 +108,7 @@ module Make (Incr : Incremental.S) = struct
       |> List.to_array
     in
     init
-      (layers * keys)
+      ~id:`Ortho42
       ~code:
         (let s =
            parse
@@ -228,9 +260,150 @@ module Make (Incr : Incremental.S) = struct
          fun i -> Int.of_string s.(i) |> Swappability.of_int)
   ;;
 
+  let simple30 ~stagger ~layout_str ~fingermap =
+    (* TODO: fix shift symbol: ⇧ *)
+    let info = info_of_id `Simple30 in
+    let keys = info.num_keys in
+    let layer_offset i =
+      let layer = i / info.num_keys_per_layer in
+      let offset = i mod info.num_keys_per_layer in
+      layer, offset
+    in
+    let parse s =
+      String.filter s ~f:(function
+        | ' ' | '\n' | '\t' -> false
+        | _ -> true)
+      |> String.to_array
+      |> Array.map ~f:Char.to_string
+    in
+    init
+      ~id:`Simple30
+      ~code:(fun i -> `Char layout_str.[i])
+      ~finger:
+        (let s =
+           let parse x =
+             parse x |> Array.map ~f:(fun x -> Int.of_string x |> Finger.of_int)
+           in
+           match (fingermap : Fingermap.t) with
+           | Standard ->
+             parse
+               {|
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+              |}
+           | Angle ->
+             parse
+               {|
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                1 2 3 3 3 3 3 2 1 0
+
+                0 1 2 3 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                1 2 3 3 3 3 3 2 1 0
+              |}
+           | Enigmak ->
+             parse
+               {|
+                0 1 2 2 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                1 2 3 3 3 3 3 2 1 0
+
+                0 1 2 2 3 3 3 2 1 0
+                0 1 2 3 3 3 3 2 1 0
+                1 2 3 3 3 3 3 2 1 0
+              |}
+           | Custom x -> x
+         in
+         fun i ->
+           try s.(i) with
+           | _ -> failwithf "Array.length: %d; index: %d" (Array.length s) i ())
+      ~hand:
+        (let s =
+           parse
+             {|
+      1 1 1 1 1 2 2 2 2 2
+      1 1 1 1 1 2 2 2 2 2
+      1 1 1 1 1 2 2 2 2 2
+
+      1 1 1 1 1 2 2 2 2 2
+      1 1 1 1 1 2 2 2 2 2
+      1 1 1 1 1 2 2 2 2 2
+ |}
+         in
+         fun i -> Int.of_string s.(i) |> Hand.of_int)
+      ~pos:(fun i ->
+        let i = i mod keys in
+        let y = if i < 10 then 2. else if i >= 10 && i < 20 then 1. else 0. in
+        let x =
+          let i = Float.of_int i in
+          let ( < ) = Float.( < ) in
+          let ( >= ) = Float.( >= ) in
+          if i < 10.
+          then i +. 0.
+          else if i >= 10. && i < 20.
+          then i -. 10. +. if stagger then 1.5 else 0.
+          else i -. 20. +. if stagger then 1.75 else 0.
+        in
+        x, y)
+      ~col:
+        (let s =
+           parse
+             {|
+      0 1 2 3 4 5 6 7 8 9
+      0 1 2 3 4 5 6 7 8 9
+      0 1 2 3 4 5 6 7 8 9
+
+      0 1 2 3 4 5 6 7 8 9
+      0 1 2 3 4 5 6 7 8 9
+      0 1 2 3 4 5 6 7 8 9
+ |}
+         in
+         fun i -> Int.of_string s.(i))
+      ~row:
+        (let s =
+           parse
+             {|
+      2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1 1 1
+      0 0 0 0 0 0 0 0 0 0
+
+      2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1 1 1
+      0 0 0 0 0 0 0 0 0 0
+ |}
+         in
+         fun i -> Int.of_string s.(i))
+      ~layer:(fun i ->
+        let layer, _offset = layer_offset i in
+        layer)
+      ~layer_trigger:(fun _i ~hand:_ -> None)
+      ~modifier:(fun _i -> false)
+      ~swappability:
+        (let s =
+           parse
+             {|
+        2 2 2 2 2 2 2 2 2 2
+        2 2 2 2 2 2 2 2 2 2
+        2 2 2 2 2 2 2 2 2 2
+
+        2 2 2 2 2 2 2 2 2 2
+        2 2 2 2 2 2 2 2 2 2
+        2 2 2 2 2 2 2 2 2 2
+      |}
+         in
+         fun i -> Int.of_string s.(i) |> Swappability.of_int)
+  ;;
+
   let ansi () =
-    let layers = 2 in
-    let keys = 49 in
+    (* TODO: fix shift symbol: ⇧ *)
+    let info = info_of_id `Ansi in
+    let keys = info.num_keys in
     let layer_offset i = i / keys, i mod keys in
     let parse s =
       s
@@ -243,7 +416,7 @@ module Make (Incr : Incremental.S) = struct
       |> List.to_array
     in
     init
-      (layers * keys)
+      ~id:`Ansi
       ~code:
         (let s =
            parse
@@ -265,14 +438,14 @@ module Make (Incr : Incremental.S) = struct
            parse
              {|
     1 1 1 2 2 2 3 3 2 2 1 2 1
-      0 1 2 2 3 3 3 2 1 0 0 0 0
+      0 1 2 3 3 3 3 2 1 0 0 0 0
       0 1 2 3 3 3 3 2 1 0 0
-    0 0 1 3 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
 
     1 1 1 2 2 2 3 3 2 2 1 2 1
-      0 1 2 2 3 3 3 2 1 0 0 0 0
+      0 1 2 3 3 3 3 2 1 0 0 0 0
       0 1 2 3 3 3 3 2 1 0 0
-    0 0 1 3 3 3 3 3 2 1 0 0
+    0 0 1 2 3 3 3 3 2 1 0 0
     |}
          in
          fun i -> Int.of_string s.(i) |> Finger.of_int)
@@ -372,32 +545,33 @@ module Make (Incr : Incremental.S) = struct
            parse
              {|
       0 0 0 0 0 0 0 0 0 0 0 0 0
-        2 2 2 2 2 2 2 0 0 0 0 0 0
-        0 0 0 0 2 2 2 0 0 0 0
+        2 2 2 2 2 2 2 2 2 1 0 0 0
+        0 0 0 0 2 2 2 2 2 2 0
       0 2 2 2 2 2 2 2 0 0 0 0
 
       0 0 0 0 0 0 0 0 0 0 0 0 0
-        2 2 2 2 2 2 2 0 0 1 1 0 0
-        0 0 0 0 2 2 2 0 0 0 1
+        2 2 2 2 2 2 2 2 2 1 1 0 0
+        0 0 0 0 2 2 2 2 2 2 1
       0 2 2 2 2 2 2 2 1 1 1 0
       |}
          in
          fun i -> Int.of_string s.(i) |> Swappability.of_int)
   ;;
 
-  let layer_offset (t : t) i = i / t.num_keys_per_layer, i mod t.num_keys_per_layer
-  let index (t : t) ~layer ~offset = (layer * t.num_keys_per_layer) + offset
+  let layer_offset info i = i / info.num_keys_per_layer, i mod info.num_keys_per_layer
+  let index info ~layer ~offset = (layer * info.num_keys_per_layer) + offset
 
-  let tower (t : t) idx =
-    let _layer, offset = layer_offset t idx in
-    List.init t.num_layers ~f:(fun layer -> index t ~layer ~offset)
+  let tower info idx =
+    let _layer, offset = layer_offset info idx in
+    List.init info.num_layers ~f:(fun layer -> index info ~layer ~offset)
   ;;
 
   let%expect_test "tower" =
     let layout = ortho42 () in
-    let t1 = tower layout 1 in
-    let t2 = tower layout 2 in
-    let t3 = tower layout 11 in
+    let info = info_of_id layout.id in
+    let t1 = tower info 1 in
+    let t2 = tower info 2 in
+    let t3 = tower info 11 in
     print_s ([%sexp_of: int list] t1);
     print_s ([%sexp_of: int list] t2);
     print_s ([%sexp_of: int list] t3);
@@ -421,6 +595,7 @@ module Make (Incr : Incremental.S) = struct
   type swap = (int * var Incr.Var.t) * (int * var Incr.Var.t) [@@deriving sexp_of]
 
   let swaps (t : t) i j =
+    let info = info_of_id t.id in
     let _k1, v1 = t.keys.(i) in
     let _k2, v2 = t.keys.(j) in
     let v1' = Incr.Var.value v1 in
@@ -434,8 +609,12 @@ module Make (Incr : Incremental.S) = struct
       | Tower, _ | _, Tower ->
         let ts =
           List.zip_exn
-            (tower t i |> List.map ~f:(fun k -> t.keys.(k)) |> List.map ~f:(fun s -> i, s))
-            (tower t j |> List.map ~f:(fun k -> t.keys.(k)) |> List.map ~f:(fun s -> j, s))
+            (tower info i
+             |> List.map ~f:(fun k -> t.keys.(k))
+             |> List.map ~f:(fun s -> i, s))
+            (tower info j
+             |> List.map ~f:(fun k -> t.keys.(k))
+             |> List.map ~f:(fun s -> j, s))
         in
         (match
            List.for_all ts ~f:(fun ((_i, (_k1, v1)), (_j, (_k2, v2))) ->
@@ -507,9 +686,10 @@ module Make (Incr : Incremental.S) = struct
         res
   ;;
 
-  let scramble layout i =
+  let scramble (layout : t) i =
+    let info = info_of_id layout.id in
     for _ = 1 to i do
-      let i, j = Random.int2 layout.num_keys in
+      let i, j = Random.int2 info.num_keys in
       let swaps = swaps layout i j in
       swap swaps
     done
@@ -648,9 +828,10 @@ module Make (Incr : Incremental.S) = struct
      ;; *)
 
   let pretty_string (t : t) =
+    let info = info_of_id t.id in
     let arr =
-      Array.init t.num_layers ~f:(fun _ ->
-        Array.init t.num_rows ~f:(fun _ -> Array.init t.num_cols ~f:(fun _ -> " ")))
+      Array.init info.num_layers ~f:(fun _ ->
+        Array.init info.num_rows ~f:(fun _ -> Array.init info.num_cols ~f:(fun _ -> " ")))
     in
     Array.iter t.keys ~f:(fun (key, var) ->
       let var' = Incr.Var.value var in

@@ -18,6 +18,8 @@ module type S = sig
     ; lsb : float Incr.t Hand_finger2.Map.t (* lateral stretch bigram *)
     ; lss : float Incr.t Hand_finger2.Map.t (* lateral scretch skipgram *)
     ; srb : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
+    ; srs : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
+    ; srspeed : float Incr.t Hand_finger2.Map.t (* same row adjacent finger bigram *)
     }
   [@@deriving sexp_of]
 

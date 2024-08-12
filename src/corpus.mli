@@ -1,17 +1,24 @@
 open! Import
 
+type 'a info =
+  { s1 : 'a String.Table.t * 'a
+  ; s2 : 'a String.Table.t * 'a
+  ; s3 : 'a String.Table.t * 'a
+  ; s4 : 'a String.Table.t * 'a
+  ; s5 : 'a String.Table.t * 'a
+  ; s6 : 'a String.Table.t * 'a
+  ; s7 : 'a String.Table.t * 'a
+  ; s8 : 'a String.Table.t * 'a
+  ; s9 : 'a String.Table.t * 'a
+  ; singles : 'a Char.Table.t * 'a
+  ; triples : 'a String.Table.t * 'a
+  ; words : 'a String.Table.t * 'a
+  }
+[@@deriving sexp]
+
 type t =
-  { s1 : float String.Table.t
-  ; s2 : float String.Table.t
-  ; s3 : float String.Table.t
-  ; s4 : float String.Table.t
-  ; s5 : float String.Table.t
-  ; s6 : float String.Table.t
-  ; s7 : float String.Table.t
-  ; s8 : float String.Table.t
-  ; s9 : float String.Table.t
-  ; singles : float Char.Table.t
-  ; triples : float String.Table.t
+  { freqs : float info
+  ; counts : Bignum.t info
   }
 [@@deriving sexp]
 

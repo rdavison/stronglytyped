@@ -7,19 +7,23 @@ module type S = sig
   module Score : Score.S
 
   type t =
-    { final_score : float
+    { final_score : Score.t
     ; save_state : Layout.save_state
     }
 
   val bruteforce
     :  Layout.t
-    -> final_score_obs:float Incr.Observer.t
+    -> score_obs:Score.t Incr.Observer.t
+    -> score_compare:(Score.t -> Score.t -> int)
+    -> score_scalarize:(Score.t -> float)
     -> mode:[ `Fast | `Slow ]
     -> t
 
   val anneal
     :  Layout.t
-    -> final_score_obs:float Incr.Observer.t
+    -> score_obs:Score.t Incr.Observer.t
+    -> score_compare:(Score.t -> Score.t -> int)
+    -> score_scalarize:(Score.t -> float)
     -> initial_temperature:float
     -> cooling_rate:float
     -> num_iterations:int
