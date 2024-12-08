@@ -31,5 +31,7 @@
   incremental
   incr_map
   textutils_kernel
+  jsonaf
+  ppx_jsonaf_conv
   core
   core_unix))
