@@ -8,17 +8,14 @@ license: "MIT"
 homepage: "https://github.com/rdavison/stronglytyped"
 bug-reports: "https://github.com/rdavison/stronglytyped/issues"
 depends: [
-  "ocaml" {>= "5.0.0"}
-  "domainslib"
+  "ocaml" {= "5.1.1"}
   "dune" {>= "3.9"}
   "dune-site"
-  "incremental"
-  "incr_map"
-  "textutils_kernel"
-  "jsonaf"
-  "ppx_jsonaf_conv"
-  "core"
-  "core_unix"
+  "base" {>= "v0.16.0" & < "v0.17.0"}
+  "core" {>= "v0.16.0" & < "v0.17.0"}
+  "bonsai" {>= "v0.16.0" & < "v0.17.0"}
+  "ppx_css" {>= "v0.16.0" & < "v0.17.0"}
+  "ppx_jane" {>= "v0.16.0" & < "v0.17.0"}
   "odoc" {with-doc}
 ]
 build: [

@@ -1,0 +1,15 @@
+(executable
+ (name main)
+ (modes js)
+ (libraries
+  stronglytyped_analysis
+  bonsai.web
+  bonsai.web_ui_form
+  bonsai.tailwind_colors
+  virtual_dom.keyboard)
+ (preprocess
+  (pps ppx_jane bonsai.ppx_bonsai ppx_css)))
+
+(install
+ (section share)
+ (files main.bc.js index.html))

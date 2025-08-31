@@ -24,14 +24,26 @@
   (share corpus))
  (depends
   (ocaml
-   (>= 5.0.0))
-  domainslib
+   (= 5.1.1))
   dune
   dune-site
-  incremental
-  incr_map
-  textutils_kernel
-  jsonaf
-  ppx_jsonaf_conv
-  core
-  core_unix))
+  (base
+   (and
+    (>= v0.16.0)
+    (< v0.17.0)))
+  (core
+   (and
+    (>= v0.16.0)
+    (< v0.17.0)))
+  (bonsai
+   (and
+    (>= v0.16.0)
+    (< v0.17.0)))
+  (ppx_css
+   (and
+    (>= v0.16.0)
+    (< v0.17.0)))
+  (ppx_jane
+   (and
+    (>= v0.16.0)
+    (< v0.17.0)))))

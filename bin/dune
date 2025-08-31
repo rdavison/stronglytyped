@@ -1,6 +1,0 @@
-(executable
- (name main)
- (libraries core core_unix.command_unix stronglytyped.analyzer)
- (preprocess
-  (pps ppx_jane))
- (modules main))
