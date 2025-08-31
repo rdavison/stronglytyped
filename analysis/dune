@@ -1,0 +1,5 @@
+(library
+ (name stronglytyped_analysis)
+ (libraries bonsai)
+ (preprocess
+  (pps ppx_jane bonsai.ppx_bonsai ppx_css)))
