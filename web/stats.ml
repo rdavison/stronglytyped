@@ -1,6 +1,5 @@
 open! Core
-open! Import
-open! Bonsai_web
+open! Bonsai_web_proc
 open! Bonsai.Let_syntax
 module Hand_finger = Stronglytyped_analysis.Hand_finger
 module Key = Stronglytyped_analysis.Key
@@ -47,17 +46,16 @@ let counter n msg =
   end
   in
   let%sub n, inject =
-    Bonsai.state_machine0
-      (module Int)
-      (module Action)
+    Bonsai.state_machine
       ~default_model:n
-      ~apply_action:(fun ~inject:_ ~schedule_event:_ model action ->
+      ~apply_action:(fun _ model action ->
         let model =
           match action with
-          | Increment -> model + 1
+          | Action.Increment -> model + 1
           | Decrement -> model - 1
         in
         if model <= 0 then 0 else model)
+      ()
   in
   let%arr n = n
   and inject = inject in

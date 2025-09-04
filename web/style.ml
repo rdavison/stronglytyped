@@ -182,7 +182,7 @@ include
         .keyboard {
           display: flex;
           flex-direction: column;
-          background-color: var(--keyboard-background-color);
+          background-color: %{Tailwind_v3_colors.slate700#Css_gen.Color};
           padding: 0.5em;
           border-radius: 1em;
         }
@@ -228,10 +228,11 @@ include
           flex-direction: column;
         }
       |}
-      ~rewrite:
+      (*~rewrite:
         [ "--keyboard-key-background-color", "--keyboard-key-background-color"
         ; "--keyboard-key-color", "--keyboard-key-color"
         ; "--keyboard-key-hover-background-color", "--keyboard-key-hover-background-color"
         ; "--keyboard-key-hover-color", "--keyboard-key-hover-color"
         ; "--keyboard-background-color", "--keyboard-background-color"
-        ]]
+        ]*)
+        ]

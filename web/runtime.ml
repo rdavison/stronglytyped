@@ -1,6 +1,8 @@
 open! Core
-open! Bonsai_web
+open! Bonsai_web_proc
 open! Bonsai.Let_syntax
+
+let _ = Bonsai_proc.state_machine
 
 module Mode = struct
   module T = struct
@@ -14,14 +16,13 @@ module Mode = struct
 
   let component =
     let%sub mode, mode_toggle =
-      Bonsai.state_machine0
-        (module T)
-        (module Unit)
+      Bonsai.state_machine
         ~default_model:Manual
-        ~apply_action:(fun ~inject:_ ~schedule_event:_ model () ->
+        ~apply_action:(fun _ctx model () ->
           match model with
           | Auto -> Manual
           | Manual -> Auto)
+        ()
     in
     let%arr mode = mode
     and mode_toggle = mode_toggle in

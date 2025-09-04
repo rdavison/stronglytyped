@@ -1,4 +1,5 @@
-open! Bonsai_web
+open! Core
+open! Bonsai_web_proc
 module Corpus = Stronglytyped_analysis.Corpus
 module Key = Stronglytyped_analysis.Key
 

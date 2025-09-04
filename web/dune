@@ -3,9 +3,9 @@
  (modes js)
  (libraries
   stronglytyped_analysis
-  bonsai.web
-  bonsai.web_ui_form
-  bonsai.tailwind_colors
+  bonsai_web
+  bonsai_web_components.web_ui_form
+  bonsai_web_components.tailwind_v3_colors
   virtual_dom.keyboard)
  (preprocess
   (pps ppx_jane bonsai.ppx_bonsai ppx_css)))
