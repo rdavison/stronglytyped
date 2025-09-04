@@ -1,9 +1,19 @@
 open! Core
-open! Import
-open! Bonsai_web
+open! Bonsai_web_proc
 open! Bonsai.Let_syntax
 module Key = Stronglytyped_analysis.Key
 module Hand_finger = Stronglytyped_analysis.Hand_finger
+
+let with_color ?background_color ?color attr =
+  let background_color =
+    Option.map background_color ~f:(fun color -> Css_gen.background_color color)
+  in
+  let color = Option.map color ~f:(fun color -> Css_gen.color color) in
+  let rest =
+    [ background_color; color ] |> List.filter_opt |> List.map ~f:Vdom.Attr.style
+  in
+  Vdom.Attr.many (attr :: rest)
+;;
 
 let app =
   let%sub runtime_mode, runtime_mode_vdom = Runtime.Mode.component in
@@ -102,7 +112,7 @@ let app =
   let nav =
     Vdom.Node.create
       "nav"
-      ~attrs:[ with_color Style.nav ~background_color:Tailwind_colors.slate600 ]
+      ~attrs:[ with_color Style.nav ~background_color:Tailwind_v3_colors.slate600 ]
       [ runtime_mode_vdom
       ; random_swap_vdom
       ; worst_counter_vdom
@@ -111,7 +121,7 @@ let app =
   in
   let header =
     Vdom.Node.header
-      ~attrs:[ with_color Style.header ~background_color:Tailwind_colors.slate500 ]
+      ~attrs:[ with_color Style.header ~background_color:Tailwind_v3_colors.slate500 ]
       [ Vdom.Node.h1
           ~attrs:[ Style.header_h1 ]
           [ Vdom.Node.text "Stronglytyped Keyboard Layout Analysis" ]

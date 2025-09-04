@@ -1,6 +1,5 @@
 open! Core
-open! Import
-open! Bonsai_web
+open! Bonsai_web_proc
 open! Bonsai.Let_syntax
 module Arrangement = Stronglytyped_analysis.Arrangement
 module Corpus = Stronglytyped_analysis.Corpus
@@ -13,15 +12,14 @@ module Key_action = struct
 end
 
 let key_state_machine id =
-  Bonsai.state_machine0
-    (module Key)
-    (module Key_action)
+  Bonsai.state_machine
     ~default_model:(Key.make id ~x:Key.Id.Ansi.x ~y:Key.Id.Ansi.y)
-    ~apply_action:(fun ~inject:_ ~schedule_event:_ model action ->
+    ~apply_action:(fun _ model action ->
       match action with
-      | Set kc ->
+      | Key_action.Set kc ->
         print_s ([%sexp_of: Key.Id.t * Keycode.t] (model.id, kc));
         { model with kc })
+    ()
 ;;
 
 module Action = struct
@@ -101,8 +99,8 @@ let component keyboard (corpus : Corpus.t Value.t) =
       let k = Map.find keyboard id in
       match k with
       | None ->
-        let keyboard_key_background_color = Tailwind_colors.slate900 in
-        let keyboard_key_color = Tailwind_colors.slate100 in
+        let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
+        let keyboard_key_color = Tailwind_v3_colors.slate100 in
         Vdom.Node.div
           ~attrs:
             [ Style.keyboard_key
@@ -111,9 +109,9 @@ let component keyboard (corpus : Corpus.t Value.t) =
                   (keyboard_key_background_color |> Css_gen.Color.to_string_css)
                 ~keyboard_key_color:(keyboard_key_color |> Css_gen.Color.to_string_css)
                 ~keyboard_key_hover_background_color:
-                  (Tailwind_colors.slate100 |> Css_gen.Color.to_string_css)
+                  (Tailwind_v3_colors.slate100 |> Css_gen.Color.to_string_css)
                 ~keyboard_key_hover_color:
-                  (Tailwind_colors.slate900 |> Css_gen.Color.to_string_css)
+                  (Tailwind_v3_colors.slate900 |> Css_gen.Color.to_string_css)
                 ~keyboard_key_width:
                   (Css_gen.Length.to_string_css (`Em_float (4. *. Key.Id.key_width id)))
                 ~keyboard_key_height:(Css_gen.Length.to_string_css (`Em_float 4.))
@@ -121,7 +119,7 @@ let component keyboard (corpus : Corpus.t Value.t) =
             ]
           [ key id k ]
       | Some k ->
-        let keyboard_key_background_color = Tailwind_colors.slate900 in
+        let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
         let keyboard_key_background_color_overlay =
           let a, b =
             match k.kc with
@@ -133,11 +131,11 @@ let component keyboard (corpus : Corpus.t Value.t) =
             (Map.find corpus_freq_a a |> Option.value ~default:0.)
             +. (Map.find corpus_freq_a b |> Option.value ~default:0.)
           in
-          let (`RGB (r, g, b)) = convert_hex_to_rgb Tailwind_colors.indigo500 in
+          let (`RGB (r, g, b)) = convert_hex_to_rgb Tailwind_v3_colors.indigo500 in
           let a = Percent.of_mult (freq /. max_value) in
           `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ())
         in
-        let keyboard_key_color = Tailwind_colors.slate100 in
+        let keyboard_key_color = Tailwind_v3_colors.slate100 in
         Vdom.Node.div
           ~attrs:
             [ Style.keyboard_key
@@ -146,9 +144,9 @@ let component keyboard (corpus : Corpus.t Value.t) =
                   (keyboard_key_background_color |> Css_gen.Color.to_string_css)
                 ~keyboard_key_color:(keyboard_key_color |> Css_gen.Color.to_string_css)
                 ~keyboard_key_hover_background_color:
-                  (Tailwind_colors.slate100 |> Css_gen.Color.to_string_css)
+                  (Tailwind_v3_colors.slate100 |> Css_gen.Color.to_string_css)
                 ~keyboard_key_hover_color:
-                  (Tailwind_colors.slate900 |> Css_gen.Color.to_string_css)
+                  (Tailwind_v3_colors.slate900 |> Css_gen.Color.to_string_css)
                 ~keyboard_key_width:
                   (Css_gen.Length.to_string_css (`Em_float (4. *. Key.Id.key_width id)))
                 ~keyboard_key_height:(Css_gen.Length.to_string_css (`Em_float 4.))
@@ -178,8 +176,6 @@ let component keyboard (corpus : Corpus.t Value.t) =
           ~attrs:
             [ Style.keyboard
             ; Style.Variables.set
-                ~keyboard_background_color:
-                  (Tailwind_colors.slate700 |> Css_gen.Color.to_string_css)
                 ()
             ]
           keyboard_rows)

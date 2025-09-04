@@ -1,0 +1,33 @@
+opam-version: "2.0"
+synopsis: "Bonsai To-do List Tutorial"
+maintainer: ["You!"]
+depends: [
+  "ocaml"
+  "dune" {>= "3.6"}
+  "bonsai"
+  "bonsai_web_components"
+  "virtual_dom"
+  "core"
+  "core_unix"
+  "async"
+  "async_extra"
+  "async_kernel"
+  "async_rpc_kernel"
+  "async_rpc_websocket"
+  "ppx_css"
+  "odoc" {with-doc}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]

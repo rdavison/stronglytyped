@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web
+open! Bonsai_web_proc
 open! Bonsai.Let_syntax
 module Key = Stronglytyped_analysis.Key
 module Keyboard = Stronglytyped_analysis.Keyboard

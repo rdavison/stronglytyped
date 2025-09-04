@@ -1,0 +1,11 @@
+(library
+ (name stronglytyped_server)
+ (libraries async_extra.async_bus async_rpc_websocket cohttp-async)
+ (preprocess
+  (pps ppx_jane)))
+
+(rule
+ (targets embedded_files.ml embedded_files.mli)
+ (deps ../web/main.bc.js)
+ (action
+  (bash "%{bin:ocaml-embed-file} %{deps} -output embedded_files")))
