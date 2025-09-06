@@ -16,29 +16,26 @@ let with_color ?background_color ?color attr =
 ;;
 
 let app graph =
-  let%sub runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
-  let%sub keyboard, keyboard_inject = Keyboard.state_machine graph in
-  let%sub brute_force_indexes_button =
-    let%sub effects =
-      let%sub indexes_swaps_for_brute_forcing =
-        let%sub x =
-          Bonsai.Map.index_by
-            keyboard
-            ~comparator:(module Stronglytyped_analysis.Hand)
-            ~index:(fun key ->
-              if Stronglytyped_analysis.Finger.equal key.finger `i
-              then Some key.hand
-              else None)
-            graph
-        in
-        let%sub x =
+  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
+  let keyboard, keyboard_inject = Keyboard.state_machine graph in
+  let brute_force_indexes_button =
+    let%arr effects =
+      let%arr keyboard_inject = keyboard_inject
+      and indexes_swaps_for_brute_forcing =
+        let%arr x =
           Bonsai.assoc
             (module Stronglytyped_analysis.Hand)
-            x
+            (Bonsai.Map.index_by
+               keyboard
+               ~comparator:(module Stronglytyped_analysis.Hand)
+               ~index:(fun key ->
+                 if Stronglytyped_analysis.Finger.equal key.finger `i
+                 then Some key.hand
+                 else None)
+               graph)
             graph
             ~f:(fun _ data graph ->
-              let%sub keys = Bonsai.Map.keys data graph in
-              let%arr keys = keys in
+              let%arr keys = Bonsai.Map.keys data graph in
               let keys = Set.to_list keys in
               let visited = ref Stronglytyped_analysis.Key.Id.Pair.Set.empty in
               List.cartesian_product keys keys
@@ -61,40 +58,37 @@ let app graph =
                 print_s ([%sexp_of: Key.Id.t * Key.Id.t] x);
                 x))
         in
-        let%arr x = x in
         List.concat (Map.data x)
       in
-      let%arr indexes_swaps_for_brute_forcing = indexes_swaps_for_brute_forcing
-      and keyboard_inject = keyboard_inject in
       let effects =
         List.map indexes_swaps_for_brute_forcing ~f:(fun swap ->
           keyboard_inject (Swap swap))
       in
       Ui_effect.all_unit effects
     in
-    let%arr effects = effects in
     Vdom.Node.button
       ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
       [ Vdom.Node.text "Brute Force indexes" ]
   in
-  let%sub () =
-    match%sub runtime_mode with
-    | Manual -> Bonsai.return ()
-    | Auto ->
-      Bonsai.Edge.lifecycle
-        ~after_display:
-          (let%map keyboard_inject = keyboard_inject in
-           keyboard_inject Random_swap)
-        graph;
-      Bonsai.return ()
+  let () =
+    (ignore : unit Bonsai.t -> unit)
+    @@ match%sub runtime_mode with
+       | Manual -> Bonsai.return ()
+       | Auto ->
+         Bonsai.Edge.lifecycle
+           ~after_display:
+             (let%map keyboard_inject = keyboard_inject in
+              keyboard_inject Random_swap)
+           graph;
+         Bonsai.return ()
   in
-  let%sub worst_counter, worst_counter_vdom =
+  let worst_counter, worst_counter_vdom =
     Stats.counter 6 (fun n -> sprintf "%d" n) graph
   in
-  let%sub corpus, corpus_vdom = Corpus.component graph in
-  let%sub stats_section_vdom = Stats.component keyboard corpus worst_counter graph in
-  let%sub keyboard_section_vdom = Keyboard.component keyboard corpus graph in
-  let%sub random_swap_vdom =
+  let corpus, corpus_vdom = Corpus.component graph in
+  let stats_section_vdom = Stats.component keyboard corpus worst_counter graph in
+  let keyboard_section_vdom = Keyboard.component keyboard corpus graph in
+  let random_swap_vdom =
     let%arr keyboard_inject = keyboard_inject
     and runtime_mode = runtime_mode in
     let button name callback =

@@ -7,5 +7,5 @@ module Mode : sig
     | Manual
   [@@deriving sexp, equal, compare]
 
-  val component : Bonsai.graph -> (t * Vdom.Node.t) Bonsai.t
+  val component : Bonsai.graph -> t Bonsai.t * Vdom.Node.t Bonsai.t
 end

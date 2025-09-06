@@ -58,21 +58,21 @@ let counter n msg =
           if model <= 0 then 0 else model)
         graph
     in
-    let%arr n = n
-    and inject = inject in
-    let button label (action : Action.t) =
-      let disabled =
-        match action with
-        | Decrement when n <= 0 -> [ Vdom.Attr.disabled ]
-        | _ -> []
-      in
-      Vdom.Node.div
-        ~attrs:
-          ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
-           @ disabled)
-        [ Vdom.Node.text label ]
-    in
     let vdom =
+      let%arr n = n
+      and inject = inject in
+      let button label (action : Action.t) =
+        let disabled =
+          match action with
+          | Decrement when n <= 0 -> [ Vdom.Attr.disabled ]
+          | _ -> []
+        in
+        Vdom.Node.div
+          ~attrs:
+            ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
+             @ disabled)
+          [ Vdom.Node.text label ]
+      in
       Vdom.Node.div
         ~attrs:[ Style.counter_container ]
         [ button "-" Decrement

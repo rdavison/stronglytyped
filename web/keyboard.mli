@@ -11,7 +11,9 @@ module Action : sig
   [@@deriving sexp, equal, compare]
 end
 
-val state_machine : Bonsai.graph -> (Keyboard.t * (Action.t -> unit Ui_effect.t)) Bonsai.t
+val state_machine
+  :  Bonsai.graph
+  -> Keyboard.t Bonsai.t * (Action.t -> unit Ui_effect.t) Bonsai.t
 
 val component
   :  Keyboard.t Bonsai.t
