@@ -29,11 +29,11 @@ volume:
 
 .PHONY: watch
 watch: install-deps
-	dune build @all -w
+	dune build bin/main.exe -w
 
-.PHONY: watch-exec
-watch-exec: install-deps
-	dune exec -w bin/main.exe -- -port 5500
+.PHONY: dev
+dev: install-deps
+	./scripts/dev-run.sh ./_build/default/bin/main.exe
 
 .PHONY: install-deps
 install-deps:
