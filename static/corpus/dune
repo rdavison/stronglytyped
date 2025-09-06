@@ -1,6 +1,6 @@
 (install
  (section
   (site
-   (stronglytyped corpus)))
+   (project corpus)))
  (files
   (typeracer as typeracer)))
