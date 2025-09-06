@@ -4,9 +4,8 @@ CONTAINER_HOME := /home/opam
 CONTAINER_PATH := $(CONTAINER_HOME)/app
 CONTAINER_PATH_SKIP_DEPEXT := $(CONTAINER_PATH)-skip-depext
 VOLUME_NAME := $(TAG)
-DOCKER := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(VOLUME_NAME):$(CONTAINER_PATH)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH) -w $(CONTAINER_PATH) $(TAG)
-DOCKER_SKIP_DEPEXT := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(VOLUME_NAME):$(CONTAINER_PATH_SKIP_DEPEXT)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH_SKIP_DEPEXT) -w $(CONTAINER_PATH_SKIP_DEPEXT) $(TAG)
-DOCKER_NVIM := docker exec -it $(TAG) nvim
+DOCKER := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(HOME)/.ssh:$(CONTAINER_HOME)/.ssh -v $(VOLUME_NAME):$(CONTAINER_PATH)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH) -w $(CONTAINER_PATH) $(TAG)
+DOCKER_SKIP_DEPEXT := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(HOME)/.ssh:$(CONTAINER_HOME)/.ssh -v $(VOLUME_NAME):$(CONTAINER_PATH_SKIP_DEPEXT)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH_SKIP_DEPEXT) -w $(CONTAINER_PATH_SKIP_DEPEXT) $(TAG)
 
 .PHONY: default
 default: watch
@@ -14,10 +13,6 @@ default: watch
 .PHONY: shell
 shell:
 	$(DOCKER) bash
-
-.PHONY: nvim
-nvim:
-	$(DOCKER_NVIM)
 
 duniverse:
 	$(DOCKER_SKIP_DEPEXT) opam monorepo pull
@@ -34,7 +29,7 @@ volume:
 
 .PHONY: watch
 watch: install-deps
-	dune build web/main.bc.js @server/all -w
+	dune build @all -w
 
 .PHONY: watch-exec
 watch-exec: install-deps
@@ -45,9 +40,9 @@ install-deps:
 	opam install . --deps-only
 
 .PHONY: start
-start: volume
+nvim: volume
 	# $(DOCKER) dune build web/main.bc.js
-	$(DOCKER) bash -lc "nvim -c \"terminal bash -lc 'make watch; exec bash'\" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash"
+	$(DOCKER) bash -lc "nvim -c \"terminal bash -lc 'make watch-exec; exec bash'\" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash"
 
 .PHONY: stop
 stop:
@@ -71,6 +66,14 @@ distclean: stop clean
 	@$(DOCKER_SKIP_DEPEXT) rm -rf duniverse
 	@docker volume rm $(VOLUME_NAME)
 
+.PHONY: docker-lazygit
+docker-lazygit:
+	docker build -t lazygit docker/lazygit
+
+.PHONY: docker-ocamlformat
+docker-ocamlformat:
+	docker build -t ocamlformat docker/ocamlformat
+
 .PHONY: docker
-docker:
-	docker build --build-arg TAG=$(TAG) -t $(TAG) .
+docker: docker-ocamlformat docker-lazygit
+	docker build --build-arg TAG=$(TAG) -t $(TAG) -f docker/app/Dockerfile .
