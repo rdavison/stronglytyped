@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web_proc
+open! Bonsai_web
 open! Bonsai.Let_syntax
 module Hand_finger = Stronglytyped_analysis.Hand_finger
 module Key = Stronglytyped_analysis.Key
@@ -45,83 +45,91 @@ let counter n msg =
     [@@deriving sexp]
   end
   in
-  let%sub n, inject =
-    Bonsai.state_machine
-      ~default_model:n
-      ~apply_action:(fun _ model action ->
-        let model =
-          match action with
-          | Action.Increment -> model + 1
-          | Decrement -> model - 1
-        in
-        if model <= 0 then 0 else model)
-      ()
-  in
-  let%arr n = n
-  and inject = inject in
-  let button label (action : Action.t) =
-    let disabled =
-      match action with
-      | Decrement when n <= 0 -> [ Vdom.Attr.disabled ]
-      | _ -> []
+  fun graph ->
+    let n, inject =
+      Bonsai.state_machine
+        ~default_model:n
+        ~apply_action:(fun _ model action ->
+          let model =
+            match action with
+            | Action.Increment -> model + 1
+            | Decrement -> model - 1
+          in
+          if model <= 0 then 0 else model)
+        graph
     in
-    Vdom.Node.div
-      ~attrs:
-        ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
-         @ disabled)
-      [ Vdom.Node.text label ]
-  in
-  let vdom =
-    Vdom.Node.div
-      ~attrs:[ Style.counter_container ]
-      [ button "-" Decrement
-      ; Vdom.Node.div ~attrs:[ Style.counter ] [ Vdom.Node.text (msg n) ]
-      ; button "+" Increment
-      ]
-  in
-  n, vdom
+    let%arr n = n
+    and inject = inject in
+    let button label (action : Action.t) =
+      let disabled =
+        match action with
+        | Decrement when n <= 0 -> [ Vdom.Attr.disabled ]
+        | _ -> []
+      in
+      Vdom.Node.div
+        ~attrs:
+          ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
+           @ disabled)
+        [ Vdom.Node.text label ]
+    in
+    let vdom =
+      Vdom.Node.div
+        ~attrs:[ Style.counter_container ]
+        [ button "-" Decrement
+        ; Vdom.Node.div ~attrs:[ Style.counter ] [ Vdom.Node.text (msg n) ]
+        ; button "+" Increment
+        ]
+    in
+    n, vdom
 ;;
 
-let same_finger_stat_vdom what render =
-  let%sub breakdown =
+let same_finger_stat_vdom what render graph =
+  let breakdown =
     Bonsai.assoc
       (module Hand_finger)
       what
-      ~f:(fun _hand_finger freq ->
+      graph
+      ~f:(fun _hand_finger freq _graph ->
         let%arr freq = freq in
         Vdom.Node.text (render freq))
   in
-  let%sub sum = Bonsai.Map.sum what (module Float) ~f:Fn.id in
+  let sum = Bonsai.Map.sum what (module Float) ~f:Fn.id graph in
   let%arr breakdown = breakdown
   and sum = sum in
   breakdown, Vdom.Node.text (render sum)
 ;;
 
-let component keyboard corpus worst_counter =
-  let%sub same_hand_same_finger_diff_row_bigram_data =
-    let%sub same_hand_same_finger_bigram_data =
-      let%sub bigram_data = Bigram_data.make keyboard corpus in
+let component keyboard corpus worst_counter graph =
+  let same_hand_same_finger_diff_row_bigram_data =
+    let same_hand_same_finger_bigram_data =
+      let bigram_data = Bigram_data.make keyboard corpus graph in
       Bonsai.Map.index_byi
         bigram_data
         ~comparator:(module Hand_finger)
         ~index:(fun ~key:(a, b) ~data:_ ->
           let x = Key.Id.hand a, Key.Id.finger a in
           if Hand_finger.equal x (Key.Id.hand b, Key.Id.finger b) then Some x else None)
+        graph
     in
     Bonsai.assoc
       (module Hand_finger)
       same_hand_same_finger_bigram_data
-      ~f:(fun _ (bigram_data : Bigram_data.t Value.t) ->
-        Bonsai.Map.filter_mapi bigram_data ~f:(fun ~key:(a, b) ~data ->
-          if Int.equal (Key.Id.row a) (Key.Id.row b) then None else Some data))
+      graph
+      ~f:(fun _ (bigram_data : Bigram_data.t Bonsai.t) graph ->
+        Bonsai.Map.filter_mapi
+          bigram_data
+          ~f:(fun ~key:(a, b) ~data ->
+            if Int.equal (Key.Id.row a) (Key.Id.row b) then None else Some data)
+          graph)
   in
   let same_finger_metrics_vdom render_metric compute_metric =
-    let%sub sum_and_worst =
+    let sum_and_worst =
       Bonsai.assoc
         (module Hand_finger)
         same_hand_same_finger_diff_row_bigram_data
-        ~f:(fun _ bigram_data ->
-          let%sub sum = Bonsai.Map.sum bigram_data (module Float) ~f:compute_metric in
+        graph
+        ~f:(fun _ bigram_data graph ->
+          let sum = Bonsai.Map.sum bigram_data (module Float) ~f:compute_metric graph in
           let%arr sum = sum
           and worst_counter = worst_counter
           and bigram_data = bigram_data in
@@ -135,20 +143,22 @@ let component keyboard corpus worst_counter =
           in
           sum, worst_n)
     in
-    let%sub hand_finger_freq =
+    let hand_finger_freq =
       Bonsai.assoc
         (module Hand_finger)
         sum_and_worst
-        ~f:(fun _ sum_and_worst ->
+        graph
+        ~f:(fun _ sum_and_worst _graph ->
           let%arr sum, _ = sum_and_worst in
           sum)
     in
-    let%sub worst_vdom =
-      let%sub breakdown =
+    let worst_vdom =
+      let breakdown =
         Bonsai.assoc
           (module Hand_finger)
           sum_and_worst
-          ~f:(fun _ sum_and_worst ->
+          graph
+          ~f:(fun _ sum_and_worst _graph ->
             let%arr _, worst = sum_and_worst in
             Vdom.Node.div
               ~attrs:[ Style.stats_vertical_analysis_inner_table ]
@@ -160,32 +170,33 @@ let component keyboard corpus worst_counter =
                        ]))
               ])
       in
-      let%sub sum =
+      let sum =
         Bonsai.Map.sum
           sum_and_worst
           (module Float)
           ~f:(fun (_, x) -> List.sum (module Float) x ~f:(fun (_, x) -> x))
+          graph
       in
       let%arr breakdown = breakdown
       and sum = sum in
       breakdown, Vdom.Node.text (render_metric sum)
     in
-    let%sub same_finger_stat_by_finger_vdom =
-      same_finger_stat_vdom hand_finger_freq render_metric
+    let same_finger_stat_by_finger_vdom =
+      same_finger_stat_vdom hand_finger_freq render_metric graph
     in
     let%arr same_finger_stat_by_finger_vdom = same_finger_stat_by_finger_vdom
     and worst_vdom = worst_vdom in
     same_finger_stat_by_finger_vdom, worst_vdom
   in
-  let%sub sfb_metrics_vdom =
+  let sfb_metrics_vdom =
     same_finger_metrics_vdom render_freq (fun (bigram_info : Bigram_data.info) ->
       bigram_info.freqs.ab)
   in
-  let%sub sfs_metrics_vdom =
+  let sfs_metrics_vdom =
     same_finger_metrics_vdom render_freq (fun (bigram_info : Bigram_data.info) ->
       bigram_info.freqs.axc)
   in
-  let%sub speed_metrics_vdom =
+  let speed_metrics_vdom =
     same_finger_metrics_vdom render_speed (fun (bigram_info : Bigram_data.info) ->
       bigram_info.dist *. (bigram_info.freqs.ab +. (0.5 *. bigram_info.freqs.axc)))
   in

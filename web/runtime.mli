@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web_proc
+open! Bonsai_web
 
 module Mode : sig
   type t =
@@ -7,5 +7,5 @@ module Mode : sig
     | Manual
   [@@deriving sexp, equal, compare]
 
-  val component : (t * Vdom.Node.t) Computation.t
+  val component : Bonsai.graph -> (t * Vdom.Node.t) Bonsai.t
 end
