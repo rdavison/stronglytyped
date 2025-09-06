@@ -3,14 +3,10 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 
 module Mode = struct
-  module T = struct
-    type t =
-      | Auto
-      | Manual
-    [@@deriving sexp, equal, compare]
-  end
-
-  include T
+  type t =
+    | Auto
+    | Manual
+  [@@deriving sexp, equal, compare]
 
   let component graph =
     let mode, mode_toggle =
@@ -22,14 +18,14 @@ module Mode = struct
           | Manual -> Auto)
         graph
     in
-    let%arr mode = mode
-    and mode_toggle = mode_toggle in
-    let button name =
-      Vdom.Node.button
-        ~attrs:[ Vdom.Attr.on_click (fun _event -> mode_toggle ()) ]
-        [ Vdom.Node.text name ]
-    in
     let vdom =
+      let%arr mode = mode
+      and mode_toggle = mode_toggle in
+      let button name =
+        Vdom.Node.button
+          ~attrs:[ Vdom.Attr.on_click (fun _event -> mode_toggle ()) ]
+          [ Vdom.Node.text name ]
+      in
       match mode with
       | Auto -> button "Manual"
       | Manual -> button "Auto"

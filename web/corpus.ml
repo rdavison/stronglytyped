@@ -49,9 +49,8 @@ include T
 
 let simple_component graph =
   let corpus, set_corpus = Bonsai.state Corpus.empty graph in
-  let%arr corpus = corpus
-  and set_corpus = set_corpus in
   let vdom =
+    let%arr set_corpus = set_corpus in
     Vdom.Node.textarea
       ~attrs:
         [ Vdom.Attr.on_change (fun _event data -> set_corpus (Corpus.of_string data)) ]
