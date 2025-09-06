@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web_proc
+open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form
 module Corpus = Stronglytyped_analysis.Corpus
@@ -47,8 +47,8 @@ include T
 (*   corpus, Vdom.Node.div [ dropdown_vdom; textarea_vdom ] *)
 (* ;; *)
 
-let simple_component =
-  let%sub corpus, set_corpus = Bonsai.state Corpus.empty in
+let simple_component graph =
+  let corpus, set_corpus = Bonsai.state Corpus.empty graph in
   let%arr corpus = corpus
   and set_corpus = set_corpus in
   let vdom =

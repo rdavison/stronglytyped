@@ -1,12 +1,13 @@
 open! Core
-open! Bonsai_web_proc
-module Keyboard = Stronglytyped_analysis.Keyboard
-module Corpus = Stronglytyped_analysis.Corpus
+open! Bonsai_web
+module Keyboard := Stronglytyped_analysis.Keyboard
+module Corpus := Stronglytyped_analysis.Corpus
 
-val counter : int -> (int -> string) -> (int * Vdom.Node.t) Computation.t
+val counter : int -> (int -> string) -> Bonsai.graph -> (int * Vdom.Node.t) Bonsai.t
 
 val component
-  :  Keyboard.t Value.t
-  -> Corpus.t Value.t
-  -> int Value.t
-  -> Vdom.Node.t Computation.t
+  :  Keyboard.t Bonsai.t
+  -> Corpus.t Bonsai.t
+  -> int Bonsai.t
+  -> Bonsai.graph
+  -> Vdom.Node.t Bonsai.t

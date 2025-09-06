@@ -1,8 +1,8 @@
 open! Core
-open! Bonsai_web_proc
-module Key = Stronglytyped_analysis.Key
-module Keyboard = Stronglytyped_analysis.Keyboard
-module Corpus = Stronglytyped_analysis.Corpus
+open! Bonsai_web
+module Key := Stronglytyped_analysis.Key
+module Keyboard := Stronglytyped_analysis.Keyboard
+module Corpus := Stronglytyped_analysis.Corpus
 
 module Action : sig
   type t =
@@ -11,5 +11,10 @@ module Action : sig
   [@@deriving sexp, equal, compare]
 end
 
-val state_machine : (Keyboard.t * (Action.t -> unit Ui_effect.t)) Computation.t
-val component : Keyboard.t Value.t -> Corpus.t Value.t -> Vdom.Node.t Computation.t
+val state_machine : Bonsai.graph -> (Keyboard.t * (Action.t -> unit Ui_effect.t)) Bonsai.t
+
+val component
+  :  Keyboard.t Bonsai.t
+  -> Corpus.t Bonsai.t
+  -> Bonsai.graph
+  -> Vdom.Node.t Bonsai.t

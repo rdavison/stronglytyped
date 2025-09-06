@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web_proc
+open! Bonsai_web
 open! Bonsai.Let_syntax
 module Arrangement = Stronglytyped_analysis.Arrangement
 module Corpus = Stronglytyped_analysis.Corpus
@@ -11,15 +11,18 @@ module Key_action = struct
   type t = Set of Keycode.t [@@deriving sexp, equal]
 end
 
-let key_state_machine id =
-  Bonsai.state_machine
-    ~default_model:(Key.make id ~x:Key.Id.Ansi.x ~y:Key.Id.Ansi.y)
-    ~apply_action:(fun _ model action ->
-      match action with
-      | Key_action.Set kc ->
-        print_s ([%sexp_of: Key.Id.t * Keycode.t] (model.id, kc));
-        { model with kc })
-    ()
+let key_state_machine id graph =
+  let state, f =
+    Bonsai.state_machine
+      ~default_model:(Key.make id ~x:Key.Id.Ansi.x ~y:Key.Id.Ansi.y)
+      ~apply_action:(fun _ model action ->
+        match action with
+        | Key_action.Set kc ->
+          print_s ([%sexp_of: Key.Id.t * Keycode.t] (model.id, kc));
+          { model with kc })
+      graph
+  in
+  Bonsai.both state f
 ;;
 
 module Action = struct
@@ -29,18 +32,20 @@ module Action = struct
   [@@deriving sexp, compare, equal]
 end
 
-let state_machine : (Keyboard.t * (Action.t -> unit Ui_effect.t)) Computation.t =
+let state_machine graph : (Keyboard.t * (Action.t -> unit Ui_effect.t)) Bonsai.t =
   let ids = Key.Id.Set.of_list Key.Id.all_var in
-  let%sub map =
-    ids |> Key.Id.Map.of_key_set ~f:key_state_machine |> Computation.all_map
+  let map =
+    let map = Key.Id.Map.of_key_set ids ~f:key_state_machine in
+    Bonsai.all_map map graph
   in
-  let%sub (keyboard : Keyboard.t Value.t) =
+  let (keyboard : Keyboard.t Bonsai.t) =
     Bonsai.assoc
       (module Key.Id)
       map
-      ~f:(fun _key data ->
+      ~f:(fun _key data _graph ->
         let%arr key, _set_key = data in
         key)
+      graph
   in
   let%arr keyboard = keyboard
   and map = map in
@@ -67,13 +72,13 @@ let convert_hex_to_rgb =
     `RGB (f r, f g, f b)
 ;;
 
-let component keyboard (corpus : Corpus.t Value.t) =
-  let corpus_freq_a = Value.map corpus ~f:(fun corpus -> corpus.freq.a) in
-  let%sub max_value =
-    Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float)
-    |> Computation.map ~f:(Option.value ~default:1.)
+let component keyboard (corpus : Corpus.t Bonsai.t) graph =
+  let corpus_freq_a = Bonsai.map corpus ~f:(fun corpus -> corpus.freq.a) in
+  let max_value =
+    Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float) graph
+    |> Bonsai.map ~f:(Option.value ~default:1.)
   in
-  let%sub keyboard_vdom =
+  let keyboard_vdom =
     let arrangement = Arrangement.ansi in
     let render_legend kc =
       match kc with
@@ -164,21 +169,15 @@ let component keyboard (corpus : Corpus.t Value.t) =
     let tr row =
       row
       |> List.map ~f:td
-      |> Computation.all
-      |> Computation.map ~f:(Vdom.Node.div ~attrs:[ Style.keyboard_row ])
+      |> Bonsai.all
+      |> Bonsai.map ~f:(Vdom.Node.div ~attrs:[ Style.keyboard_row ])
     in
     let table arrangement =
       arrangement
       |> List.map ~f:tr
-      |> Computation.all
-      |> Computation.map ~f:(fun keyboard_rows ->
-        Vdom.Node.div
-          ~attrs:
-            [ Style.keyboard
-            ; Style.Variables.set
-                ()
-            ]
-          keyboard_rows)
+      |> Bonsai.all
+      |> Bonsai.map ~f:(fun keyboard_rows ->
+        Vdom.Node.div ~attrs:[ Style.keyboard; Style.Variables.set () ] keyboard_rows)
     in
     table arrangement
   in

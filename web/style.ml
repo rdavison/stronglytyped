@@ -228,11 +228,10 @@ include
           flex-direction: column;
         }
       |}
-      (*~rewrite:
+    (*~rewrite:
         [ "--keyboard-key-background-color", "--keyboard-key-background-color"
         ; "--keyboard-key-color", "--keyboard-key-color"
         ; "--keyboard-key-hover-background-color", "--keyboard-key-hover-background-color"
         ; "--keyboard-key-hover-color", "--keyboard-key-hover-color"
         ; "--keyboard-background-color", "--keyboard-background-color"
-        ]*)
-        ]
+        ]*)]
