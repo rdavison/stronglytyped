@@ -1,5 +1,5 @@
 open! Core
-open! Bonsai_web_proc
+open! Bonsai_web
 open! Bonsai.Let_syntax
 module Key = Stronglytyped_analysis.Key
 module Hand_finger = Stronglytyped_analysis.Hand_finger
@@ -15,9 +15,9 @@ let with_color ?background_color ?color attr =
   Vdom.Attr.many (attr :: rest)
 ;;
 
-let app =
-  let%sub runtime_mode, runtime_mode_vdom = Runtime.Mode.component in
-  let%sub keyboard, keyboard_inject = Keyboard.state_machine in
+let app graph =
+  let%sub runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
+  let%sub keyboard, keyboard_inject = Keyboard.state_machine graph in
   let%sub brute_force_indexes_button =
     let%sub effects =
       let%sub indexes_swaps_for_brute_forcing =
@@ -29,13 +29,15 @@ let app =
               if Stronglytyped_analysis.Finger.equal key.finger `i
               then Some key.hand
               else None)
+            graph
         in
         let%sub x =
           Bonsai.assoc
             (module Stronglytyped_analysis.Hand)
             x
-            ~f:(fun _ data ->
-              let%sub keys = Bonsai.Map.keys data in
+            graph
+            ~f:(fun _ data graph ->
+              let%sub keys = Bonsai.Map.keys data graph in
               let%arr keys = keys in
               let keys = Set.to_list keys in
               let visited = ref Stronglytyped_analysis.Key.Id.Pair.Set.empty in
@@ -77,18 +79,21 @@ let app =
   in
   let%sub () =
     match%sub runtime_mode with
-    | Manual -> Computation.return ()
+    | Manual -> Bonsai.return ()
     | Auto ->
       Bonsai.Edge.lifecycle
         ~after_display:
           (let%map keyboard_inject = keyboard_inject in
            keyboard_inject Random_swap)
-        ()
+        graph;
+      Bonsai.return ()
   in
-  let%sub worst_counter, worst_counter_vdom = Stats.counter 6 (fun n -> sprintf "%d" n) in
-  let%sub corpus, corpus_vdom = Corpus.component in
-  let%sub stats_section_vdom = Stats.component keyboard corpus worst_counter in
-  let%sub keyboard_section_vdom = Keyboard.component keyboard corpus in
+  let%sub worst_counter, worst_counter_vdom =
+    Stats.counter 6 (fun n -> sprintf "%d" n) graph
+  in
+  let%sub corpus, corpus_vdom = Corpus.component graph in
+  let%sub stats_section_vdom = Stats.component keyboard corpus worst_counter graph in
+  let%sub keyboard_section_vdom = Keyboard.component keyboard corpus graph in
   let%sub random_swap_vdom =
     let%arr keyboard_inject = keyboard_inject
     and runtime_mode = runtime_mode in
@@ -143,5 +148,6 @@ let app =
 let () = Bonsai_web.Start.start app
 
 (* let () = *)
-(*   Bonsai_web.Start.start (Computation.return (Vdom.Node.text (Bonsai.Debug.to_dot app))) *)
+(*   Bonsai_web.Start.start (fun _ -> *)
+(*     Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot app))) *)
 (* ;; *)
