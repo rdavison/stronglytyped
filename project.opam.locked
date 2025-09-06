@@ -1,6 +1,6 @@
 opam-version: "2.0"
-synopsis: "Bonsai To-do List Tutorial"
-maintainer: "You!"
+synopsis: "Keyboard layout analysis"
+maintainer: "richardneildavison@gmail.com"
 depends: [
   "abstract_algebra" {= "v0.18~preview.130.50+1016"}
   "am_running_how_js" {= "v0.18~preview.130.50+1016"}
@@ -223,18 +223,26 @@ pin-depends: [
   "https://github.com/ocaml/ocaml/releases/download/5.2.1/ocaml-5.2.1.tar.gz"
 ]
 name: "project"
-version: "dev"
+version: "0.01"
 build: [
   ["dune" "subst"] {dev}
   [
-    "dune"
-    "build"
-    "-p"
-    name
-    "-j"
-    jobs
-    "@install"
-    "@runtest" {with-test}
-    "@doc" {with-doc}
-  ]
+  "dune"
+  "build"
+  "-p"
+  name
+  "-j"
+  jobs
+  "--promote-install-files=false"
+  "@install"
+  "@runtest" {with-test}
+  "@doc" {with-doc}
 ]
+  ["dune" "install" "-p" name "--create-install-files" name]
+]
+authors: "Richard Davison"
+license: "MIT"
+homepage: "https://github.com/rdavison/stronglytyped"
+bug-reports: "https://github.com/rdavison/stronglytyped/issues"
+dev-repo: "git+https://github.com/rdavison/stronglytyped.git"
+x-maintenance-intent: ["(latest)"]
