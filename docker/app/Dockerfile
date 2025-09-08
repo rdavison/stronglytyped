@@ -2,7 +2,7 @@ FROM ocamlformat AS ocamlformat
 FROM lazygit AS lazygit
 FROM ocaml/opam:ubuntu-22.04-ocaml-5.2
 
-RUN sudo apt update && sudo apt install -y m4 pkg-config libgmp-dev libffi-dev libssl-dev git ripgrep zlib1g-dev wget
+RUN sudo apt update && sudo apt install -y m4 pkg-config libgmp-dev libffi-dev libssl-dev git ripgrep zlib1g-dev wget inotify-tools
 RUN opam update && opam install ocaml-lsp-server
 RUN opam repo add janestreet-bleeding https://github.com/janestreet/opam-repository.git
 RUN opam repo add dune-universe git+https://github.com/dune-universe/opam-overlays.git
