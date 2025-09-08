@@ -5,6 +5,7 @@ module Hand_finger = Stronglytyped_analysis.Hand_finger
 module Key = Stronglytyped_analysis.Key
 module Keyboard = Stronglytyped_analysis.Keyboard
 module Corpus = Stronglytyped_analysis.Corpus
+module Bigram_data = Stronglytyped_analysis.Bigram_data
 
 let render_speed x = sprintf "%.2fd/t" (Float.abs (x *. 100.))
 let render_freq x = sprintf "%.2f%%" (Float.abs (x *. 100.))
@@ -91,7 +92,7 @@ let component keyboard corpus worst_counter graph =
             bigram_data
             |> Map.to_alist
             |> List.map ~f:(fun (_, bigram_info) ->
-              bigram_info.corpus_key, compute_metric bigram_info)
+              bigram_info.bigram, compute_metric bigram_info)
             |> List.sort ~compare:(fun (_, a) (_, b) -> Float.compare b a)
             |> Fn.flip List.take worst_counter
           in
