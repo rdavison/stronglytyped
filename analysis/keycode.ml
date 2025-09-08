@@ -6,7 +6,7 @@ type t =
   | `Legend of string
   | `Power
   ]
-[@@deriving sexp, equal, compare]
+[@@deriving sexp, bin_io, equal, compare]
 
 let to_string_upper t =
   match t with

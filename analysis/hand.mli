@@ -4,9 +4,9 @@ type t =
   [ `l
   | `r
   ]
-[@@deriving sexp, equal, compare, enumerate]
+[@@deriving sexp, bin_io, equal, compare, enumerate]
 
-include Comparable.S with type t := t
+include Comparable.S_binable with type t := t
 
 val to_string : t -> string
 

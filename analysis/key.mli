@@ -81,9 +81,9 @@ module Id : sig
     | `UP
     | `RIGHT
     ]
-  [@@deriving sexp, compare, equal, enumerate]
+  [@@deriving sexp, bin_io, compare, equal, enumerate]
 
-  include Comparable.S with type t := t
+  include Comparable.S_binable with type t := t
 
   val default_kc : t -> Keycode.t
   val key_width : t -> float
@@ -122,7 +122,7 @@ type t =
   ; x : float
   ; y : float
   }
-[@@deriving sexp, compare, equal]
+[@@deriving sexp, bin_io, compare, equal]
 
 val make
   :  Id.t
