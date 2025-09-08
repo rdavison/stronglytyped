@@ -29,20 +29,24 @@ volume:
 
 .PHONY: watch
 watch: install-deps
-	dune build bin/main.exe -w
+	dune build @all -w
 
-.PHONY: dev
-dev: install-deps
+.PHONY: exe
+exe:
 	./scripts/dev-run.sh ./_build/default/bin/main.exe
 
 .PHONY: install-deps
 install-deps:
 	opam install . --deps-only
 
+.PHONY: nvim
+nvim:
+	nvim -c "terminal bash -lc 'make watch; exec bash'" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash
+
 .PHONY: start
-nvim: volume
+start: volume
 	# $(DOCKER) dune build web/main.bc.js
-	$(DOCKER) bash -lc "nvim -c \"terminal bash -lc 'make watch-exec; exec bash'\" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash"
+	$(DOCKER) make nvim
 
 .PHONY: stop
 stop:
