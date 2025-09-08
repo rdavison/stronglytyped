@@ -83,7 +83,9 @@ let app graph =
          Bonsai.return ()
   in
   let worst_counter, worst_counter_vdom =
-    Stats.counter 6 (fun n -> sprintf "%d" n) graph
+    let n, inject = Stronglytyped_analysis.Counter.counter 6 graph in
+    let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
+    n, vdom
   in
   let corpus, corpus_vdom = Corpus.component graph in
   let stats_section_vdom = Stats.component keyboard corpus worst_counter graph in
