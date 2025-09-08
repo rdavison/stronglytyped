@@ -3,12 +3,16 @@
  (modes js)
  (libraries
   stronglytyped_analysis
+  stronglytyped_rpc
+  async_kernel
+  async_js
+  cohttp
   bonsai_web
   bonsai_web_components.web_ui_form
   bonsai_web_components.tailwind_v3_colors
   virtual_dom.keyboard)
  (preprocess
-  (pps ppx_jane bonsai.ppx_bonsai ppx_css)))
+  (pps ppx_jane bonsai.ppx_bonsai ppx_css js_of_ocaml-ppx)))
 
 (install
  (section share)
