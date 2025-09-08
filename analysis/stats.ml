@@ -3,11 +3,9 @@ open! Bonsai
 open! Bonsai.Let_syntax
 
 module Hand_finger = struct
-  type t =
-    { freqs : float Hand_finger.Map.t
-    ; total : float
-    ; worst_n : (string * float) list Hand_finger.Map.t
-    ; worst_n_total : float
+  type ('breakdown, 'total) t =
+    { breakdown : 'breakdown Hand_finger.Map.t
+    ; total : 'total
     }
 
   let diff_row_bigram_data ~bigram_data graph : Bigram_data.t Hand_finger.Map.t Bonsai.t =
@@ -34,7 +32,6 @@ module Hand_finger = struct
 
   let make
         ~(diff_row_bigram_data : Bigram_data.t Hand_finger.Map.t Bonsai.t)
-        ~(worst_counter : int Bonsai.t)
         ~(compute_metric : Bigram_data.info -> float)
         graph
     =
@@ -47,6 +44,17 @@ module Hand_finger = struct
         graph
     in
     let total = Bonsai.Map.sum freqs (module Float) ~f:Fn.id graph in
+    let%arr breakdown = freqs
+    and total = total in
+    { breakdown; total }
+  ;;
+
+  let worst
+        ~(diff_row_bigram_data : Bigram_data.t Hand_finger.Map.t Bonsai.t)
+        ~(worst_counter : int Bonsai.t)
+        ~(compute_metric : Bigram_data.info -> float)
+        graph
+    =
     let worst_n =
       Bonsai.assoc
         (module Hand_finger)
@@ -70,31 +78,51 @@ module Hand_finger = struct
           List.sum (module Float) worst_bigrams ~f:(fun (_bigram, freq) -> freq))
         graph
     in
-    let%arr freqs = freqs
-    and total = total
-    and worst_n = worst_n
-    and worst_n_total = worst_n_total in
-    { freqs; total; worst_n; worst_n_total }
+    let%arr breakdown = worst_n
+    and total = worst_n_total in
+    { breakdown; total }
   ;;
 
-  let sfb ~diff_row_bigram_data ~worst_counter graph =
+  let sfb ~diff_row_bigram_data graph =
     make
+      ~diff_row_bigram_data
+      ~compute_metric:(fun (bigram_info : Bigram_data.info) -> bigram_info.freqs.ab)
+      graph
+  ;;
+
+  let sfs ~diff_row_bigram_data graph =
+    make
+      ~diff_row_bigram_data
+      ~compute_metric:(fun (bigram_info : Bigram_data.info) -> bigram_info.freqs.axc)
+      graph
+  ;;
+
+  let speed ~diff_row_bigram_data graph =
+    make
+      ~diff_row_bigram_data
+      ~compute_metric:(fun (bigram_info : Bigram_data.info) ->
+        bigram_info.dist *. (bigram_info.freqs.ab +. (0.5 *. bigram_info.freqs.axc)))
+      graph
+  ;;
+
+  let sfb_worst ~diff_row_bigram_data ~worst_counter graph =
+    worst
       ~diff_row_bigram_data
       ~worst_counter
       ~compute_metric:(fun (bigram_info : Bigram_data.info) -> bigram_info.freqs.ab)
       graph
   ;;
 
-  let sfs ~diff_row_bigram_data ~worst_counter graph =
-    make
+  let sfs_worst ~diff_row_bigram_data ~worst_counter graph =
+    worst
       ~diff_row_bigram_data
       ~worst_counter
       ~compute_metric:(fun (bigram_info : Bigram_data.info) -> bigram_info.freqs.axc)
       graph
   ;;
 
-  let speed ~diff_row_bigram_data ~worst_counter graph =
-    make
+  let speed_worst ~diff_row_bigram_data ~worst_counter graph =
+    worst
       ~diff_row_bigram_data
       ~worst_counter
       ~compute_metric:(fun (bigram_info : Bigram_data.info) ->
