@@ -16,17 +16,17 @@ let make (keyboard : Keyboard.t Bonsai.t) corpus graph =
       (module Key.Id)
       keyboard
       graph
-      ~f:(fun _ v1 graph ->
+      ~f:(fun _id1 key1 graph ->
         Bonsai.assoc
           (module Key.Id)
           keyboard
           graph
-          ~f:(fun _ v2 _graph ->
-            let%arr v1 = v1
-            and v2 = v2
+          ~f:(fun _id2 key2 _graph ->
+            let%arr key1 = key1
+            and key2 = key2
             and corpus = corpus in
-            let bigram = Key.bigram v1 v2 in
-            let dist = Key.dist v1 v2 in
+            let bigram = Key.bigram key1 key2 in
+            let dist = Key.dist key1 key2 in
             { bigram; dist; freqs = Corpus.bigrams corpus bigram }))
   in
   Bonsai.Map.collapse id_id_map ~comparator:(module Key.Id) graph
