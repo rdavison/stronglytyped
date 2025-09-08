@@ -37,52 +37,6 @@ let same_finger_entry_to_vdom entry =
   entry |> Option.value ~default:(Vdom.Node.text "[Not Found]")
 ;;
 
-let counter n msg =
-  let module Action = struct
-    type t =
-      | Increment
-      | Decrement
-    [@@deriving sexp]
-  end
-  in
-  fun graph ->
-    let n, inject =
-      Bonsai.state_machine
-        ~default_model:n
-        ~apply_action:(fun _ model action ->
-          let model =
-            match action with
-            | Action.Increment -> model + 1
-            | Decrement -> model - 1
-          in
-          if model <= 0 then 0 else model)
-        graph
-    in
-    let vdom =
-      let%arr n = n
-      and inject = inject in
-      let button label (action : Action.t) =
-        let disabled =
-          match action with
-          | Decrement when n <= 0 -> [ Vdom.Attr.disabled ]
-          | _ -> []
-        in
-        Vdom.Node.div
-          ~attrs:
-            ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
-             @ disabled)
-          [ Vdom.Node.text label ]
-      in
-      Vdom.Node.div
-        ~attrs:[ Style.counter_container ]
-        [ button "-" Decrement
-        ; Vdom.Node.div ~attrs:[ Style.counter ] [ Vdom.Node.text (msg n) ]
-        ; button "+" Increment
-        ]
-    in
-    n, vdom
-;;
-
 let same_finger_stat_vdom what render graph =
   let breakdown =
     Bonsai.assoc
