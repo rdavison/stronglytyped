@@ -5,7 +5,7 @@ open! Bonsai.Let_syntax
 type info =
   { bigram : string
   ; dist : float
-  ; freqs : float Corpus.bigrams
+  ; freqs : float Corpus.Bigrams.t
   }
 
 type t = info Key.Id.Pair.Map.t

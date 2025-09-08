@@ -1,35 +1,39 @@
 open! Core
 
-type 'a maps =
-  { a : 'a Char.Map.t
-  ; ab : 'a String.Map.t
-  ; aba : 'a String.Map.t
-  ; abxab : 'a String.Map.t
-  ; abxba : 'a String.Map.t
-  ; abc : 'a String.Map.t
-  ; abcd : 'a String.Map.t
-  ; axc : 'a String.Map.t
-  ; vbcv : 'a String.Map.t
-  }
-[@@deriving sexp, equal]
+module Maps = struct
+  type 'a t =
+    { a : 'a Char.Map.t
+    ; ab : 'a String.Map.t
+    ; aba : 'a String.Map.t
+    ; abxab : 'a String.Map.t
+    ; abxba : 'a String.Map.t
+    ; abc : 'a String.Map.t
+    ; abcd : 'a String.Map.t
+    ; axc : 'a String.Map.t
+    ; vbcv : 'a String.Map.t
+    }
+  [@@deriving sexp, equal]
+end
 
-type 'a bigrams =
-  { ab : 'a
-  ; aba : 'a
-  ; axc : 'a
-  ; vbcv : 'a
-  }
-[@@deriving sexp, equal]
+module Bigrams = struct
+  type 'a t =
+    { ab : 'a
+    ; aba : 'a
+    ; axc : 'a
+    ; vbcv : 'a
+    }
+  [@@deriving sexp, equal]
+end
 
 type t =
-  { count : int maps
-  ; freq : float maps
+  { count : int Maps.t
+  ; freq : float Maps.t
   }
 [@@deriving sexp, equal]
 
 let empty =
   let count =
-    { a = Map.empty (module Char)
+    { Maps.a = Map.empty (module Char)
     ; ab = Map.empty (module String)
     ; aba = Map.empty (module String)
     ; abxab = Map.empty (module String)
@@ -41,7 +45,7 @@ let empty =
     }
   in
   let freq =
-    { a = Map.empty (module Char)
+    { Maps.a = Map.empty (module Char)
     ; ab = Map.empty (module String)
     ; aba = Map.empty (module String)
     ; abxab = Map.empty (module String)
@@ -149,7 +153,7 @@ let of_string (s : string) =
     Map.map axc_count ~f:(fun x -> Float.of_int x /. Float.of_int axc_total)
   in
   let count =
-    { a = a_count
+    { Maps.a = a_count
     ; ab = ab_count
     ; aba = aba_count
     ; abxab = abxab_count
@@ -161,7 +165,7 @@ let of_string (s : string) =
     }
   in
   let freq =
-    { a = a_freq
+    { Maps.a = a_freq
     ; ab = ab_freq
     ; aba = aba_freq
     ; abxab = abxab_freq
@@ -175,7 +179,7 @@ let of_string (s : string) =
   { count; freq }
 ;;
 
-let bigrams (t : t) (bigram : string) : float bigrams =
+let bigrams (t : t) (bigram : string) : float Bigrams.t =
   let f where = Map.find where bigram |> Option.value ~default:0. in
   let maps = t.freq in
   { ab = f maps.ab; aba = f maps.aba; axc = f maps.axc; vbcv = f maps.vbcv }
