@@ -1,6 +1,11 @@
 (library
  (name stronglytyped_server)
- (libraries async_extra.async_bus async_rpc_websocket cohttp-async)
+ (libraries
+  async_extra.async_bus
+  async_rpc_websocket
+  cohttp-async
+  cohttp_async_websocket
+  stronglytyped_rpc)
  (preprocess
   (pps ppx_jane)))
 
