@@ -5,11 +5,11 @@ module T = struct
     [ `l
     | `r
     ]
-  [@@deriving sexp, equal, compare, enumerate]
+  [@@deriving sexp, bin_io, equal, compare, enumerate]
 end
 
 include T
-include Comparable.Make (T)
+include Comparable.Make_binable (T)
 
 let to_string = function
   | `l -> "L"

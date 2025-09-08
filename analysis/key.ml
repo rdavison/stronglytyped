@@ -82,11 +82,11 @@ module Id = struct
       | `UP
       | `RIGHT
       ]
-    [@@deriving sexp, compare, equal, enumerate]
+    [@@deriving sexp, bin_io, compare, equal, enumerate]
   end
 
   include T
-  include Comparable.Make (T)
+  include Comparable.Make_binable (T)
 
   let default_kc (x : t) =
     match x with
@@ -512,7 +512,7 @@ module T = struct
     ; x : float
     ; y : float
     }
-  [@@deriving sexp, equal, compare]
+  [@@deriving sexp, bin_io, equal, compare]
 end
 
 include T

@@ -6,9 +6,9 @@ type t =
   | `m
   | `i
   ]
-[@@deriving sexp, equal, compare, enumerate]
+[@@deriving sexp, bin_io, equal, compare, enumerate]
 
-include Comparator.S with type t := t
+include Comparable.S with type t := t
 
 val is_adjacent : t -> t -> bool
 val roll_direction : t -> t -> [ `In | `Out ]

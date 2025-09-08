@@ -7,7 +7,7 @@ module T = struct
     | `m
     | `i
     ]
-  [@@deriving sexp, equal, compare, enumerate]
+  [@@deriving sexp, bin_io, equal, compare, enumerate]
 
   let is_adjacent a b =
     match a, b with
@@ -23,7 +23,7 @@ module T = struct
 end
 
 include T
-include Comparator.Make (T)
+include Comparable.Make_binable (T)
 
 let to_string = function
   | `p -> "P"
