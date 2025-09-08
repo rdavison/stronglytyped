@@ -52,6 +52,7 @@ let handler ~body:_ _inet req =
 let initialize_connection _initiated_from _addr _inet connection = connection
 
 let main ~port =
+  let () = Random.self_init () in
   let hostname = Unix.gethostname () in
   printf "Serving http://%s:%d/\n%!" hostname port;
   let%bind server =
@@ -61,11 +62,7 @@ let main ~port =
       ~mode:`TCP
       ~where_to_listen:(Tcp.Where_to_listen.of_port port)
       ~http_handler
-      ~implementations:
-        (Rpc.Implementations.create_exn
-           ~implementations:[]
-           ~on_unknown_rpc:`Continue
-           ~on_exception:Log_on_background_exn)
+      ~implementations:Rpc_implementations.implementations
       ~initial_connection_state:initialize_connection
       ()
   in
