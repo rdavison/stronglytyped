@@ -132,3 +132,9 @@ val make
 
 val dist : t -> t -> float
 val bigram : t -> t -> string
+
+module Action : sig
+  type t = Set of Keycode.t [@@deriving sexp, equal]
+end
+
+val state_machine : Id.t -> Bonsai.graph -> (t * (Action.t -> unit Ui_effect.t)) Bonsai.t

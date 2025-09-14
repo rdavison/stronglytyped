@@ -548,3 +548,21 @@ module Pair = struct
   include T
   include Comparable.Make_using_comparator (T)
 end
+
+module Action = struct
+  type t = Set of Keycode.t [@@deriving sexp, equal]
+end
+
+let state_machine id graph =
+  let state, f =
+    Bonsai.state_machine
+      ~default_model:(make id ~x:Id.Ansi.x ~y:Id.Ansi.y)
+      ~apply_action:(fun _ model action ->
+        match action with
+        | Action.Set kc ->
+          print_s ([%sexp_of: Id.t * Keycode.t] (model.id, kc));
+          { model with kc })
+      graph
+  in
+  Bonsai.both state f
+;;
