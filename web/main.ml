@@ -15,7 +15,7 @@ let with_color ?background_color ?color attr =
   Vdom.Attr.many (attr :: rest)
 ;;
 
-let app graph =
+let _app graph =
   let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
   let keyboard, keyboard_inject = Keyboard.state_machine graph in
   let brute_force_indexes_button =
@@ -88,7 +88,9 @@ let app graph =
     n, vdom
   in
   let corpus, corpus_vdom = Corpus.component graph in
-  let stats_section_vdom = Stats.component keyboard corpus worst_counter graph in
+  let same_finger_controls, stats_section_vdom =
+    Stats_same_finger.component ~keyboard ~corpus ~worst_counter graph
+  in
   let keyboard_section_vdom = Keyboard.component keyboard corpus graph in
   let random_swap_vdom =
     let%arr keyboard_inject = keyboard_inject
@@ -103,23 +105,27 @@ let app graph =
     in
     button "Random Swap" (fun () -> keyboard_inject Random_swap)
   in
-  let%arr stats_section_vdom = stats_section_vdom
-  and keyboard_section_vdom = keyboard_section_vdom
-  and worst_counter_vdom = worst_counter_vdom
-  and random_swap_vdom = random_swap_vdom
-  and runtime_mode_vdom = runtime_mode_vdom
-  and brute_force_indexes_button = brute_force_indexes_button
-  and corpus_vdom = corpus_vdom in
   let nav =
+    let%arr worst_counter_vdom = worst_counter_vdom
+    and random_swap_vdom = random_swap_vdom
+    and runtime_mode_vdom = runtime_mode_vdom
+    and brute_force_indexes_button = brute_force_indexes_button
+    and same_finger_controls = same_finger_controls
+    and corpus_vdom = corpus_vdom in
     Vdom.Node.create
       "nav"
       ~attrs:[ with_color Style.nav ~background_color:Tailwind_v3_colors.slate600 ]
-      [ runtime_mode_vdom
+      [ Bonsai_web_ui_form.With_manual_view.view same_finger_controls
+      ; runtime_mode_vdom
       ; random_swap_vdom
       ; worst_counter_vdom
       ; brute_force_indexes_button
+      ; corpus_vdom
       ]
   in
+  let%arr stats_section_vdom = stats_section_vdom
+  and keyboard_section_vdom = keyboard_section_vdom
+  and nav = nav in
   let header =
     Vdom.Node.header
       ~attrs:[ with_color Style.header ~background_color:Tailwind_v3_colors.slate500 ]
@@ -131,7 +137,7 @@ let app graph =
   let footer = Vdom.Node.footer [] in
   let main =
     let sections =
-      [ keyboard_section_vdom; stats_section_vdom; corpus_vdom ]
+      [ keyboard_section_vdom; stats_section_vdom ]
       |> List.map ~f:(fun vdom -> Vdom.Node.section [ vdom ])
     in
     Vdom.Node.main
@@ -141,9 +147,83 @@ let app graph =
   Vdom.Node.div ~attrs:[ Style.root ] [ nav; main ]
 ;;
 
-let () = Bonsai_web.Start.start app
+module Foo = struct
+  (* open! Async_kernel *)
+  (* open! Async_js *)
 
+  (* let wait ms = after (Time_float.Span.of_int_ms ms) *)
+
+  (* let rec connect_and_reload_on_reconnect ~(uri : Uri.t) () : unit Deferred.t = *)
+  (*   Monitor.try_with (fun () -> *)
+  (*     Cohttp_async_websocket.Client.with_websocket_client *)
+  (*       uri *)
+  (*       ~f:(fun _resp (ws : string Websocket.t) -> *)
+  (*         let read_pipe, _write_pipe = Websocket.pipes ws in *)
+  (*         let closed = Ivar.create () in *)
+  (*         (* consume frames just to keep the pipe drained *) *)
+  (*         let rec reader () = *)
+  (*           match%bind Pipe.read read_pipe with *)
+  (*           | `Eof -> *)
+  (*             Ivar.fill_if_empty closed (); *)
+  (*             return () *)
+  (*           | `Ok _ -> reader () *)
+  (*         in *)
+  (*         don't_wait_for (reader ()); *)
+  (*         (* if we got here after a previous failure, we just reconnected → reload *) *)
+  (*         Js_of_ocaml.Dom_html.window##.location##reload; *)
+  (*         Ivar.read closed)) *)
+  (*   >>= function *)
+  (*   | Ok _ -> *)
+  (*     (* socket closed normally; start over *) *)
+  (*     connect_and_reload_on_reconnect ~uri () *)
+  (*   | Error _exn -> *)
+  (*     (* failed to connect — retry with backoff *) *)
+  (*     let rec loop delay = *)
+  (*       Monitor.try_with (fun () -> *)
+  (*         Cohttp_async_websocket.Client.with_websocket_client uri ~f:(fun _ _ -> *)
+  (*           return ())) *)
+  (*       >>= function *)
+  (*       | Ok _ -> *)
+  (*         (* success → reload *) *)
+  (*         Js_of_ocaml.Dom_html.window##.location##reload; *)
+  (*         Deferred.unit *)
+  (*       | Error _ -> *)
+  (*         let next = Int.min 3000 (int_of_float (float delay *. 1.6) |> max 300) in *)
+  (*         let%bind () = wait delay in *)
+  (*         loop next *)
+  (*     in *)
+  (*     loop 300 *)
+  (* ;; *)
+end
+
+let () = Bonsai_web.Start.start _app
+
+(* let _ = *)
+(*   let open Async_kernel in *)
+(*   let open Async_rpc_kernel in *)
+(*   Async_js.init (); *)
+(*   don't_wait_for *)
+(*     (let conn = *)
+(*        let r, w = Pipe.create () in *)
+(*        Rpc.Connection.create *)
+(*          ~connection_state:(fun _ -> ()) *)
+(*          (Pipe_transport.create Pipe_transport.Kind.string r w) *)
+(*      in *)
+(*      match%bind conn with *)
+(*      | Error exn -> *)
+(*        printf "Connection failed: %s\n" (Exn.to_string exn); *)
+(*        return () *)
+(*      | Ok conn -> *)
+(*        let%bind response = *)
+(*          Rpc.Rpc.dispatch Stronglytyped_rpc.Protocol.Version.t conn () *)
+(*        in *)
+(*        (match response with *)
+(*         | Ok s -> printf "Server replied: %s\n" s *)
+(*         | Error e -> printf "Error: %s\n" (Error.to_string_hum e)); *)
+(*        Rpc.Connection.close conn) *)
+(* ;; *)
+(**)
 (* let () = *)
 (*   Bonsai_web.Start.start (fun _ -> *)
-(*     Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot app))) *)
+(*     Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot _app))) *)
 (* ;; *)

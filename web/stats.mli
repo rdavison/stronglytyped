@@ -1,11 +1,7 @@
 open! Core
 open! Bonsai_web
-module Keyboard := Stronglytyped_analysis.Keyboard
-module Corpus := Stronglytyped_analysis.Corpus
 
 val component
-  :  Keyboard.t Bonsai.t
-  -> Corpus.t Bonsai.t
-  -> int Bonsai.t
+  :  same_finger_vdom:Vdom.Node.t Bonsai.t
   -> Bonsai.graph
   -> Vdom.Node.t Bonsai.t
