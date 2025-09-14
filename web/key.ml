@@ -43,8 +43,8 @@ let vdom id k corpus_freq_a max_value =
             ~keyboard_key_height:(Css_gen.Length.to_string_css (`Em_float 4.))
             ()
         ]
-      [ vdom_optional id k ]
-  | Some k ->
+      [ vdom_optional id (Option.map k ~f:fst) ]
+  | Some (k, dnd_attr) ->
     let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
     let keyboard_key_background_color_overlay =
       let a, b =
@@ -77,6 +77,7 @@ let vdom id k corpus_freq_a max_value =
               (Css_gen.Length.to_string_css (`Em_float (4. *. Id.key_width id)))
             ~keyboard_key_height:(Css_gen.Length.to_string_css (`Em_float 4.))
             ()
+        ; dnd_attr
         ]
       [ Vdom.Node.div
           ~attrs:
@@ -86,4 +87,16 @@ let vdom id k corpus_freq_a max_value =
             ]
           [ vdom_optional id (Some k) ]
       ]
+;;
+
+let component id ~keyboard ~corpus_freq_a ~max_value ~dnd _graph =
+  let%arr id = id
+  and keyboard = keyboard
+  and corpus_freq_a = corpus_freq_a
+  and max_value = max_value
+  and dnd_source = dnd >>| Bonsai_web_ui_drag_and_drop.source
+  and dnd_target = dnd >>| Bonsai_web_ui_drag_and_drop.drop_target in
+  let dnd_attr id = Vdom.Attr.( @ ) (dnd_source ~id) (dnd_target ~id) in
+  let k = Map.find keyboard id |> Option.map ~f:(fun key -> key, dnd_attr id) in
+  vdom id k corpus_freq_a max_value
 ;;
