@@ -17,7 +17,7 @@ let with_color ?background_color ?color attr =
 
 let _app graph =
   let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
-  let keyboard, keyboard_inject = Keyboard.state_machine graph in
+  let keyboard, keyboard_inject = Analysis.Keyboard.state_machine graph in
   let brute_force_indexes_button =
     let%arr effects =
       let%arr keyboard_inject = keyboard_inject
