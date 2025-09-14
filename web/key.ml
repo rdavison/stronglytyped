@@ -16,7 +16,7 @@ let render_legend kc =
   | `Power -> Vdom.Node.text "O"
 ;;
 
-let vdom (id : Id.t) (key : t option) =
+let vdom_optional (id : Id.t) (key : t option) =
   match key with
   | None -> render_legend (Analysis.Key.Id.default_kc id)
   | Some key -> render_legend key.kc
@@ -43,7 +43,7 @@ let vdom id k corpus_freq_a max_value =
             ~keyboard_key_height:(Css_gen.Length.to_string_css (`Em_float 4.))
             ()
         ]
-      [ vdom id k ]
+      [ vdom_optional id k ]
   | Some k ->
     let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
     let keyboard_key_background_color_overlay =
@@ -84,6 +84,6 @@ let vdom id k corpus_freq_a max_value =
             ; Vdom.Attr.style
                 (Css_gen.background_color keyboard_key_background_color_overlay)
             ]
-          [ vdom id (Some k) ]
+          [ vdom_optional id (Some k) ]
       ]
 ;;
