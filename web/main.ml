@@ -4,6 +4,74 @@ open! Bonsai.Let_syntax
 module Key = Analysis.Key
 module Hand_finger = Analysis.Hand_finger
 
+module Style =
+  [%css
+    stylesheet
+      {|
+        /* --------------------------------------------------------------- ROOT SECTION */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          background-color: #94A3B8;
+        }
+
+        /* --------------------------------------------------------------- ROOT SECTION */
+        .root {
+          display: flex;
+          flex-direction: row;
+          min-width: 100%;
+          font-family: sans-serif;
+          color: black;
+        }
+
+        /* ---------------------------------------------------------------- NAV SECTION */
+        .nav {
+          display: flex;
+          flex-direction: column;
+          width: 20rem;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 2px 0px 10px black;
+        }
+
+        /* --------------------------------------------------------------- MAIN SECTION */
+        .main {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+
+        /* ------------------------------------------------------------- HEADER SECTION */
+        .header {
+          z-index: -1;
+          padding: 1rem;
+          color: white;
+          text-shadow: 0.2rem 0.2rem 0.5rem black;
+          min-height: 1rem;
+          display: flex;
+          flex-direction: row-reverse;
+          justify-content: space-between;
+        }
+
+        .header-h1 {
+          font-size: 2rem;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        /* ------------------------------------------------------------------ MAIN BODY */
+        .main-body {
+          display: flex;
+          flex-direction: column;
+          padding: 2rem;
+        }
+      |}]
+
 let with_color ?background_color ?color attr =
   let background_color =
     Option.map background_color ~f:(fun color -> Css_gen.background_color color)

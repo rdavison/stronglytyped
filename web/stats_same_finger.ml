@@ -3,6 +3,87 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
 
+module Style =
+  [%css
+    stylesheet
+      {|
+        .stats-vertical-analysis {
+          padding: 2rem;
+        }
+
+        .stats-vertical-analysis table {
+          border-collapse: collapse;
+          font-family: monospace;
+        }
+
+        .stats-vertical-analysis table th {
+          font-weight: bold;
+          color: black;
+          padding: 0.25rem;
+          border: 1px black solid;
+        }
+
+        .stats-vertical-analysis table td {
+          color: black;
+          padding: 1rem;
+          border: 1px black solid;
+          text-align: center;
+          align-items: center;
+        }
+
+        .stats-vertical-analysis table thead th {
+          border-top: 0;
+        }
+
+        .stats-vertical-analysis table tbody th {
+          border-top: 1;
+        }
+
+        .stats-vertical-analysis table tr:last-child th,
+        .stats-vertical-analysis table tr:last-child td {
+          border-bottom: 0;
+        }
+
+        .stats-vertical-analysis table tr th:first-child,
+        .stats-vertical-analysis table tr td:first-child {
+          border-left: 0;
+        }
+
+        .stats-vertical-analysis table tr th:last-child,
+        .stats-vertical-analysis table tr td:last-child {
+          border-right: 0;
+        }
+
+        .stats-vertical-analysis-inner-table table {
+          border-radius: 0;
+          border-collapse: collapse;
+          border: 0;
+          margin: 0;
+        }
+
+        .stats-vertical-analysis-inner-table table td {
+          border: 1px black solid;
+          padding: 0.5rem;
+          color: black;
+        }
+
+        .stats-vertical-analysis-inner-table table tr:first-child td {
+          border-top: 0;
+        }
+
+        .stats-vertical-analysis-inner-table table tr:last-child td {
+          border-bottom: 0;
+        }
+
+        .stats-vertical-analysis-inner-table table tr td:first-child {
+          border-left: 0;
+        }
+
+        .stats-vertical-analysis-inner-table table tr td:last-child {
+          border-right: 0;
+        }
+|}]
+
 let multiselect graph =
   Form.Elements.Multiselect.set
     (module Analysis.Stats_same_finger.Typed_variant.Packed)

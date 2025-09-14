@@ -3,6 +3,45 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 include Analysis.Key
 
+module Style =
+  [%css
+    stylesheet
+      {|
+        .keyboard-key {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: var(--keyboard-key-width);
+          height: var(--keyboard-key-height);
+          background-color: var(--keyboard-key-background-color);
+          color: var(--keyboard-key-color);
+          margin: 0.1em;
+          transition-property: color, background-color;
+          transition-timing-function:  cubic-bezier(0.4, 0, 0.2, 1);
+          transition-duration: 300ms;
+          transition-timing-function:  cubic-bezier(0, 0, 0.2, 1);
+          border-radius: 0.5rem;
+          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+          align-items: center;
+          text-align: center;
+        }
+
+        .keyboard-key-overlay {
+          all: inherit;
+          margin: unset;
+        }
+
+        .keyboard-key:hover {
+          background-color: var(--keyboard-key-hover-background-color);
+          color: var(--keyboard-key-hover-color);
+        }
+
+        .keyboard-key-label {
+          display: flex;
+          flex-direction: column;
+        }
+|}]
+
 let render_legend kc =
   match kc with
   | `Alpha _ -> Vdom.Node.text (Analysis.Keycode.to_string_upper kc)

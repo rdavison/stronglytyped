@@ -3,6 +3,39 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 open Analysis.Counter
 
+module Style =
+  [%css
+    stylesheet
+      {|
+        .counter-container {
+          display: flex;
+          justify-content: space-evenly;
+          user-select: none;
+        }
+
+        .counter {
+        }
+
+        .counter-button {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 2ch;
+          border: 1px black solid;
+          background-color: #334;
+          cursor: default;
+        }
+
+        .counter-button:hover {
+          background-color: #445;
+        }
+
+        .counter-button:active {
+          background-color: #223;
+          color: white;
+        }
+|}]
+
 let vdom ~n ~inject ~msg =
   let%arr n = n
   and inject = inject in
