@@ -4,7 +4,7 @@ open! Bonsai.Let_syntax
 module Keycode = Analysis.Keycode
 module Keyboard = Analysis.Keyboard
 
-let keyboard_vdom keyboard corpus_freq_a max_value =
+let vdom keyboard corpus_freq_a max_value =
   let arrangement = Analysis.Arrangement.ansi in
   let row row =
     row
@@ -33,6 +33,6 @@ let component keyboard (corpus : Analysis.Corpus.t Bonsai.t) graph =
     Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float) graph
     |> Bonsai.map ~f:(Option.value ~default:1.)
   in
-  let%arr keyboard_vdom = keyboard_vdom keyboard corpus_freq_a max_value in
-  Vdom.Node.div ~attrs:[ Style.keyboard_section ] [ keyboard_vdom ]
+  let%arr vdom = vdom keyboard corpus_freq_a max_value in
+  Vdom.Node.div ~attrs:[ Style.keyboard_section ] [ vdom ]
 ;;
