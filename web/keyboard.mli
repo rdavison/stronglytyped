@@ -8,7 +8,7 @@ module Action : sig
   type t =
     | Swap of (Key.Id.t * Key.Id.t)
     | Random_swap
-  [@@deriving sexp, equal, compare]
+  [@@deriving sexp, compare, equal]
 end
 
 val state_machine

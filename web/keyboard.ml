@@ -1,29 +1,9 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-module Arrangement = Analysis.Arrangement
-module Corpus = Analysis.Corpus
 module Key = Analysis.Key
 module Keycode = Analysis.Keycode
 module Keyboard = Analysis.Keyboard
-
-module Key_action = struct
-  type t = Set of Keycode.t [@@deriving sexp, equal]
-end
-
-let key_state_machine id graph =
-  let state, f =
-    Bonsai.state_machine
-      ~default_model:(Key.make id ~x:Key.Id.Ansi.x ~y:Key.Id.Ansi.y)
-      ~apply_action:(fun _ model action ->
-        match action with
-        | Key_action.Set kc ->
-          print_s ([%sexp_of: Key.Id.t * Keycode.t] (model.id, kc));
-          { model with kc })
-      graph
-  in
-  Bonsai.both state f
-;;
 
 module Action = struct
   type t =
@@ -35,7 +15,7 @@ end
 let state_machine graph : Keyboard.t Bonsai.t * (Action.t -> unit Ui_effect.t) Bonsai.t =
   let ids = Key.Id.Set.of_list Key.Id.all_var in
   let state_machines_by_id =
-    let map = Key.Id.Map.of_key_set ids ~f:key_state_machine in
+    let map = Key.Id.Map.of_key_set ids ~f:Analysis.Key.state_machine in
     Bonsai.all_map map graph
   in
   let keyboard : Keyboard.t Bonsai.t =
@@ -72,14 +52,14 @@ let convert_hex_to_rgb =
     `RGB (f r, f g, f b)
 ;;
 
-let component keyboard (corpus : Corpus.t Bonsai.t) graph =
+let component keyboard (corpus : Analysis.Corpus.t Bonsai.t) graph =
   let corpus_freq_a = Bonsai.map corpus ~f:(fun corpus -> corpus.freq.a) in
   let max_value =
     Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float) graph
     |> Bonsai.map ~f:(Option.value ~default:1.)
   in
   let keyboard_vdom =
-    let arrangement = Arrangement.ansi in
+    let arrangement = Analysis.Arrangement.ansi in
     let render_legend kc =
       match kc with
       | `Alpha _ -> Vdom.Node.text (Keycode.to_string_upper kc)
@@ -94,7 +74,7 @@ let component keyboard (corpus : Corpus.t Bonsai.t) graph =
     in
     let key (id : Key.Id.t) (key : Key.t option) =
       match key with
-      | None -> render_legend (Key.Id.default_kc id)
+      | None -> render_legend (Analysis.Key.Id.default_kc id)
       | Some key -> render_legend key.kc
     in
     let td id =
