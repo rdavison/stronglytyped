@@ -17,14 +17,14 @@ let vdom keyboard corpus_freq_a max_value =
     |> Bonsai.all
     |> Bonsai.map ~f:(Vdom.Node.div ~attrs:[ Style.keyboard_row ])
   in
-  let vdom arrangement =
+  let board arrangement =
     arrangement
     |> List.map ~f:row
     |> Bonsai.all
     |> Bonsai.map ~f:(fun keyboard_rows ->
       Vdom.Node.div ~attrs:[ Style.keyboard; Style.Variables.set () ] keyboard_rows)
   in
-  vdom arrangement
+  board arrangement
 ;;
 
 let component keyboard (corpus : Analysis.Corpus.t Bonsai.t) graph =
