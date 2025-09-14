@@ -1,8 +1,8 @@
 open! Core
 open! Bonsai_web
-module Key := Stronglytyped_analysis.Key
-module Keyboard := Stronglytyped_analysis.Keyboard
-module Corpus := Stronglytyped_analysis.Corpus
+module Key := Analysis.Key
+module Keyboard := Analysis.Keyboard
+module Corpus := Analysis.Corpus
 
 module Action : sig
   type t =

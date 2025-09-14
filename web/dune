@@ -2,7 +2,7 @@
  (name main)
  (modes js)
  (libraries
-  stronglytyped_analysis
+  analysis
   stronglytyped_rpc
   async_kernel
   async_js

@@ -1,11 +1,11 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-module Arrangement = Stronglytyped_analysis.Arrangement
-module Corpus = Stronglytyped_analysis.Corpus
-module Key = Stronglytyped_analysis.Key
-module Keycode = Stronglytyped_analysis.Keycode
-module Keyboard = Stronglytyped_analysis.Keyboard
+module Arrangement = Analysis.Arrangement
+module Corpus = Analysis.Corpus
+module Key = Analysis.Key
+module Keycode = Analysis.Keycode
+module Keyboard = Analysis.Keyboard
 
 module Key_action = struct
   type t = Set of Keycode.t [@@deriving sexp, equal]
