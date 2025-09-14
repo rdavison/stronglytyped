@@ -1,6 +1,6 @@
 open! Core
 open! Bonsai_web
-open! Stronglytyped_analysis.Counter
+open! Analysis.Counter
 
 val vdom
   :  n:int Bonsai.t

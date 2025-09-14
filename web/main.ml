@@ -1,8 +1,8 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-module Key = Stronglytyped_analysis.Key
-module Hand_finger = Stronglytyped_analysis.Hand_finger
+module Key = Analysis.Key
+module Hand_finger = Analysis.Hand_finger
 
 let with_color ?background_color ?color attr =
   let background_color =
@@ -24,20 +24,18 @@ let _app graph =
       and indexes_swaps_for_brute_forcing =
         let%arr x =
           Bonsai.assoc
-            (module Stronglytyped_analysis.Hand)
+            (module Analysis.Hand)
             (Bonsai.Map.index_by
                keyboard
-               ~comparator:(module Stronglytyped_analysis.Hand)
+               ~comparator:(module Analysis.Hand)
                ~index:(fun key ->
-                 if Stronglytyped_analysis.Finger.equal key.finger `i
-                 then Some key.hand
-                 else None)
+                 if Analysis.Finger.equal key.finger `i then Some key.hand else None)
                graph)
             graph
             ~f:(fun _ data graph ->
               let%arr keys = Bonsai.Map.keys data graph in
               let keys = Set.to_list keys in
-              let visited = ref Stronglytyped_analysis.Key.Id.Pair.Set.empty in
+              let visited = ref Analysis.Key.Id.Pair.Set.empty in
               List.cartesian_product keys keys
               |> List.filter_map ~f:(fun (k1, k2) ->
                 if Key.Id.equal k1 k2
@@ -83,7 +81,7 @@ let _app graph =
          Bonsai.return ()
   in
   let worst_counter, worst_counter_vdom =
-    let n, inject = Stronglytyped_analysis.Counter.counter 6 graph in
+    let n, inject = Analysis.Counter.counter 6 graph in
     let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
     n, vdom
   in

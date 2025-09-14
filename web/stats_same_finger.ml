@@ -5,8 +5,8 @@ module Form = Bonsai_web_ui_form.With_manual_view
 
 let multiselect graph =
   Form.Elements.Multiselect.set
-    (module Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed)
-    (Bonsai.return Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.all)
+    (module Analysis.Stats_same_finger.Typed_variant.Packed)
+    (Bonsai.return Analysis.Stats_same_finger.Typed_variant.Packed.all)
     graph
 ;;
 
@@ -15,7 +15,7 @@ let selected_metrics form =
   Form.value_or_default form ~default:[]
 ;;
 
-let label (t : Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.t) =
+let label (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
   match t.f with
   | T Sfb -> "SFB"
   | T Sfs -> "SFS"
@@ -28,9 +28,7 @@ let label (t : Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.t) 
 let render_speed x = sprintf "%.2fd/t" (Float.abs (x *. 100.))
 let render_freq x = sprintf "%.2f%%" (Float.abs (x *. 100.))
 
-let render_measurement
-      (t : Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.t)
-  =
+let render_measurement (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
   match t.f with
   | T Sfb -> render_freq
   | T Sfs -> render_freq
@@ -42,21 +40,21 @@ let render_measurement
 
 let render_simple
       (t :
-        (float, 'total) Stronglytyped_analysis.Stats_same_finger.metric
-          Stronglytyped_analysis.Stats_same_finger.Typed_variant.t)
+        (float, 'total) Analysis.Stats_same_finger.metric
+          Analysis.Stats_same_finger.Typed_variant.t)
       data
   =
-  let packed = Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
   Vdom.Node.text (render_measurement packed data)
 ;;
 
 let render_detailed
       (t :
-        ((string * float) list, 'total) Stronglytyped_analysis.Stats_same_finger.metric
-          Stronglytyped_analysis.Stats_same_finger.Typed_variant.t)
+        ((string * float) list, 'total) Analysis.Stats_same_finger.metric
+          Analysis.Stats_same_finger.Typed_variant.t)
       worst
   =
-  let packed = Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
   Vdom.Node.div
     ~attrs:[ Style.stats_vertical_analysis_inner_table ]
     [ Vdom.Node.table
@@ -70,8 +68,8 @@ let render_detailed
 
 let render_breakdown
   : type breakdown.
-    (breakdown, 'total) Stronglytyped_analysis.Stats_same_finger.metric
-      Stronglytyped_analysis.Stats_same_finger.Typed_variant.t
+    (breakdown, 'total) Analysis.Stats_same_finger.metric
+      Analysis.Stats_same_finger.Typed_variant.t
     -> breakdown
     -> Vdom.Node.t
   =
@@ -89,18 +87,17 @@ let render_total t total = Vdom.Node.text (render_measurement t total)
 
 let row
       (t :
-        ('breakdown, 'total) Stronglytyped_analysis.Stats_same_finger.metric
-          Stronglytyped_analysis.Stats_same_finger.Typed_variant.t)
-      ~(metric :
-         ('breakdown, 'total) Stronglytyped_analysis.Stats_same_finger.metric Bonsai.t)
+        ('breakdown, 'total) Analysis.Stats_same_finger.metric
+          Analysis.Stats_same_finger.Typed_variant.t)
+      ~(metric : ('breakdown, 'total) Analysis.Stats_same_finger.metric Bonsai.t)
       graph
   : Vdom.Node.t Bonsai.t
   =
-  let packed = Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
   let%sub { breakdown; total } = metric in
   let breakdown =
     Bonsai.assoc
-      (module Stronglytyped_analysis.Hand_finger)
+      (module Analysis.Hand_finger)
       breakdown
       ~f:(fun _key data _graph ->
         let%arr contents = Bonsai.map data ~f:(render_breakdown t) in
@@ -113,7 +110,7 @@ let row
   and total = total in
   let header = Vdom.Node.th [ Vdom.Node.text label ] in
   let breakdown =
-    List.map Stronglytyped_analysis.Hand_finger.all ~f:(fun hand_finger ->
+    List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
       Map.find breakdown hand_finger
       |> Option.value ~default:(Vdom.Node.td [ Vdom.Node.none ]))
   in
@@ -123,10 +120,9 @@ let row
 
 let table
       (t :
-        ( Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.t
-          , Stronglytyped_analysis.Stats_same_finger.t
-          , Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed
-            .comparator_witness )
+        ( Analysis.Stats_same_finger.Typed_variant.Packed.t
+          , Analysis.Stats_same_finger.t
+          , Analysis.Stats_same_finger.Typed_variant.Packed.comparator_witness )
           Map_intf.Map.t
           Bonsai.t)
       metrics_order
@@ -134,7 +130,7 @@ let table
   =
   let data =
     Bonsai.assoc
-      (module Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed)
+      (module Analysis.Stats_same_finger.Typed_variant.Packed)
       t
       ~f:(fun _key data graph ->
         match%sub data with
@@ -148,8 +144,8 @@ let table
   in
   let%arr data = data in
   let header =
-    let all = Stronglytyped_analysis.Hand_finger.all in
-    let to_string = Stronglytyped_analysis.Hand_finger.to_string in
+    let all = Analysis.Hand_finger.all in
+    let to_string = Analysis.Hand_finger.to_string in
     (all |> List.map ~f:to_string) @ [ "Total" ]
   in
   let scope x = Vdom.Attr.create "scope" x in
@@ -174,25 +170,22 @@ let component ~keyboard ~corpus ~worst_counter graph =
       controls
       ~default:
         (Set.of_list
-           (module Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed)
-           Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.all)
+           (module Analysis.Stats_same_finger.Typed_variant.Packed)
+           Analysis.Stats_same_finger.Typed_variant.Packed.all)
   in
   let diff_row_bigram_data =
-    let bigram_data = Stronglytyped_analysis.Bigram_data.make keyboard corpus graph in
-    Stronglytyped_analysis.Stats_same_finger.bigram_data bigram_data graph
+    let bigram_data = Analysis.Bigram_data.make keyboard corpus graph in
+    Analysis.Stats_same_finger.bigram_data bigram_data graph
   in
   let stats_same_finger =
-    Stronglytyped_analysis.Stats_same_finger.component
+    Analysis.Stats_same_finger.component
       ~metrics
       ~worst_counter
       ~diff_row_bigram_data
       graph
   in
   let table =
-    table
-      stats_same_finger
-      Stronglytyped_analysis.Stats_same_finger.Typed_variant.Packed.all
-      graph
+    table stats_same_finger Analysis.Stats_same_finger.Typed_variant.Packed.all graph
   in
   let vdom =
     let%arr table = table in

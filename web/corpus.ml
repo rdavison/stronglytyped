@@ -2,8 +2,8 @@ open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
-module Corpus = Stronglytyped_analysis.Corpus
-module Key = Stronglytyped_analysis.Key
+module Corpus = Analysis.Corpus
+module Key = Analysis.Key
 
 module T = struct
   type t =

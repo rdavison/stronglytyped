@@ -1,7 +1,7 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-open Stronglytyped_analysis.Counter
+open Analysis.Counter
 
 let vdom ~n ~inject ~msg =
   let%arr n = n
