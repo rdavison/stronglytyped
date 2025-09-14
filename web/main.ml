@@ -89,7 +89,9 @@ let _app graph =
   let same_finger_controls, stats_section_vdom =
     Stats_same_finger.component ~keyboard ~corpus ~worst_counter graph
   in
-  let keyboard_section_vdom = Keyboard.component keyboard corpus graph in
+  let keyboard_section_vdom =
+    Keyboard.section_component keyboard keyboard_inject corpus graph
+  in
   let random_swap_vdom =
     let%arr keyboard_inject = keyboard_inject
     and runtime_mode = runtime_mode in

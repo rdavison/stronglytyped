@@ -4,35 +4,41 @@ open! Bonsai.Let_syntax
 module Keycode = Analysis.Keycode
 module Keyboard = Analysis.Keyboard
 
-let vdom keyboard corpus_freq_a max_value =
+let component keyboard corpus_freq_a max_value dnd graph =
+  let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
   let arrangement = Analysis.Arrangement.ansi in
   let row row =
     row
-    |> List.map ~f:(fun id ->
-      let%arr keyboard = keyboard
-      and corpus_freq_a = corpus_freq_a
-      and max_value = max_value in
-      let k = Map.find keyboard id in
-      Key.vdom id k corpus_freq_a max_value)
+    |> List.map ~f:(fun id -> key (Bonsai.return id) graph)
     |> Bonsai.all
     |> Bonsai.map ~f:(Vdom.Node.div ~attrs:[ Style.keyboard_row ])
   in
-  let board arrangement =
-    arrangement
-    |> List.map ~f:row
-    |> Bonsai.all
-    |> Bonsai.map ~f:(fun keyboard_rows ->
-      Vdom.Node.div ~attrs:[ Style.keyboard; Style.Variables.set () ] keyboard_rows)
-  in
-  board arrangement
+  let%arr keyboard_rows = arrangement |> List.map ~f:row |> Bonsai.all
+  and dnd_sentinel = dnd >>| Bonsai_web_ui_drag_and_drop.sentinel ~name:"dnd-sentinel" in
+  Vdom.Node.div ~attrs:[ Style.keyboard; dnd_sentinel ] keyboard_rows
 ;;
 
-let component keyboard (corpus : Analysis.Corpus.t Bonsai.t) graph =
+let section_component keyboard keyboard_inject (corpus : Analysis.Corpus.t Bonsai.t) graph
+  =
   let corpus_freq_a = Bonsai.map corpus ~f:(fun corpus -> corpus.freq.a) in
   let max_value =
     Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float) graph
     |> Bonsai.map ~f:(Option.value ~default:1.)
   in
-  let%arr vdom = vdom keyboard corpus_freq_a max_value in
-  Vdom.Node.div ~attrs:[ Style.keyboard_section ] [ vdom ]
+  let dnd =
+    let on_drop =
+      let%arr keyboard_inject = keyboard_inject in
+      fun a b -> keyboard_inject (Keyboard.Action.Swap (a, b))
+    in
+    Bonsai_web_ui_drag_and_drop.create
+      ~source_id:(module Key.Id)
+      ~target_id:(module Key.Id)
+      ~on_drop
+      graph
+  in
+  let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
+  let dragged_element = Bonsai_web_ui_drag_and_drop.dragged_element dnd ~f:key graph in
+  let%arr component = component keyboard corpus_freq_a max_value dnd graph
+  and dragged_element = dragged_element in
+  Vdom.Node.div ~attrs:[ Style.keyboard_section ] [ dragged_element; component ]
 ;;
