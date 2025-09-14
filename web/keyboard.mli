@@ -4,17 +4,6 @@ module Key := Analysis.Key
 module Keyboard := Analysis.Keyboard
 module Corpus := Analysis.Corpus
 
-module Action : sig
-  type t =
-    | Swap of (Key.Id.t * Key.Id.t)
-    | Random_swap
-  [@@deriving sexp, compare, equal]
-end
-
-val state_machine
-  :  Bonsai.graph
-  -> Keyboard.t Bonsai.t * (Action.t -> unit Ui_effect.t) Bonsai.t
-
 val component
   :  Keyboard.t Bonsai.t
   -> Corpus.t Bonsai.t
