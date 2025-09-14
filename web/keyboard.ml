@@ -4,6 +4,34 @@ open! Bonsai.Let_syntax
 module Keycode = Analysis.Keycode
 module Keyboard = Analysis.Keyboard
 
+module Style =
+  [%css
+    stylesheet
+      {|
+        .keyboard-section {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          font-family: Helvetica;
+        }
+
+        .keyboard {
+          display: flex;
+          flex-direction: column;
+          background-color: %{Tailwind_v3_colors.slate700#Css_gen.Color};
+          padding: 0.5em;
+          border-radius: 1em;
+        }
+
+        .keyboard-row {
+          display: flex;
+          flex-direction: row;
+          font-size: 1rem;
+          justify-content: space-between;
+        }
+|}]
+
 let component keyboard corpus_freq_a max_value dnd graph =
   let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
   let arrangement = Analysis.Arrangement.ansi in
