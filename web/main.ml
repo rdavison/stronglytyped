@@ -8,7 +8,6 @@ module Style =
   [%css
     stylesheet
       {|
-        /* --------------------------------------------------------------- ROOT SECTION */
         * {
           margin: 0;
           padding: 0;
@@ -18,136 +17,10 @@ module Style =
         body {
           background-color: #94A3B8;
         }
-
-        /* --------------------------------------------------------------- ROOT SECTION */
-        .root {
-          display: flex;
-          flex-direction: row;
-          min-width: 100%;
-          font-family: sans-serif;
-          color: black;
-        }
-
-        /* ---------------------------------------------------------------- NAV SECTION */
-        .nav {
-          display: flex;
-          flex-direction: column;
-          width: 20rem;
-          justify-content: center;
-          align-items: center;
-          box-shadow: 2px 0px 10px black;
-        }
-
-        /* --------------------------------------------------------------- MAIN SECTION */
-        .main {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-        }
-
-        /* ------------------------------------------------------------- HEADER SECTION */
-        .header {
-          z-index: -1;
-          padding: 1rem;
-          color: white;
-          text-shadow: 0.2rem 0.2rem 0.5rem black;
-          min-height: 1rem;
-          display: flex;
-          flex-direction: row-reverse;
-          justify-content: space-between;
-        }
-
-        .header-h1 {
-          font-size: 2rem;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        /* ------------------------------------------------------------------ MAIN BODY */
-        .main-body {
-          display: flex;
-          flex-direction: column;
-          padding: 2rem;
-        }
       |}]
 
-let with_color ?background_color ?color attr =
-  let background_color =
-    Option.map background_color ~f:(fun color -> Css_gen.background_color color)
-  in
-  let color = Option.map color ~f:(fun color -> Css_gen.color color) in
-  let rest =
-    [ background_color; color ] |> List.filter_opt |> List.map ~f:Vdom.Attr.style
-  in
-  Vdom.Attr.many (attr :: rest)
-;;
-
-let _app graph =
-  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
+let app graph =
   let keyboard, keyboard_inject = Analysis.Keyboard.state_machine graph in
-  let brute_force_indexes_button =
-    let%arr effects =
-      let%arr keyboard_inject = keyboard_inject
-      and indexes_swaps_for_brute_forcing =
-        let%arr x =
-          Bonsai.assoc
-            (module Analysis.Hand)
-            (Bonsai.Map.index_by
-               keyboard
-               ~comparator:(module Analysis.Hand)
-               ~index:(fun key ->
-                 if Analysis.Finger.equal key.finger `i then Some key.hand else None)
-               graph)
-            graph
-            ~f:(fun _ data graph ->
-              let%arr keys = Bonsai.Map.keys data graph in
-              let keys = Set.to_list keys in
-              let visited = ref Analysis.Key.Id.Pair.Set.empty in
-              List.cartesian_product keys keys
-              |> List.filter_map ~f:(fun (k1, k2) ->
-                if Key.Id.equal k1 k2
-                then None
-                else (
-                  let k12 = k1, k2 in
-                  let k21 = k2, k1 in
-                  let curr = !visited in
-                  match Set.mem curr k12, Set.mem curr k21 with
-                  | false, false ->
-                    visited := Set.add !visited k12;
-                    visited := Set.add !visited k21;
-                    Some k12
-                  | _, _ -> None))
-              |> fun l ->
-              List.take l 1
-              |> List.map ~f:(fun x ->
-                print_s ([%sexp_of: Key.Id.t * Key.Id.t] x);
-                x))
-        in
-        List.concat (Map.data x)
-      in
-      let effects =
-        List.map indexes_swaps_for_brute_forcing ~f:(fun swap ->
-          keyboard_inject (Swap swap))
-      in
-      Ui_effect.all_unit effects
-    in
-    Vdom.Node.button
-      ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
-      [ Vdom.Node.text "Brute Force indexes" ]
-  in
-  let () =
-    (ignore : unit Bonsai.t -> unit)
-    @@ match%sub runtime_mode with
-       | Manual -> Bonsai.return ()
-       | Auto ->
-         Bonsai.Edge.lifecycle
-           ~after_display:
-             (let%map keyboard_inject = keyboard_inject in
-              keyboard_inject Random_swap)
-           graph;
-         Bonsai.return ()
-  in
   let worst_counter, worst_counter_vdom =
     let n, inject = Analysis.Counter.counter 6 graph in
     let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
@@ -158,49 +31,44 @@ let _app graph =
     Stats_same_finger.component ~keyboard ~corpus ~worst_counter graph
   in
   let keyboard_section_vdom =
-    Keyboard.section_component keyboard keyboard_inject corpus graph
-  in
-  let random_swap_vdom =
-    let%arr keyboard_inject = keyboard_inject
-    and runtime_mode = runtime_mode in
-    let button name callback =
-      match runtime_mode with
-      | Auto -> Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
-      | Manual ->
-        Vdom.Node.button
-          ~attrs:[ Vdom.Attr.on_click (fun _event -> callback ()) ]
-          [ Vdom.Node.text name ]
-    in
-    button "Random Swap" (fun () -> keyboard_inject Random_swap)
+    Keyboard.section_component ~keyboard ~keyboard_inject ~corpus graph
   in
   let nav =
-    let%arr worst_counter_vdom = worst_counter_vdom
-    and random_swap_vdom = random_swap_vdom
-    and runtime_mode_vdom = runtime_mode_vdom
-    and brute_force_indexes_button = brute_force_indexes_button
-    and same_finger_controls = same_finger_controls
-    and corpus_vdom = corpus_vdom in
-    Vdom.Node.create
-      "nav"
-      ~attrs:[ with_color Style.nav ~background_color:Tailwind_v3_colors.slate600 ]
-      [ Bonsai_web_ui_form.With_manual_view.view same_finger_controls
-      ; runtime_mode_vdom
-      ; random_swap_vdom
-      ; worst_counter_vdom
-      ; brute_force_indexes_button
-      ; corpus_vdom
-      ]
+    Nav.component
+      ~same_finger_controls
+      ~keyboard
+      ~keyboard_inject
+      ~worst_counter_vdom
+      ~corpus_vdom
+      graph
   in
   let%arr stats_section_vdom = stats_section_vdom
   and keyboard_section_vdom = keyboard_section_vdom
   and nav = nav in
   let header =
     Vdom.Node.header
-      ~attrs:[ with_color Style.header ~background_color:Tailwind_v3_colors.slate500 ]
-      [ Vdom.Node.h1
-          ~attrs:[ Style.header_h1 ]
-          [ Vdom.Node.text "Stronglytyped Keyboard Layout Analysis" ]
-      ]
+      ~attrs:
+        [ [%css
+            {|
+              z-index: -1;
+              padding: 1rem;
+              background-color: %{Tailwind_v3_colors.slate500#Css_gen.Color};
+              color: white;
+              text-shadow: 0.2rem 0.2rem 0.5rem black;
+              min-height: 1rem;
+              display: flex;
+              flex-direction: row-reverse;
+              justify-content: space-between;
+
+              & > h1 {
+                font-size: 2rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              }
+            |}]
+        ]
+      [ Vdom.Node.h1 [ Vdom.Node.text "Stronglytyped Keyboard Layout Analysis" ] ]
   in
   let footer = Vdom.Node.footer [] in
   let main =
@@ -209,10 +77,40 @@ let _app graph =
       |> List.map ~f:(fun vdom -> Vdom.Node.section [ vdom ])
     in
     Vdom.Node.main
-      ~attrs:[ Style.main ]
-      [ header; Vdom.Node.div ~attrs:[ Style.main_body ] sections; footer ]
+      ~attrs:
+        [ [%css
+            {|
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+            |}]
+        ]
+      [ header
+      ; Vdom.Node.div
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  flex-direction: column;
+                  padding: 2rem;
+                |}]
+            ]
+          sections
+      ; footer
+      ]
   in
-  Vdom.Node.div ~attrs:[ Style.root ] [ nav; main ]
+  Vdom.Node.div
+    ~attrs:
+      [ [%css
+          {|
+            display: flex;
+            flex-direction: row;
+            min-width: 100%;
+            font-family: sans-serif;
+            color: black;
+          |}]
+      ]
+    [ nav; main ]
 ;;
 
 module Foo = struct
@@ -264,7 +162,7 @@ module Foo = struct
   (* ;; *)
 end
 
-let () = Bonsai_web.Start.start _app
+let () = Bonsai_web.Start.start app
 
 (* let _ = *)
 (*   let open Async_kernel in *)
