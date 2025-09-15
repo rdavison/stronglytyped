@@ -57,11 +57,16 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
   | Some (k, dnd_attr) ->
     let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
     let keyboard_key_color = Tailwind_v3_colors.slate100 in
+    let hover_background_color = Tailwind_v3_colors.slate100 in
+    let hover_color = Tailwind_v3_colors.slate900 in
+    let box_shadow =
+      match dnd_element with
+      | None -> "0 25px 50px -12px rgb(0 0 0 / 0.25)"
+      | Some _ -> "7px 7px 4px -2px rgb(0 0 0 / 0.50)"
+    in
     let key_css =
       let background_color = keyboard_key_background_color in
       let color = keyboard_key_color in
-      let hover_background_color = Tailwind_v3_colors.slate100 in
-      let hover_color = Tailwind_v3_colors.slate900 in
       let width = `Em_float (4. *. Id.key_width id) in
       let height = `Em_float 4. in
       [%css
@@ -79,7 +84,7 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
           transition-duration: 300ms;
           transition-timing-function:  cubic-bezier(0, 0, 0.2, 1);
           border-radius: 0.5rem;
-          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+          box-shadow: %{box_shadow};
           align-items: center;
           text-align: center;
           &:hover {
@@ -106,7 +111,7 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
             +. (Map.find corpus_freq_a b |> Option.value ~default:0.)
           in
           let (`RGB (r, g, b)) =
-            Util.Color.convert_hex_to_rgb Tailwind_v3_colors.indigo500
+            Util.Color.convert_hex_to_rgb Tailwind_v3_colors.blue500
           in
           let a = Percent.of_mult (freq /. max_value) in
           `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ())
@@ -122,6 +127,10 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
           margin: unset;
           background-color: %{background_color#Css_gen.Color};
           color: %{color};
+          &:hover {
+            background-color: %{hover_background_color#Css_gen.Color};
+            color: %{hover_color#Css_gen.Color};
+          }
           &:active {
             background-color: %{active_background_color#Css_gen.Color};
             color: %{active_color#Css_gen.Color};
