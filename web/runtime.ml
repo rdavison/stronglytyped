@@ -3,10 +3,7 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 
 module Mode = struct
-  type t =
-    | Auto
-    | Manual
-  [@@deriving sexp, equal, compare]
+  include Analysis.Runtime.Mode
 
   let component graph =
     let mode, mode_toggle =

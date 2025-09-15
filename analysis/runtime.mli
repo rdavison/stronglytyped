@@ -1,12 +1,11 @@
 open! Core
-open! Bonsai_web
+open! Bonsai
 
 module Mode : sig
   type t =
     | Auto
     | Manual
-  [@@deriving sexp, equal, compare]
+  [@@deriving sexp, compare, equal]
 
   val start : t Bonsai.t -> f:unit Ui_effect.t Bonsai.t -> Bonsai.graph -> unit
-  val component : Bonsai.graph -> t Bonsai.t * Vdom.Node.t Bonsai.t
 end

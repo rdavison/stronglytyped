@@ -44,7 +44,7 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
     in
     let effects =
       List.map indexes_swaps_for_brute_forcing ~f:(fun swap ->
-        keyboard_inject (Analysis.Keyboard.Action.Swap swap))
+        keyboard_inject (Keyboard.Action.Swap swap))
     in
     Ui_effect.all_unit effects
   in
@@ -62,18 +62,11 @@ let component
       graph
   =
   let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
-  let () =
-    (ignore : unit Bonsai.t -> unit)
-    @@ match%sub runtime_mode with
-       | Manual -> Bonsai.return ()
-       | Auto ->
-         Bonsai.Edge.lifecycle
-           ~after_display:
-             (let%map keyboard_inject = keyboard_inject in
-              keyboard_inject Analysis.Keyboard.Action.Random_swap)
-           graph;
-         Bonsai.return ()
+  let random_swap_effect =
+    let%map keyboard_inject = keyboard_inject in
+    keyboard_inject Keyboard.Action.Random_swap
   in
+  Runtime.Mode.start runtime_mode ~f:random_swap_effect graph;
   let brute_force_indexes_button =
     brute_force_indexes_button ~keyboard ~keyboard_inject graph
   in

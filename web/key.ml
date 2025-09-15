@@ -7,15 +7,14 @@ let render_legend kc =
   match kc with
   | `Alpha _ -> Vdom.Node.text (Analysis.Keycode.to_string_upper kc)
   | `Sym (_, _) ->
-    let css =
-      [%css
-        {|
-          display: flex;
-          flex-direction: column;
-        |}]
-    in
     Vdom.Node.div
-      ~attrs:[ css ]
+      ~attrs:
+        [ [%css
+            {|
+              display: flex;
+              flex-direction: column;
+            |}]
+        ]
       [ Vdom.Node.div [ Vdom.Node.text (Analysis.Keycode.to_string_upper kc) ]
       ; Vdom.Node.div [ Vdom.Node.text (Analysis.Keycode.to_string_lower kc) ]
       ]
@@ -30,30 +29,36 @@ let vdom_optional (id : Id.t) (key : t option) =
 ;;
 
 let vdom ?dnd_element id k corpus_freq_a max_value =
-  match k with
-  | None ->
-    let css =
-      let background_color = Tailwind_v3_colors.slate900 in
-      let color = Tailwind_v3_colors.slate100 in
-      let width = `Em_float (4. *. Id.key_width id) in
-      let height = `Em_float 4. in
-      [%css
-        {|
+  let common_css =
+    let width = `Em_float (4. *. Id.key_width id) in
+    let height = `Em_float 4. in
+    [%css
+      {|
           display: flex;
           justify-content: center;
           align-items: center;
           width: %{width#Css_gen.Length};
           height: %{height#Css_gen.Length};
-          background-color: %{background_color#Css_gen.Color};
-          color: %{color#Css_gen.Color};
           margin: 0.1em;
           border-radius: 0.5rem;
-          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
           align-items: center;
           text-align: center;
+          user-select: none;
+        |}]
+  in
+  match k with
+  | None ->
+    let css =
+      let background_color = Tailwind_v3_colors.slate900 in
+      let color = Tailwind_v3_colors.slate100 in
+      [%css
+        {|
+          background-color: %{background_color#Css_gen.Color};
+          color: %{color#Css_gen.Color};
+          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
         |}]
     in
-    Vdom.Node.div ~attrs:[ css ] [ vdom_optional id (Option.map k ~f:fst) ]
+    Vdom.Node.div ~attrs:[ common_css; css ] [ vdom_optional id (Option.map k ~f:fst) ]
   | Some (k, dnd_attr) ->
     let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
     let keyboard_key_color = Tailwind_v3_colors.slate100 in
@@ -67,26 +72,15 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
     let key_css =
       let background_color = keyboard_key_background_color in
       let color = keyboard_key_color in
-      let width = `Em_float (4. *. Id.key_width id) in
-      let height = `Em_float 4. in
       [%css
         {|
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: %{width#Css_gen.Length};
-          height: %{height#Css_gen.Length};
           background-color: %{background_color#Css_gen.Color};
           color: %{color#Css_gen.Color};
-          margin: 0.1em;
           transition-property: color, background-color;
           transition-timing-function:  cubic-bezier(0.4, 0, 0.2, 1);
           transition-duration: 300ms;
           transition-timing-function:  cubic-bezier(0, 0, 0.2, 1);
-          border-radius: 0.5rem;
           box-shadow: %{box_shadow};
-          align-items: center;
-          text-align: center;
           &:hover {
             background-color: %{hover_background_color#Css_gen.Color};
             color: %{hover_color#Css_gen.Color};
@@ -138,7 +132,7 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
         |}]
     in
     Vdom.Node.div
-      ~attrs:[ key_css; dnd_attr ]
+      ~attrs:[ common_css; key_css; dnd_attr ]
       [ Vdom.Node.div ~attrs:[ overlay_css ] [ vdom_optional id (Some k) ] ]
 ;;
 
