@@ -31,6 +31,10 @@ volume:
 watch: install-deps
 	dune build bin/main.exe -w
 
+.PHONY: watch-all
+watch-all: install-deps
+	dune build @all -w
+
 .PHONY: exe
 exe:
 	./scripts/dev-run.sh ./_build/default/bin/main.exe
