@@ -2,8 +2,7 @@ open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
-module Corpus = Analysis.Corpus
-module Key = Analysis.Key
+include Analysis.Corpus
 
 module T = struct
   type t =
@@ -47,8 +46,8 @@ let better_component graph =
     let%arr dropdown = dropdown
     and textarea = textarea in
     match dropdown with
-    | Custom -> Corpus.of_string textarea
-    | Foo -> Corpus.foo
+    | Custom -> of_string textarea
+    | Foo -> foo
   in
   let view =
     let%arr dropdown_vdom = dropdown_vdom
@@ -59,12 +58,11 @@ let better_component graph =
 ;;
 
 let _simple_component graph =
-  let corpus, set_corpus = Bonsai.state Corpus.empty graph in
+  let corpus, set_corpus = Bonsai.state empty graph in
   let vdom =
     let%arr set_corpus = set_corpus in
     Vdom.Node.textarea
-      ~attrs:
-        [ Vdom.Attr.on_change (fun _event data -> set_corpus (Corpus.of_string data)) ]
+      ~attrs:[ Vdom.Attr.on_change (fun _event data -> set_corpus (of_string data)) ]
       []
   in
   corpus, vdom

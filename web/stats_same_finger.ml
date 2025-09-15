@@ -2,11 +2,12 @@ open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
+include Analysis.Stats_same_finger
 
 let multiselect graph =
   Form.Elements.Multiselect.set
-    (module Analysis.Stats_same_finger.Typed_variant.Packed)
-    (Bonsai.return Analysis.Stats_same_finger.Typed_variant.Packed.all)
+    (module Typed_variant.Packed)
+    (Bonsai.return Typed_variant.Packed.all)
     graph
 ;;
 
@@ -15,7 +16,7 @@ let selected_metrics form =
   Form.value_or_default form ~default:[]
 ;;
 
-let label (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
+let label (t : Typed_variant.Packed.t) =
   match t.f with
   | T Sfb -> "SFB"
   | T Sfs -> "SFS"
@@ -28,7 +29,7 @@ let label (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
 let render_speed x = sprintf "%.2fd/t" (Float.abs (x *. 100.))
 let render_freq x = sprintf "%.2f%%" (Float.abs (x *. 100.))
 
-let render_measurement (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
+let render_measurement (t : Typed_variant.Packed.t) =
   match t.f with
   | T Sfb -> render_freq
   | T Sfs -> render_freq
@@ -38,17 +39,12 @@ let render_measurement (t : Analysis.Stats_same_finger.Typed_variant.Packed.t) =
   | T Speed_worst -> render_speed
 ;;
 
-let render_simple
-      (t :
-        (float, 'total) Analysis.Stats_same_finger.metric
-          Analysis.Stats_same_finger.Typed_variant.t)
-      data
-  =
-  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+let render_simple (t : (float, 'total) metric Typed_variant.t) data =
+  let packed = Typed_variant.Packed.pack t in
   Vdom.Node.text (render_measurement packed data)
 ;;
 
-let table_color = Tailwind_v3_colors.neutral200
+let table_color = Tailwind_v3_colors.slate900
 
 let grid_attr cols =
   let cols = Int.to_string cols in
@@ -57,12 +53,12 @@ let grid_attr cols =
       display: grid;
       grid-template-columns: repeat(%{cols}, 1fr);
       gap: 1px;
-      background: #222;
+      background: %{Tailwind_v3_colors.slate600#Css_gen.Color};
       border-radius: 12px;
       overflow: hidden;
 
       & > div {
-        background: %{table_color#Css_gen.Color};
+        background: %{Tailwind_v3_colors.slate700#Css_gen.Color};
         padding: 0.5rem;
         text-align: center;
         font-family: monospace;
@@ -70,13 +66,8 @@ let grid_attr cols =
     |}]
 ;;
 
-let render_detailed
-      (t :
-        ((string * float) list, 'total) Analysis.Stats_same_finger.metric
-          Analysis.Stats_same_finger.Typed_variant.t)
-      worst
-  =
-  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+let render_detailed (t : ((string * float) list, 'total) metric Typed_variant.t) worst =
+  let packed = Typed_variant.Packed.pack t in
   Vdom.Node.div
     ~attrs:[]
     [ Vdom.Node.div
@@ -89,11 +80,7 @@ let render_detailed
 ;;
 
 let render_breakdown
-  : type breakdown.
-    (breakdown, 'total) Analysis.Stats_same_finger.metric
-      Analysis.Stats_same_finger.Typed_variant.t
-    -> breakdown
-    -> Vdom.Node.t
+  : type breakdown. (breakdown, 'total) metric Typed_variant.t -> breakdown -> Vdom.Node.t
   =
   fun t breakdown ->
   match t with
@@ -108,14 +95,12 @@ let render_breakdown
 let render_total t total = Vdom.Node.text (render_measurement t total)
 
 let row
-      (t :
-        ('breakdown, 'total) Analysis.Stats_same_finger.metric
-          Analysis.Stats_same_finger.Typed_variant.t)
-      ~(metric : ('breakdown, 'total) Analysis.Stats_same_finger.metric Bonsai.t)
+      (t : ('breakdown, 'total) metric Typed_variant.t)
+      ~(metric : ('breakdown, 'total) metric Bonsai.t)
       graph
   : Vdom.Node.t list Bonsai.t
   =
-  let packed = Analysis.Stats_same_finger.Typed_variant.Packed.pack t in
+  let packed = Typed_variant.Packed.pack t in
   let%sub { breakdown; total } = metric in
   let breakdown =
     Bonsai.assoc
@@ -144,9 +129,9 @@ let row
 
 let table
       (t :
-        ( Analysis.Stats_same_finger.Typed_variant.Packed.t
-          , Analysis.Stats_same_finger.t
-          , Analysis.Stats_same_finger.Typed_variant.Packed.comparator_witness )
+        ( Typed_variant.Packed.t
+          , t
+          , Typed_variant.Packed.comparator_witness )
           Map_intf.Map.t
           Bonsai.t)
       metrics_order
@@ -154,7 +139,7 @@ let table
   =
   let data =
     Bonsai.assoc
-      (module Analysis.Stats_same_finger.Typed_variant.Packed)
+      (module Typed_variant.Packed)
       t
       ~f:(fun _key data graph ->
         match%sub data with
@@ -204,14 +189,11 @@ let component ~keyboard ~corpus ~worst_counter graph =
     let%arr controls = controls in
     Form.value_or_default
       controls
-      ~default:
-        (Set.of_list
-           (module Analysis.Stats_same_finger.Typed_variant.Packed)
-           Analysis.Stats_same_finger.Typed_variant.Packed.all)
+      ~default:(Set.of_list (module Typed_variant.Packed) Typed_variant.Packed.all)
   in
   let diff_row_bigram_data =
-    let bigram_data = Analysis.Bigram_data.make keyboard corpus graph in
-    Analysis.Stats_same_finger.bigram_data bigram_data graph
+    let data = Analysis.Bigram_data.make keyboard corpus graph in
+    bigram_data data graph
   in
   let stats_same_finger =
     Analysis.Stats_same_finger.component
@@ -234,6 +216,7 @@ let component ~keyboard ~corpus ~worst_counter graph =
           [ [%css
               {|
               background: %{table_color#Css_gen.Color};
+              color: %{Tailwind_v3_colors.neutral200#Css_gen.Color};
               border: 1px solid #e7e9ee;
               border-radius: 12px;
               padding: 16px;

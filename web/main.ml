@@ -1,8 +1,6 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-module Key = Analysis.Key
-module Hand_finger = Analysis.Hand_finger
 
 module Style =
   [%css
@@ -20,7 +18,7 @@ module Style =
       |}]
 
 let app graph =
-  let keyboard, keyboard_inject = Analysis.Keyboard.state_machine graph in
+  let keyboard, keyboard_inject = Keyboard.state_machine graph in
   let worst_counter, worst_counter_vdom =
     let n, inject = Analysis.Counter.counter 6 graph in
     let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in

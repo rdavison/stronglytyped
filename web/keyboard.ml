@@ -1,6 +1,7 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
+include Analysis.Keyboard
 
 let component ~keyboard ~corpus_freq_a ~max_value ~dnd graph =
   let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
@@ -39,12 +40,7 @@ let component ~keyboard ~corpus_freq_a ~max_value ~dnd graph =
     keyboard_rows
 ;;
 
-let section_component
-      ~keyboard
-      ~keyboard_inject
-      ~(corpus : Analysis.Corpus.t Bonsai.t)
-      graph
-  =
+let section_component ~keyboard ~keyboard_inject ~(corpus : Corpus.t Bonsai.t) graph =
   let corpus_freq_a = Bonsai.map corpus ~f:(fun corpus -> corpus.freq.a) in
   let max_value =
     Bonsai.Map.max_value corpus_freq_a ~comparator:(module Float) graph
@@ -53,7 +49,7 @@ let section_component
   let dnd =
     let on_drop =
       let%arr keyboard_inject = keyboard_inject in
-      fun a b -> keyboard_inject (Analysis.Keyboard.Action.Swap (a, b))
+      fun a b -> keyboard_inject (Action.Swap (a, b))
     in
     Bonsai_web_ui_drag_and_drop.create
       ~source_id:(module Key.Id)
