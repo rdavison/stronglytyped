@@ -48,22 +48,24 @@ let render_simple
   Vdom.Node.text (render_measurement packed data)
 ;;
 
+let table_color = Tailwind_v3_colors.neutral200
+
 let grid_attr cols =
   let cols = Int.to_string cols in
   [%css
     {|
       display: grid;
       grid-template-columns: repeat(%{cols}, 1fr);
-      gap: 4px;
+      gap: 1px;
       background: #222;
       border-radius: 12px;
       overflow: hidden;
 
       & > div {
-        background: #fff;
-        padding: 16px;
+        background: %{table_color#Css_gen.Color};
+        padding: 0.5rem;
         text-align: center;
-        font-weight: 600;
+        font-family: monospace;
       }
     |}]
 ;;
@@ -128,7 +130,9 @@ let row
   let label = label packed in
   let%arr breakdown = breakdown
   and total = total in
-  let header = Vdom.Node.div [ Vdom.Node.text label ] in
+  let header =
+    Vdom.Node.div ~attrs:[ [%css {|font-weight: bold;|}] ] [ Vdom.Node.text label ]
+  in
   let breakdown =
     List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
       Map.find breakdown hand_finger
@@ -172,7 +176,7 @@ let table
     ~attrs:
       [ [%css
           {|
-            padding: 16px;
+            padding: 0.25rem;
             background: transparent;
           |}]
       ]
@@ -181,7 +185,9 @@ let table
         (let header =
            Vdom.Node.div (*th*) ~attrs:[] [ (* empty corner cell *) ]
            :: List.map header ~f:(fun label ->
-             Vdom.Node.div (*th*) ~attrs:[] [ Vdom.Node.text label ])
+             Vdom.Node.div (*th*)
+               ~attrs:[ [%css {|font-weight: bold;|}] ]
+               [ Vdom.Node.text label ])
          in
          let rows =
            List.map metrics_order ~f:(fun metric -> Map.find data metric)
@@ -218,19 +224,23 @@ let component ~keyboard ~corpus ~worst_counter graph =
     table stats_same_finger Analysis.Stats_same_finger.Typed_variant.Packed.all graph
   in
   let vdom =
-    let%arr table = table in
-    Vdom.Node.div
-      ~attrs:
-        [ [%css
-            {|
-              background: #fff;
+    let%arr metrics = metrics
+    and table = table in
+    if Set.is_empty metrics
+    then Vdom.Node.none
+    else
+      Vdom.Node.div
+        ~attrs:
+          [ [%css
+              {|
+              background: %{table_color#Css_gen.Color};
               border: 1px solid #e7e9ee;
               border-radius: 12px;
               padding: 16px;
               box-shadow: 0 1px 2px rgba(0,0,0,.04);
             |}]
-        ]
-      [ table ]
+          ]
+        [ table ]
   in
   controls, vdom
 ;;
