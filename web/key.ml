@@ -29,7 +29,7 @@ let vdom_optional (id : Id.t) (key : t option) =
   | Some key -> render_legend key.kc
 ;;
 
-let vdom id k corpus_freq_a max_value =
+let vdom ?dnd_element id k corpus_freq_a max_value =
   match k with
   | None ->
     let css =
@@ -89,28 +89,43 @@ let vdom id k corpus_freq_a max_value =
         |}]
     in
     let overlay_css =
+      let active_background_color = Tailwind_v3_colors.amber500 in
+      let active_color = Tailwind_v3_colors.slate900 in
       let background_color =
-        let a, b =
-          match k.kc with
-          | `Alpha a -> Char.lowercase a, Char.uppercase a
-          | `Sym (a, b) -> a, b
-          | _ -> failwith "keycode unsupported"
-        in
-        let freq =
-          (Map.find corpus_freq_a a |> Option.value ~default:0.)
-          +. (Map.find corpus_freq_a b |> Option.value ~default:0.)
-        in
-        let (`RGB (r, g, b)) =
-          Util.Color.convert_hex_to_rgb Tailwind_v3_colors.indigo500
-        in
-        let a = Percent.of_mult (freq /. max_value) in
-        `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ())
+        match dnd_element with
+        | Some _ -> (active_background_color :> Css_gen.Color.t)
+        | None ->
+          let a, b =
+            match k.kc with
+            | `Alpha a -> Char.lowercase a, Char.uppercase a
+            | `Sym (a, b) -> a, b
+            | _ -> failwith "keycode unsupported"
+          in
+          let freq =
+            (Map.find corpus_freq_a a |> Option.value ~default:0.)
+            +. (Map.find corpus_freq_a b |> Option.value ~default:0.)
+          in
+          let (`RGB (r, g, b)) =
+            Util.Color.convert_hex_to_rgb Tailwind_v3_colors.indigo500
+          in
+          let a = Percent.of_mult (freq /. max_value) in
+          `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ())
+      in
+      let color =
+        match dnd_element with
+        | Some _ -> Css_gen.Color.to_string_css (active_color :> Css_gen.Color.t)
+        | None -> "inherit"
       in
       [%css
         {|
           all: inherit;
           margin: unset;
           background-color: %{background_color#Css_gen.Color};
+          color: %{color};
+          &:active {
+            background-color: %{active_background_color#Css_gen.Color};
+            color: %{active_color#Css_gen.Color};
+          }
         |}]
     in
     Vdom.Node.div
@@ -118,7 +133,7 @@ let vdom id k corpus_freq_a max_value =
       [ Vdom.Node.div ~attrs:[ overlay_css ] [ vdom_optional id (Some k) ] ]
 ;;
 
-let component id ~keyboard ~corpus_freq_a ~max_value ~dnd _graph =
+let component ?dnd_element id ~keyboard ~corpus_freq_a ~max_value ~dnd _graph =
   let%arr id = id
   and keyboard = keyboard
   and corpus_freq_a = corpus_freq_a
@@ -127,5 +142,8 @@ let component id ~keyboard ~corpus_freq_a ~max_value ~dnd _graph =
   and dnd_target = dnd >>| Bonsai_web_ui_drag_and_drop.drop_target in
   let dnd_attr id = Vdom.Attr.( @ ) (dnd_source ~id) (dnd_target ~id) in
   let k = Map.find keyboard id |> Option.map ~f:(fun key -> key, dnd_attr id) in
-  vdom id k corpus_freq_a max_value
+  vdom ?dnd_element id k corpus_freq_a max_value
 ;;
+
+let dragged_component = component ~dnd_element:()
+let component = component ?dnd_element:None

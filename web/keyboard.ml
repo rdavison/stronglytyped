@@ -64,7 +64,9 @@ let section_component keyboard keyboard_inject (corpus : Analysis.Corpus.t Bonsa
       ~on_drop
       graph
   in
-  let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
+  let key id graph =
+    Key.dragged_component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph
+  in
   let dragged_element = Bonsai_web_ui_drag_and_drop.dragged_element dnd ~f:key graph in
   let%arr component = component keyboard corpus_freq_a max_value dnd graph
   and dragged_element = dragged_element in
