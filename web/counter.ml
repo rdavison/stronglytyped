@@ -3,39 +3,6 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 open Analysis.Counter
 
-module Style =
-  [%css
-    stylesheet
-      {|
-        .counter-container {
-          display: flex;
-          justify-content: space-evenly;
-          user-select: none;
-        }
-
-        .counter {
-        }
-
-        .counter-button {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 2ch;
-          border: 1px black solid;
-          background-color: #334;
-          cursor: default;
-        }
-
-        .counter-button:hover {
-          background-color: #445;
-        }
-
-        .counter-button:active {
-          background-color: #223;
-          color: white;
-        }
-|}]
-
 let vdom ~n ~inject ~msg =
   let%arr n = n
   and inject = inject in
@@ -47,14 +14,41 @@ let vdom ~n ~inject ~msg =
     in
     Vdom.Node.div
       ~attrs:
-        ([ Style.counter_button; Vdom.Attr.on_click (fun _event -> inject action) ]
+        ([ [%css
+             {|
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 2ch;
+                border: 1px black solid;
+                background-color: #334;
+                cursor: default;
+
+                &:hover {
+                  background-color: #445;
+                }
+
+                &:active {
+                  background-color: #223;
+                  color: white;
+                }
+            |}]
+         ; Vdom.Attr.on_click (fun _event -> inject action)
+         ]
          @ disabled)
       [ Vdom.Node.text label ]
   in
   Vdom.Node.div
-    ~attrs:[ Style.counter_container ]
+    ~attrs:
+      [ [%css
+          {|
+            display: flex;
+            justify-content: space-evenly;
+            user-select: none;
+          |}]
+      ]
     [ button "-" Decrement
-    ; Vdom.Node.div ~attrs:[ Style.counter ] [ Vdom.Node.text (msg n) ]
+    ; Vdom.Node.div ~attrs:[] [ Vdom.Node.text (msg n) ]
     ; button "+" Increment
     ]
 ;;
