@@ -1,36 +1,6 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-module Keycode = Analysis.Keycode
-module Keyboard = Analysis.Keyboard
-
-module Style =
-  [%css
-    stylesheet
-      {|
-        .keyboard-section {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          font-family: Helvetica;
-        }
-
-        .keyboard {
-          display: flex;
-          flex-direction: column;
-          background-color: %{Tailwind_v3_colors.slate700#Css_gen.Color};
-          padding: 0.5em;
-          border-radius: 1em;
-        }
-
-        .keyboard-row {
-          display: flex;
-          flex-direction: row;
-          font-size: 1rem;
-          justify-content: space-between;
-        }
-|}]
 
 let component ~keyboard ~corpus_freq_a ~max_value ~dnd graph =
   let key id graph = Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd graph in
@@ -39,11 +9,34 @@ let component ~keyboard ~corpus_freq_a ~max_value ~dnd graph =
     row
     |> List.map ~f:(fun id -> key (Bonsai.return id) graph)
     |> Bonsai.all
-    |> Bonsai.map ~f:(Vdom.Node.div ~attrs:[ Style.keyboard_row ])
+    |> Bonsai.map
+         ~f:
+           (Vdom.Node.div
+              ~attrs:
+                [ [%css
+                    {|
+                      display: flex;
+                      flex-direction: row;
+                      font-size: 1rem;
+                      justify-content: space-between;
+                    |}]
+                ])
   in
   let%arr keyboard_rows = arrangement |> List.map ~f:row |> Bonsai.all
   and dnd_sentinel = dnd >>| Bonsai_web_ui_drag_and_drop.sentinel ~name:"dnd-sentinel" in
-  Vdom.Node.div ~attrs:[ Style.keyboard; dnd_sentinel ] keyboard_rows
+  Vdom.Node.div
+    ~attrs:
+      [ dnd_sentinel
+      ; [%css
+          {|
+            display: flex;
+            flex-direction: column;
+            background-color: %{Tailwind_v3_colors.slate700#Css_gen.Color};
+            padding: 0.5em;
+            border-radius: 1em;
+          |}]
+      ]
+    keyboard_rows
 ;;
 
 let section_component
@@ -60,7 +53,7 @@ let section_component
   let dnd =
     let on_drop =
       let%arr keyboard_inject = keyboard_inject in
-      fun a b -> keyboard_inject (Keyboard.Action.Swap (a, b))
+      fun a b -> keyboard_inject (Analysis.Keyboard.Action.Swap (a, b))
     in
     Bonsai_web_ui_drag_and_drop.create
       ~source_id:(module Key.Id)
@@ -74,5 +67,16 @@ let section_component
   let dragged_element = Bonsai_web_ui_drag_and_drop.dragged_element dnd ~f:key graph in
   let%arr component = component ~keyboard ~corpus_freq_a ~max_value ~dnd graph
   and dragged_element = dragged_element in
-  Vdom.Node.div ~attrs:[ Style.keyboard_section ] [ dragged_element; component ]
+  Vdom.Node.div
+    ~attrs:
+      [ [%css
+          {|
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Helvetica;
+          |}]
+      ]
+    [ dragged_element; component ]
 ;;
