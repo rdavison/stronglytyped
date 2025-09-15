@@ -29,7 +29,7 @@ volume:
 
 .PHONY: watch
 watch: install-deps
-	dune build @all -w
+	dune build bin/main.exe -w
 
 .PHONY: exe
 exe:
@@ -41,7 +41,7 @@ install-deps:
 
 .PHONY: nvim
 nvim:
-	nvim -c "terminal bash -lc 'make watch; exec bash'" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash
+	nvim -c "terminal make exe" -c "terminal make watch" -c 'vsplit' -c 'wincmd h' -c 'Oil'; exec bash -l
 
 .PHONY: start
 start: volume
