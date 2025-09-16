@@ -5,10 +5,28 @@ module Form = Bonsai_web_ui_form.With_manual_view
 include Analysis.Stats_same_finger
 
 let multiselect graph =
-  Form.Elements.Multiselect.set
-    (module Typed_variant.Packed)
-    (Bonsai.return Typed_variant.Packed.all)
-    graph
+  let%arr form =
+    Form.Elements.Multiselect.set
+      (module Typed_variant.Packed)
+      (Bonsai.return Typed_variant.Packed.all)
+      graph
+  in
+  Form.map_view form ~f:(fun view ->
+    Vdom.Node.div
+      ~attrs:
+        [ [%css
+            {|
+              padding: 1rem;
+              border: 1px solid %{Tailwind_v3_colors.slate900#Css_gen.Color};
+              background-color: %{Tailwind_v3_colors.slate100#Css_gen.Color};
+              box-shadow: 0 1px 2px rgba(0,0,0,.4);
+
+              .multi-select-container {
+                font-family: monospace;
+              }
+            |}]
+        ]
+      [ view ])
 ;;
 
 let selected_metrics form =
@@ -42,6 +60,37 @@ let render_measurement (t : Typed_variant.Packed.t) =
 let render_simple (t : (float, 'total) metric Typed_variant.t) data =
   let packed = Typed_variant.Packed.pack t in
   Vdom.Node.text (render_measurement packed data)
+;;
+
+let css_attr_prev_curr prev curr =
+  match prev with
+  | None -> Vdom.Attr.empty
+  | Some prev ->
+    let diff = curr -. prev in
+    (match Float.compare prev curr with
+     | 0 -> Vdom.Attr.empty
+     | _ ->
+       let (`RGB (r, g, b)) =
+         Util.Color.convert_hex_to_rgb
+           (if Float.( > ) diff 0.
+            then Tailwind_v3_colors.green500
+            else Tailwind_v3_colors.red500)
+       in
+       (* let scale x = Float.tanh (50. *. Float.sin (Float.pi *. x /. 2.)) in *)
+       let scale x = 10. *. x in
+       let a = Percent.of_mult (scale (Float.abs curr)) in
+       let color = `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ()) in
+       [%css {|background-color: %{color#Css_gen.Color};|}])
+;;
+
+let render_prev_curr
+      (t : (float option * float, 'total) metric Typed_variant.t)
+      ((prev, curr) : float option * float)
+  =
+  let packed = Typed_variant.Packed.pack t in
+  Vdom.Node.div
+    ~attrs:[ css_attr_prev_curr prev curr ]
+    [ Vdom.Node.text (render_measurement packed curr) ]
 ;;
 
 let table_color = Tailwind_v3_colors.slate900
@@ -84,8 +133,8 @@ let render_breakdown
   =
   fun t breakdown ->
   match t with
-  | Sfb -> render_simple Sfb breakdown
-  | Sfs -> render_simple Sfs breakdown
+  | Sfb -> render_prev_curr Sfb breakdown
+  | Sfs -> render_prev_curr Sfs breakdown
   | Speed -> render_simple Speed breakdown
   | Sfb_worst -> render_detailed Sfb_worst breakdown
   | Sfs_worst -> render_detailed Sfs_worst breakdown
@@ -107,7 +156,11 @@ let row
       (module Analysis.Hand_finger)
       breakdown
       ~f:(fun _key data _graph ->
-        let%arr contents = Bonsai.map data ~f:(render_breakdown t) in
+        let contents =
+          let%arr data = data in
+          render_breakdown t data
+        in
+        let%arr contents = contents in
         Vdom.Node.div [ contents ])
       graph
   in
@@ -220,7 +273,7 @@ let component ~keyboard ~corpus ~worst_counter graph =
               border: 1px solid #e7e9ee;
               border-radius: 12px;
               padding: 16px;
-              box-shadow: 0 1px 2px rgba(0,0,0,.04);
+              box-shadow: 0 1px 2px rgba(0,0,0,.4);
             |}]
           ]
         [ table ]
