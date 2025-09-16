@@ -8,7 +8,6 @@ val selected_metrics : ('a list, 'b) Form.t Bonsai.t -> 'a list Bonsai.t
 val component
   :  keyboard:Keyboard.t Bonsai.t
   -> corpus:Corpus.t Bonsai.t
-  -> worst_counter:int Bonsai.t
   -> Bonsai.graph
   -> ( (Typed_variant.Packed.t, Typed_variant.Packed.comparator_witness) Set.t
        , Vdom.Node.t )

@@ -21,15 +21,15 @@ let vdom ~n ~inject ~msg =
                 align-items: center;
                 width: 2ch;
                 border: 1px black solid;
-                background-color: #334;
                 cursor: default;
 
                 &:hover {
-                  background-color: #445;
+                  background-color: blue;
+                  color: white;
                 }
 
                 &:active {
-                  background-color: #223;
+                  background-color: purple;
                   color: white;
                 }
             |}]

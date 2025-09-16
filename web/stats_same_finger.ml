@@ -16,11 +16,6 @@ let multiselect graph =
       ~attrs:
         [ [%css
             {|
-              padding: 1rem;
-              border: 1px solid %{Tailwind_v3_colors.slate900#Css_gen.Color};
-              background-color: %{Tailwind_v3_colors.slate100#Css_gen.Color};
-              box-shadow: 0 1px 2px rgba(0,0,0,.4);
-
               .multi-select-container {
                 font-family: monospace;
               }
@@ -76,8 +71,8 @@ let css_attr_prev_curr prev curr =
             then Tailwind_v3_colors.green500
             else Tailwind_v3_colors.red500)
        in
-       (* let scale x = Float.tanh (50. *. Float.sin (Float.pi *. x /. 2.)) in *)
-       let scale x = 10. *. x in
+       let scale x = Float.tanh (50. *. Float.sin (Float.pi *. x /. 2.)) in
+       (* let scale x = 10. *. x in *)
        let a = Percent.of_mult (scale (Float.abs curr)) in
        let color = `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ()) in
        [%css {|background-color: %{color#Css_gen.Color};|}])
@@ -236,8 +231,39 @@ let table
     ]
 ;;
 
-let component ~keyboard ~corpus ~worst_counter graph =
-  let controls = multiselect graph in
+let component ~keyboard ~corpus graph =
+  let worst_counter, worst_counter_vdom =
+    let n, inject = Analysis.Counter.counter 6 graph in
+    let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
+    n, vdom
+  in
+  let controls =
+    let%arr controls = multiselect graph
+    and worst_counter_vdom = worst_counter_vdom in
+    let worst_counter_vdom =
+      Vdom.Node.div
+        ~attrs:
+          [ [%css
+              {|
+                display: flex;
+                flex-direction: column;
+              |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Worst Counter" ]; worst_counter_vdom ]
+    in
+    Form.map_view controls ~f:(fun vdom ->
+      Vdom.Node.div
+        ~attrs:
+          [ Design.card
+          ; [%css
+              {|
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+              |}]
+          ]
+        [ vdom; worst_counter_vdom ])
+  in
   let metrics =
     let%arr controls = controls in
     Form.value_or_default

@@ -15,7 +15,7 @@ module Mode = struct
           | Manual -> Auto)
         graph
     in
-    let vdom =
+    let button =
       let%arr mode = mode
       and mode_toggle = mode_toggle in
       let button name =
@@ -26,6 +26,19 @@ module Mode = struct
       match mode with
       | Auto -> button "Manual"
       | Manual -> button "Auto"
+    in
+    let vdom =
+      let%arr button = button in
+      Vdom.Node.div
+        ~attrs:
+          [ Design.card
+          ; [%css
+              {|
+                display: flex;
+                flex-direction: column;
+              |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Runtime Mode" ]; button ]
     in
     mode, vdom
   ;;

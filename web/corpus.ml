@@ -4,55 +4,77 @@ open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
 include Analysis.Corpus
 
-module T = struct
-  type t =
-    | Foo
-    | Custom
-  [@@deriving sexp, equal, compare, enumerate]
+module Select = struct
+  module T = struct
+    type t =
+      | Fast
+      | Custom
+    [@@deriving sexp, equal, compare, enumerate]
+  end
+
+  include T
+
+  let default = Fast
+
+  let component graph =
+    let dropdown =
+      Form.Elements.Dropdown.enumerable
+        ~init:(`This (Bonsai.return default))
+        (module T)
+        graph
+    in
+    let textarea =
+      let extra_attrs =
+        let%map dropdown = dropdown in
+        match Form.value_or_default dropdown ~default with
+        | Fast -> [ Vdom.Attr.disabled ]
+        | Custom -> []
+      in
+      Form.Elements.Textarea.string ~extra_attrs () graph
+    in
+    let corpus =
+      let%arr dropdown = dropdown
+      and textarea = textarea in
+      let dropdown = Form.value_or_default dropdown ~default in
+      let textarea = Form.value_or_default textarea ~default:"" in
+      match dropdown with
+      | Fast -> fast
+      | Custom -> of_string textarea
+    in
+    let view =
+      let%arr dropdown = dropdown
+      and textarea = textarea in
+      Vdom.Node.div
+        ~attrs:
+          [ Design.card
+          ; [%css
+              {|
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Select Corpus" ]
+        ; Form.view dropdown
+        ; Form.view textarea
+        ]
+    in
+    corpus, view
+  ;;
 end
 
-let component graph =
-  let dropdown, dropdown_vdom =
-    let form = Form.Elements.Dropdown.enumerable (module T) graph in
-    let value =
-      let%arr form = form in
-      form |> Form.value_or_default ~default:T.Foo
-    in
-    let vdom =
-      let%arr form = form in
-      Form.view form
-    in
-    value, vdom
-  in
-  let textarea, textarea_vdom =
-    let extra_attrs =
-      let%map dropdown = dropdown in
-      match dropdown with
-      | Foo -> [ Vdom.Attr.disabled ]
-      | Custom -> []
-    in
-    let form = Form.Elements.Textarea.string ~extra_attrs () graph in
-    let value =
-      let%arr form = form in
-      Form.value_or_default ~default:"" form
-    in
-    let vdom =
-      let%arr form = form in
-      Form.view form
-    in
-    value, vdom
-  in
-  let corpus =
-    let%arr dropdown = dropdown
-    and textarea = textarea in
-    match dropdown with
-    | Custom -> of_string textarea
-    | Foo -> foo
-  in
-  let view =
-    let%arr dropdown_vdom = dropdown_vdom
-    and textarea_vdom = textarea_vdom in
-    Vdom.Node.div [ dropdown_vdom; textarea_vdom ]
-  in
-  corpus, view
-;;
+(* let component graph = *)
+(*   let corpus = *)
+(*     let%arr dropdown = dropdown *)
+(*     and textarea = textarea in *)
+(*     match dropdown with *)
+(*     | Custom -> of_string textarea *)
+(*     | Foo -> foo *)
+(*   in *)
+(*   let view = *)
+(*     let%arr dropdown_vdom = dropdown_vdom *)
+(*     and textarea_vdom = textarea_vdom in *)
+(*     Vdom.Node.div [ dropdown_vdom; textarea_vdom ] *)
+(*   in *)
+(*   corpus, view *)
+(* ;; *)

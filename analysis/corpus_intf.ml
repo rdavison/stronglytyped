@@ -35,5 +35,5 @@ module type S = sig
   val empty : t
   val of_string : string -> t
   val bigrams : t -> string -> float Bigrams.t
-  val foo : t
+  val fast : t
 end
