@@ -185,7 +185,7 @@ let bigrams (t : t) (bigram : string) : float Bigrams.t =
   { ab = f maps.ab; aba = f maps.aba; axc = f maps.axc; vbcv = f maps.vbcv }
 ;;
 
-let foo =
+let fast =
   of_string
     {|No one in the world needs an elephant tusk but an elephant.
 

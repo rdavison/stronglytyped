@@ -23,24 +23,37 @@ module Style =
 
 let app graph =
   let keyboard, keyboard_inject = Keyboard.state_machine graph in
-  let worst_counter, worst_counter_vdom =
-    let n, inject = Analysis.Counter.counter 6 graph in
-    let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
-    n, vdom
-  in
-  let corpus, corpus_vdom = Corpus.component graph in
+  let corpus, corpus_vdom = Corpus.Select.component graph in
   let same_finger_controls, stats_section_vdom =
-    Stats_same_finger.component ~keyboard ~corpus ~worst_counter graph
+    Stats_same_finger.component ~keyboard ~corpus graph
   in
   let keyboard_section_vdom =
     Keyboard.section_component ~keyboard ~keyboard_inject ~corpus graph
   in
+  let same_finger_controls_vdom =
+    let%arr same_finger_controls = same_finger_controls in
+    Bonsai_web_ui_form.With_manual_view.view same_finger_controls
+  in
+  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
+  Runtime.Mode.start
+    runtime_mode
+    ~f:
+      (let%map keyboard_inject = keyboard_inject in
+       keyboard_inject Keyboard.Action.Random_swap)
+    graph;
+  Runtime.Mode.start
+    runtime_mode
+    ~f:
+      (let%map keyboard_inject = keyboard_inject in
+       keyboard_inject Keyboard.Action.Random_swap)
+    graph;
   let nav =
     Nav.component
-      ~same_finger_controls
       ~keyboard
       ~keyboard_inject
-      ~worst_counter_vdom
+      ~runtime_mode
+      ~runtime_mode_vdom
+      ~same_finger_controls_vdom
       ~corpus_vdom
       graph
   in

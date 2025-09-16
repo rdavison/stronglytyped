@@ -6,4 +6,6 @@ include
   with module Maps = Analysis.Corpus.Maps
    and type t = Analysis.Corpus.t
 
-val component : Bonsai.graph -> t Bonsai.t * Vdom.Node.t Bonsai.t
+module Select : sig
+  val component : Bonsai.graph -> t Bonsai.t * Vdom.Node.t Bonsai.t
+end

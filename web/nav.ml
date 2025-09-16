@@ -55,19 +55,14 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
 ;;
 
 let component
-      ~same_finger_controls
       ~keyboard
+      ~runtime_mode
+      ~runtime_mode_vdom
+      ~same_finger_controls_vdom
       ~keyboard_inject
-      ~worst_counter_vdom
       ~corpus_vdom
       graph
   =
-  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
-  let random_swap_effect =
-    let%map keyboard_inject = keyboard_inject in
-    keyboard_inject Keyboard.Action.Random_swap
-  in
-  Runtime.Mode.start runtime_mode ~f:random_swap_effect graph;
   let brute_force_indexes_button =
     brute_force_indexes_button ~keyboard ~keyboard_inject graph
   in
@@ -76,7 +71,8 @@ let component
     and runtime_mode = runtime_mode in
     let button name callback =
       match runtime_mode with
-      | Auto -> Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
+      | Runtime.Mode.Auto ->
+        Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
       | Manual ->
         Vdom.Node.button
           ~attrs:[ Vdom.Attr.on_click (fun _event -> callback ()) ]
@@ -84,11 +80,27 @@ let component
     in
     button "Random Swap" (fun () -> keyboard_inject Random_swap)
   in
-  let%arr worst_counter_vdom = worst_counter_vdom
-  and random_swap_vdom = random_swap_vdom
+  let actions_vdom =
+    let%arr random_swap_vdom = random_swap_vdom
+    and brute_force_indexes_button = brute_force_indexes_button in
+    Vdom.Node.div
+      ~attrs:
+        [ Design.card
+        ; [%css
+            {|
+              display: flex;
+              flex-direction: column;
+              gap: 0.5rem;
+            |}]
+        ]
+      [ Vdom.Node.label [ Vdom.Node.text "Actions" ]
+      ; random_swap_vdom
+      ; brute_force_indexes_button
+      ]
+  in
+  let%arr same_finger_controls_vdom = same_finger_controls_vdom
+  and actions_vdom = actions_vdom
   and runtime_mode_vdom = runtime_mode_vdom
-  and brute_force_indexes_button = brute_force_indexes_button
-  and same_finger_controls = same_finger_controls
   and corpus_vdom = corpus_vdom in
   Vdom.Node.create
     "nav"
@@ -102,15 +114,10 @@ let component
           height: 100%;
           justify-content: flex-start;
           gap: 2rem;
+          padding: 2rem;
           align-items: center;
           box-shadow: 2px 0px 10px black;
       |}]
       ]
-    [ Form.view same_finger_controls
-    ; runtime_mode_vdom
-    ; random_swap_vdom
-    ; worst_counter_vdom
-    ; brute_force_indexes_button
-    ; corpus_vdom
-    ]
+    [ corpus_vdom; same_finger_controls_vdom; runtime_mode_vdom; actions_vdom ]
 ;;
