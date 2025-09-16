@@ -1,6 +1,7 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
+module Form = Bonsai_web_ui_form.With_manual_view
 
 let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
   let%arr effects =
@@ -98,12 +99,14 @@ let component
           flex-direction: column;
           background-color: %{Tailwind_v3_colors.slate600#Css_gen.Color};
           width: 20rem;
-          justify-content: center;
+          height: 100%;
+          justify-content: flex-start;
+          gap: 2rem;
           align-items: center;
           box-shadow: 2px 0px 10px black;
       |}]
       ]
-    [ Bonsai_web_ui_form.With_manual_view.view same_finger_controls
+    [ Form.view same_finger_controls
     ; runtime_mode_vdom
     ; random_swap_vdom
     ; worst_counter_vdom

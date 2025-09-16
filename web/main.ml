@@ -12,6 +12,10 @@ module Style =
           box-sizing: border-box;
         }
 
+        html, body {
+          height: 100%;
+        }
+
         body {
           background-color: #94A3B8;
         }
@@ -91,6 +95,8 @@ let app graph =
                   display: flex;
                   flex-direction: column;
                   padding: 2rem;
+                  gap: 2rem;
+                  align-items: flex-start;
                 |}]
             ]
           sections
@@ -104,7 +110,8 @@ let app graph =
             display: flex;
             flex-direction: row;
             min-width: 100%;
-            font-family: sans-serif;
+            height: 100%;
+            font-family: monospace;
             color: black;
           |}]
       ]

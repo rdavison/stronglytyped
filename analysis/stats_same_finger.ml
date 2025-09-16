@@ -9,8 +9,8 @@ type ('breakdown, 'total) metric =
 [@@deriving sexp, compare, equal]
 
 type t =
-  | Sfb of (float, float) metric
-  | Sfs of (float, float) metric
+  | Sfb of (float option * float, float) metric
+  | Sfs of (float option * float, float) metric
   | Speed of (float, float) metric
   | Sfb_worst of ((string * float) list, float) metric
   | Sfs_worst of ((string * float) list, float) metric
@@ -54,6 +54,35 @@ let component
     and total = total in
     Typed_variant.create metric { breakdown; total }
   in
+  let prev_curr (metric : (float option * float, float) metric Typed_variant.t) graph =
+    let freqs =
+      Bonsai.assoc
+        (module Hand_finger)
+        diff_row_bigram_data
+        ~f:(fun _hand_finger bigram_data graph ->
+          let curr =
+            Bonsai.Map.sum
+              bigram_data
+              (module Float)
+              ~f:(bigram (Typed_variant.Packed.pack metric))
+              graph
+          in
+          let prev = Bonsai.previous_value ~equal:Float.equal curr graph in
+          Bonsai.both prev curr
+          |> Bonsai.cutoff ~equal:(fun (_, a) (_, b) -> Float.equal a b))
+        graph
+    in
+    let total =
+      let curr =
+        Bonsai.Map.sum freqs (module Float) ~f:(fun (_prev, curr) -> curr) graph
+      in
+      let _prev = () in
+      curr
+    in
+    let%arr breakdown = freqs
+    and total = total in
+    Typed_variant.create metric { breakdown; total }
+  in
   let detailed (metric : ((string * float) list, float) metric Typed_variant.t) graph =
     let worst_n =
       Bonsai.assoc
@@ -87,8 +116,8 @@ let component
     metrics
     ~f:(fun key graph ->
       match%sub key with
-      | { f = T Sfb } -> simple Sfb graph
-      | { f = T Sfs } -> simple Sfs graph
+      | { f = T Sfb } -> prev_curr Sfb graph
+      | { f = T Sfs } -> prev_curr Sfs graph
       | { f = T Speed } -> simple Speed graph
       | { f = T Sfb_worst } -> detailed Sfb_worst graph
       | { f = T Sfs_worst } -> detailed Sfs_worst graph
@@ -109,11 +138,11 @@ let bigram_data bigram_data graph : Bigram_data.t Hand_finger.Map.t Bonsai.t =
   Bonsai.assoc
     (module Hand_finger)
     same_hand_same_finger_bigram_data
-    graph
     ~f:(fun _ (bigram_data : Bigram_data.t Bonsai.t) graph ->
       Bonsai.Map.filter_mapi
         bigram_data
         ~f:(fun ~key:(a, b) ~data ->
           if Int.equal (Key.Id.row a) (Key.Id.row b) then None else Some data)
         graph)
+    graph
 ;;
