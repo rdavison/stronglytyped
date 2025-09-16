@@ -11,7 +11,7 @@ module T = struct
   [@@deriving sexp, equal, compare, enumerate]
 end
 
-let better_component graph =
+let component graph =
   let dropdown, dropdown_vdom =
     let form = Form.Elements.Dropdown.enumerable (module T) graph in
     let value =
@@ -56,16 +56,3 @@ let better_component graph =
   in
   corpus, view
 ;;
-
-let _simple_component graph =
-  let corpus, set_corpus = Bonsai.state empty graph in
-  let vdom =
-    let%arr set_corpus = set_corpus in
-    Vdom.Node.textarea
-      ~attrs:[ Vdom.Attr.on_change (fun _event data -> set_corpus (of_string data)) ]
-      []
-  in
-  corpus, vdom
-;;
-
-let component = better_component
