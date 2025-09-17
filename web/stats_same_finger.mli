@@ -9,8 +9,9 @@ val component
   :  keyboard:Keyboard.t Bonsai.t
   -> corpus:Corpus.t Bonsai.t
   -> Bonsai.graph
-  -> ( (Typed_variant.Packed.t, Typed_variant.Packed.comparator_witness) Set.t
-       , Vdom.Node.t )
-       Form.t
-       Bonsai.t
+  -> (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Map.t Bonsai.t
+     * ( (Typed_variant.Packed.t, Typed_variant.Packed.comparator_witness) Set.t
+         , Vdom.Node.t )
+         Form.t
+         Bonsai.t
      * Vdom.Node.t Bonsai.t

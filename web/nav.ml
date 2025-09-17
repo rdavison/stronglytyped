@@ -3,9 +3,10 @@ open! Bonsai_web
 open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
 
-let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
+let brute_force_indexes_button ~keyboard_inject ~keyboard_cancel ~keyboard graph =
   let%arr effects =
     let%arr keyboard_inject = keyboard_inject
+    and keyboard_cancel = keyboard_cancel
     and indexes_swaps_for_brute_forcing =
       let%arr x =
         Bonsai.assoc
@@ -44,7 +45,7 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
     let effects =
       List.map indexes_swaps_for_brute_forcing ~f:(fun swap -> Keyboard.Action.Swap swap)
     in
-    keyboard_inject effects
+    Ui_effect.all_unit [ keyboard_cancel; keyboard_inject effects ]
   in
   Vdom.Node.button
     ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
@@ -53,15 +54,16 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
 
 let component
       ~keyboard
+      ~keyboard_inject
+      ~keyboard_cancel
       ~runtime_mode
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
-      ~keyboard_inject
       ~corpus_vdom
       graph
   =
   let brute_force_indexes_button =
-    brute_force_indexes_button ~keyboard ~keyboard_inject graph
+    brute_force_indexes_button ~keyboard ~keyboard_inject ~keyboard_cancel graph
   in
   let random_swap_vdom =
     let%arr keyboard_inject = keyboard_inject

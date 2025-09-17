@@ -22,11 +22,12 @@ module Style =
       |}]
 
 let app graph =
-  let keyboard, keyboard_inject = Keyboard.state_machine graph in
+  let keyboard, keyboard_inject, keyboard_cancel = Keyboard.state_machine graph in
   let corpus, corpus_vdom = Corpus.Select.component graph in
-  let same_finger_controls, stats_section_vdom =
+  let same_finger_stats, same_finger_controls, stats_section_vdom =
     Stats_same_finger.component ~keyboard ~corpus graph
   in
+  let score = Score.component ~same_finger_stats graph in
   let keyboard_section_vdom =
     Keyboard.section_component ~keyboard ~keyboard_inject ~corpus graph
   in
@@ -45,6 +46,7 @@ let app graph =
     Nav.component
       ~keyboard
       ~keyboard_inject
+      ~keyboard_cancel
       ~runtime_mode
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
@@ -53,6 +55,7 @@ let app graph =
   in
   let%arr stats_section_vdom = stats_section_vdom
   and keyboard_section_vdom = keyboard_section_vdom
+  and score = score
   and nav = nav in
   let header =
     Vdom.Node.header
@@ -82,7 +85,38 @@ let app graph =
   let footer = Vdom.Node.footer [] in
   let main =
     let sections =
-      [ keyboard_section_vdom; stats_section_vdom ]
+      [ Vdom.Node.div
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  flex-direction: row;
+                  align-items: center;
+                |}]
+            ]
+          [ Vdom.Node.h1
+              ~attrs:
+                [ [%css
+                    {|
+                      flex: 1;
+                      text-align: right;
+                    |}]
+                ]
+              [ Vdom.Node.text "Score:" ]
+          ; Vdom.Node.h1
+              ~attrs:
+                [ [%css
+                    {|
+                      flex: 1;
+                      text-align: left;
+                      padding-left: 0.5rem;
+                    |}]
+                ]
+              [ score ]
+          ]
+      ; keyboard_section_vdom
+      ; stats_section_vdom
+      ]
       |> List.map ~f:(fun vdom ->
         Vdom.Node.section
           ~attrs:

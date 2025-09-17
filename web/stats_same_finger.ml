@@ -310,5 +310,5 @@ let component ~keyboard ~corpus graph =
           ]
         [ table ]
   in
-  controls, vdom
+  stats_same_finger, controls, vdom
 ;;
