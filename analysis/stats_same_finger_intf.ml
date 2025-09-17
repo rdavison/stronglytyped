@@ -9,8 +9,8 @@ module type S = sig
   [@@deriving sexp, compare, equal]
 
   type t =
-    | Sfb of (float option * float, float) metric
-    | Sfs of (float option * float, float) metric
+    | Sfb of (float, float) metric
+    | Sfs of (float, float) metric
     | Speed of (float, float) metric
     | Sfb_worst of ((string * float) list, float) metric
     | Sfs_worst of ((string * float) list, float) metric
