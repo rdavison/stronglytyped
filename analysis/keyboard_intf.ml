@@ -10,5 +10,7 @@ module type S = sig
     [@@deriving sexp, compare, equal]
   end
 
-  val state_machine : Bonsai.graph -> t Bonsai.t * (Action.t -> unit Ui_effect.t) Bonsai.t
+  val state_machine
+    :  Bonsai.graph
+    -> t Bonsai.t * (Action.t list -> unit Ui_effect.t) Bonsai.t
 end

@@ -57,7 +57,7 @@ let render_simple (t : (float, 'total) metric Typed_variant.t) data =
   Vdom.Node.text (render_measurement packed data)
 ;;
 
-let css_attr_prev_curr prev curr =
+let css_attr_prev_curr good_dir prev curr =
   match prev with
   | None -> Vdom.Attr.empty
   | Some prev ->
@@ -68,11 +68,16 @@ let css_attr_prev_curr prev curr =
        let (`RGB (r, g, b)) =
          Util.Color.convert_hex_to_rgb
            (if Float.( > ) diff 0.
-            then Tailwind_v3_colors.green500
-            else Tailwind_v3_colors.red500)
+            then (
+              match good_dir with
+              | `Up -> Tailwind_v3_colors.green500
+              | `Down -> Tailwind_v3_colors.red500)
+            else (
+              match good_dir with
+              | `Up -> Tailwind_v3_colors.red500
+              | `Down -> Tailwind_v3_colors.green500))
        in
        let scale x = Float.tanh (50. *. Float.sin (Float.pi *. x /. 2.)) in
-       (* let scale x = 10. *. x in *)
        let a = Percent.of_mult (scale (Float.abs curr)) in
        let color = `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ()) in
        [%css {|background-color: %{color#Css_gen.Color};|}])
@@ -80,11 +85,12 @@ let css_attr_prev_curr prev curr =
 
 let render_prev_curr
       (t : (float option * float, 'total) metric Typed_variant.t)
+      good_dir
       ((prev, curr) : float option * float)
   =
   let packed = Typed_variant.Packed.pack t in
   Vdom.Node.div
-    ~attrs:[ css_attr_prev_curr prev curr ]
+    ~attrs:[ css_attr_prev_curr good_dir prev curr ]
     [ Vdom.Node.text (render_measurement packed curr) ]
 ;;
 
@@ -128,8 +134,8 @@ let render_breakdown
   =
   fun t breakdown ->
   match t with
-  | Sfb -> render_prev_curr Sfb breakdown
-  | Sfs -> render_prev_curr Sfs breakdown
+  | Sfb -> render_prev_curr Sfb `Down breakdown
+  | Sfs -> render_prev_curr Sfs `Down breakdown
   | Speed -> render_simple Speed breakdown
   | Sfb_worst -> render_detailed Sfb_worst breakdown
   | Sfs_worst -> render_detailed Sfs_worst breakdown

@@ -39,13 +39,7 @@ let app graph =
     runtime_mode
     ~f:
       (let%map keyboard_inject = keyboard_inject in
-       keyboard_inject Keyboard.Action.Random_swap)
-    graph;
-  Runtime.Mode.start
-    runtime_mode
-    ~f:
-      (let%map keyboard_inject = keyboard_inject in
-       keyboard_inject Keyboard.Action.Random_swap)
+       keyboard_inject [ Keyboard.Action.Random_swap ])
     graph;
   let nav =
     Nav.component
@@ -89,7 +83,15 @@ let app graph =
   let main =
     let sections =
       [ keyboard_section_vdom; stats_section_vdom ]
-      |> List.map ~f:(fun vdom -> Vdom.Node.section [ vdom ])
+      |> List.map ~f:(fun vdom ->
+        Vdom.Node.section
+          ~attrs:
+            [ [%css
+                {|
+                  width: 100%;
+                |}]
+            ]
+          [ vdom ])
     in
     Vdom.Node.main
       ~attrs:
@@ -98,6 +100,8 @@ let app graph =
               display: flex;
               flex-direction: column;
               width: 100%;
+              overflow: auto;
+              overscroll-behavior: contain;
             |}]
         ]
       [ header
@@ -126,6 +130,7 @@ let app graph =
             height: 100%;
             font-family: monospace;
             color: black;
+            overflow: hidden;
           |}]
       ]
     [ nav; main ]
