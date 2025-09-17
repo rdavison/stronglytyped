@@ -44,6 +44,11 @@ module Select = struct
     let view =
       let%arr dropdown = dropdown
       and textarea = textarea in
+      let textarea_wrapper =
+        match Form.value_or_default dropdown ~default with
+        | Fast -> []
+        | Custom -> [ Form.view textarea ]
+      in
       Vdom.Node.div
         ~attrs:
           [ Design.card
@@ -54,10 +59,8 @@ module Select = struct
               gap: 2px;
             |}]
           ]
-        [ Vdom.Node.label [ Vdom.Node.text "Select Corpus" ]
-        ; Form.view dropdown
-        ; Form.view textarea
-        ]
+        ([ Vdom.Node.label [ Vdom.Node.text "Select Corpus" ]; Form.view dropdown ]
+         @ textarea_wrapper)
     in
     corpus, view
   ;;

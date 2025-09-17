@@ -52,45 +52,38 @@ let render_measurement (t : Typed_variant.Packed.t) =
   | T Speed_worst -> render_speed
 ;;
 
-let render_simple (t : (float, 'total) metric Typed_variant.t) data =
+let _render_simple (t : (float, 'total) metric Typed_variant.t) data =
   let packed = Typed_variant.Packed.pack t in
   Vdom.Node.text (render_measurement packed data)
 ;;
 
-let css_attr_prev_curr good_dir prev curr =
-  match prev with
-  | None -> Vdom.Attr.empty
-  | Some prev ->
-    let diff = curr -. prev in
-    (match Float.compare prev curr with
-     | 0 -> Vdom.Attr.empty
-     | _ ->
-       let (`RGB (r, g, b)) =
-         Util.Color.convert_hex_to_rgb
-           (if Float.( > ) diff 0.
-            then (
-              match good_dir with
-              | `Up -> Tailwind_v3_colors.green500
-              | `Down -> Tailwind_v3_colors.red500)
-            else (
-              match good_dir with
-              | `Up -> Tailwind_v3_colors.red500
-              | `Down -> Tailwind_v3_colors.green500))
-       in
-       let scale x = Float.tanh (50. *. Float.sin (Float.pi *. x /. 2.)) in
-       let a = Percent.of_mult (scale (Float.abs curr)) in
-       let color = `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ()) in
-       [%css {|background-color: %{color#Css_gen.Color};|}])
+let css_attr_target target curr =
+  let scale x =
+    let open Float in
+    5. *. exp (-2000. *. exp 1. *. (x ** 2.)) /. (2. *. sqrt (2. *. pi))
+  in
+  let a = Float.to_string (scale (Float.abs (target -. curr))) in
+  [%css {|background: hsl(calc(0 + (142 - 0) * %{a}),70%,45%);|}]
 ;;
 
-let render_prev_curr
+let render_simple_with_target (t : (float, 'total) metric Typed_variant.t) target data =
+  let packed = Typed_variant.Packed.pack t in
+  Vdom.Node.div
+    ~attrs:[ css_attr_target target data ]
+    [ Vdom.Node.text (render_measurement packed data) ]
+;;
+
+let css_attr_prev_curr _good_dir target _prev curr = css_attr_target target curr
+
+let _render_prev_curr
       (t : (float option * float, 'total) metric Typed_variant.t)
       good_dir
+      target
       ((prev, curr) : float option * float)
   =
   let packed = Typed_variant.Packed.pack t in
   Vdom.Node.div
-    ~attrs:[ css_attr_prev_curr good_dir prev curr ]
+    ~attrs:[ css_attr_prev_curr good_dir target prev curr ]
     [ Vdom.Node.text (render_measurement packed curr) ]
 ;;
 
@@ -134,9 +127,9 @@ let render_breakdown
   =
   fun t breakdown ->
   match t with
-  | Sfb -> render_prev_curr Sfb `Down breakdown
-  | Sfs -> render_prev_curr Sfs `Down breakdown
-  | Speed -> render_simple Speed breakdown
+  | Sfb -> render_simple_with_target Sfb 0. breakdown
+  | Sfs -> render_simple_with_target Sfs 0. breakdown
+  | Speed -> render_simple_with_target Speed 0. breakdown
   | Sfb_worst -> render_detailed Sfb_worst breakdown
   | Sfs_worst -> render_detailed Sfs_worst breakdown
   | Speed_worst -> render_detailed Speed_worst breakdown

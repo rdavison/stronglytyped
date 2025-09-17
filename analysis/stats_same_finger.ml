@@ -9,8 +9,8 @@ type ('breakdown, 'total) metric =
 [@@deriving sexp, compare, equal]
 
 type t =
-  | Sfb of (float option * float, float) metric
-  | Sfs of (float option * float, float) metric
+  | Sfb of (float, float) metric
+  | Sfs of (float, float) metric
   | Speed of (float, float) metric
   | Sfb_worst of ((string * float) list, float) metric
   | Sfs_worst of ((string * float) list, float) metric
@@ -54,7 +54,7 @@ let component
     and total = total in
     Typed_variant.create metric { breakdown; total }
   in
-  let prev_curr (metric : (float option * float, float) metric Typed_variant.t) graph =
+  let _prev_curr (metric : (float option * float, float) metric Typed_variant.t) graph =
     let freqs =
       Bonsai.assoc
         (module Hand_finger)
@@ -116,8 +116,8 @@ let component
     metrics
     ~f:(fun key graph ->
       match%sub key with
-      | { f = T Sfb } -> prev_curr Sfb graph
-      | { f = T Sfs } -> prev_curr Sfs graph
+      | { f = T Sfb } -> simple Sfb graph
+      | { f = T Sfs } -> simple Sfs graph
       | { f = T Speed } -> simple Speed graph
       | { f = T Sfb_worst } -> detailed Sfb_worst graph
       | { f = T Sfs_worst } -> detailed Sfs_worst graph
