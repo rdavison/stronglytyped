@@ -35,8 +35,6 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
                   visited := Set.add !visited k21;
                   Some k12
                 | _, _ -> None))
-            |> fun l ->
-            List.take l 1
             |> List.map ~f:(fun x ->
               print_s ([%sexp_of: Key.Id.t * Key.Id.t] x);
               x))
@@ -44,10 +42,9 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard graph =
       List.concat (Map.data x)
     in
     let effects =
-      List.map indexes_swaps_for_brute_forcing ~f:(fun swap ->
-        keyboard_inject (Keyboard.Action.Swap swap))
+      List.map indexes_swaps_for_brute_forcing ~f:(fun swap -> Keyboard.Action.Swap swap)
     in
-    Ui_effect.all_unit effects
+    keyboard_inject effects
   in
   Vdom.Node.button
     ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
@@ -78,7 +75,7 @@ let component
           ~attrs:[ Vdom.Attr.on_click (fun _event -> callback ()) ]
           [ Vdom.Node.text name ]
     in
-    button "Random Swap" (fun () -> keyboard_inject Random_swap)
+    button "Random Swap" (fun () -> keyboard_inject [ Random_swap ])
   in
   let actions_vdom =
     let%arr random_swap_vdom = random_swap_vdom
@@ -111,12 +108,13 @@ let component
           flex-direction: column;
           background-color: %{Tailwind_v3_colors.slate600#Css_gen.Color};
           width: 20rem;
-          height: 100%;
           justify-content: flex-start;
           gap: 2rem;
           padding: 2rem;
           align-items: center;
           box-shadow: 2px 0px 10px black;
+          overflow: auto;
+          overscroll-behavior: contain;
       |}]
       ]
     [ corpus_vdom; same_finger_controls_vdom; runtime_mode_vdom; actions_vdom ]

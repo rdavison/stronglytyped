@@ -49,7 +49,7 @@ let section_component ~keyboard ~keyboard_inject ~(corpus : Corpus.t Bonsai.t) g
   let dnd =
     let on_drop =
       let%arr keyboard_inject = keyboard_inject in
-      fun a b -> keyboard_inject (Action.Swap (a, b))
+      fun a b -> keyboard_inject [ Action.Swap (a, b) ]
     in
     Bonsai_web_ui_drag_and_drop.create
       ~source_id:(module Key.Id)

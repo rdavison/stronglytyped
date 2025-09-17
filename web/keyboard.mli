@@ -8,7 +8,7 @@ include
 
 val section_component
   :  keyboard:t Bonsai.t
-  -> keyboard_inject:(Action.t -> unit Ui_effect.t) Bonsai.t
+  -> keyboard_inject:(Action.t list -> unit Ui_effect.t) Bonsai.t
   -> corpus:Corpus.t Bonsai.t
   -> Bonsai.graph
   -> Vdom.Node.t Bonsai.t

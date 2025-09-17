@@ -1,6 +1,7 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
+module M = Bonsai.Effect_throttling
 
 module Mode = struct
   include Analysis.Runtime.Mode
