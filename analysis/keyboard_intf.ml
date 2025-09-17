@@ -12,5 +12,7 @@ module type S = sig
 
   val state_machine
     :  Bonsai.graph
-    -> t Bonsai.t * (Action.t list -> unit Ui_effect.t) Bonsai.t
+    -> t Bonsai.t
+       * (Action.t list -> unit Ui_effect.t) Bonsai.t
+       * unit Ui_effect.t Bonsai.t
 end

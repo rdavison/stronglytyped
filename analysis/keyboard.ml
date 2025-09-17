@@ -7,6 +7,7 @@ module One_per_frame_after_display = struct
     type 'action t =
       | Enqueue_many of 'action list
       | Tick
+      | Cancel
   end
 
   type 'action t =
@@ -23,6 +24,7 @@ module One_per_frame_after_display = struct
           | Action.Enqueue_many effs ->
             Queue.enqueue_all queue effs;
             { queue; running = running || not (Queue.is_empty queue) }
+          | Cancel -> { queue = Queue.create (); running = false }
           | Tick ->
             (match Queue.dequeue queue with
              | None -> { queue; running = false }
@@ -42,8 +44,15 @@ module One_per_frame_after_display = struct
          if state.running then inject Action.Tick else Ui_effect.Ignore)
         graph
     in
-    let%arr inject = inject in
-    fun eff -> inject (Enqueue_many eff)
+    let enqueue_many =
+      let%arr inject = inject in
+      fun eff -> inject (Enqueue_many eff)
+    in
+    let cancel =
+      let%arr inject = inject in
+      inject Cancel
+    in
+    enqueue_many, cancel
   ;;
 end
 
@@ -56,7 +65,9 @@ module Action = struct
   [@@deriving sexp, compare, equal]
 end
 
-let state_machine graph : t Bonsai.t * (Action.t list -> unit Ui_effect.t) Bonsai.t =
+let state_machine graph
+  : t Bonsai.t * (Action.t list -> unit Ui_effect.t) Bonsai.t * unit Ui_effect.t Bonsai.t
+  =
   let ids = Key.Id.Set.of_list Key.Id.all_var in
   let state_machines_by_id =
     let map = Key.Id.Map.of_key_set ids ~f:Key.state_machine in
@@ -83,6 +94,6 @@ let state_machine graph : t Bonsai.t * (Action.t list -> unit Ui_effect.t) Bonsa
       let b_key, b_set = Map.find_exn state_machines_by_id b in
       Ui_effect.all_unit [ a_set (Set b_key.kc); b_set (Set a_key.kc) ]
   in
-  let inject = One_per_frame_after_display.component inject graph in
-  keyboard, inject
+  let inject, cancel = One_per_frame_after_display.component inject graph in
+  keyboard, inject, cancel
 ;;
