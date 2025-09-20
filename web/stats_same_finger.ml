@@ -4,9 +4,63 @@ open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
 include Analysis.Stats_same_finger
 
+let bar ~dir ~color ~pct =
+  let flex_direction =
+    match dir with
+    | `H -> "row"
+    | `V -> "column-reverse"
+  in
+  let flex_bar = pct |> Float.to_string in
+  let flex_blank = 1. -. pct |> Float.to_string in
+  let bar =
+    Vdom.Node.create
+      "bar-fill"
+      ~attrs:
+        [ [%css
+            {|
+              flex: %{flex_bar};
+              background: %{color};
+            |}]
+        ]
+      []
+  in
+  let blank =
+    Vdom.Node.create
+      "bar-blank"
+      ~attrs:
+        [ [%css
+            {|
+              flex: %{flex_blank};
+            |}]
+        ]
+      []
+  in
+  Vdom.Node.create
+    "bar"
+    ~attrs:
+      [ [%css
+          {|
+            display: flex;
+            width: 100%;
+            height: 100%;
+            flex-direction: %{flex_direction};
+          |}]
+      ]
+    [ bar; blank ]
+;;
+
+(* let bar_attr height = *)
+(*   [%css *)
+(*     {| *)
+(*       flex: %{sprintf "%f" height}; *)
+(*     |}] *)
+(* ;; *)
+
 let multiselect graph =
   let%arr form =
     Form.Elements.Multiselect.set
+      ~default_selection_status:
+        (Bonsai.return Bonsai_web_ui_multi_select.Selection_status.Selected)
       (module Typed_variant.Packed)
       (Bonsai.return Typed_variant.Packed.all)
       graph
@@ -39,8 +93,8 @@ let label (t : Typed_variant.Packed.t) =
   | T Speed_worst -> "Worst Speed"
 ;;
 
-let render_speed x = sprintf "%.2fd/t" (Float.abs (x *. 100.))
-let render_freq x = sprintf "%.2f%%" (Float.abs (x *. 100.))
+let render_speed x = Vdom.Node.textf "%.2fd/t" (Float.abs (x *. 100.))
+let render_freq x = Vdom.Node.textf "%.2f%%" (Float.abs (x *. 100.))
 
 let render_measurement (t : Typed_variant.Packed.t) =
   match t.f with
@@ -54,127 +108,247 @@ let render_measurement (t : Typed_variant.Packed.t) =
 
 let _render_simple (t : (float, 'total) metric Typed_variant.t) data =
   let packed = Typed_variant.Packed.pack t in
-  Vdom.Node.text (render_measurement packed data)
+  render_measurement packed data
 ;;
 
-let css_attr_target target curr =
+let css_attr_target n target curr =
   let scale x =
     let open Float in
-    5. *. exp (-2000. *. exp 1. *. (x ** 2.)) /. (2. *. sqrt (2. *. pi))
+    5. *. exp (-1. *. n *. exp 1. *. (x ** 2.)) /. (2. *. sqrt (2. *. pi))
   in
   let a = Float.to_string (scale (Float.abs (target -. curr))) in
-  [%css {|background: hsl(calc(0 + (142 - 0) * %{a}),70%,45%);|}]
+  [%string "hsl(calc(0 + (142 - 0) * %{a}),70%,45%)"]
 ;;
 
-let render_simple_with_target (t : (float, 'total) metric Typed_variant.t) target data =
-  let packed = Typed_variant.Packed.pack t in
-  Vdom.Node.div
-    ~attrs:[ css_attr_target target data ]
-    [ Vdom.Node.text (render_measurement packed data) ]
-;;
-
-let css_attr_prev_curr _good_dir target _prev curr = css_attr_target target curr
-
-let _render_prev_curr
-      (t : (float option * float, 'total) metric Typed_variant.t)
-      good_dir
+let render_simple_with_target
+      n
+      (_t : (float, float) metric Typed_variant.t)
       target
-      ((prev, curr) : float option * float)
+      breakdown
+      total
   =
-  let packed = Typed_variant.Packed.pack t in
-  Vdom.Node.div
-    ~attrs:[ css_attr_prev_curr good_dir target prev curr ]
-    [ Vdom.Node.text (render_measurement packed curr) ]
+  (* let packed = Typed_variant.Packed.pack t in *)
+  let scale x = Float.sqrt (1. -. ((x -. 1.) ** 2.)) in
+  let height = scale (breakdown /. total) in
+  bar ~dir:`V ~color:(css_attr_target n target breakdown) ~pct:height
 ;;
 
-let table_color = Tailwind_v3_colors.slate900
+let render_total2 n (packed : Typed_variant.Packed.t) target total =
+  let scale x =
+    match packed.f with
+    | T Sfb | T Sfs | T Sfb_worst | T Sfs_worst -> Float.sqrt (1. -. ((x -. 1.) ** 2.))
+    | T Speed | T Speed_worst -> total
+  in
+  let height = scale total in
+  bar ~dir:`V ~color:(css_attr_target n target total) ~pct:height
+;;
 
-let grid_attr cols =
+(* let css_attr_prev_curr n _good_dir target _prev curr = css_attr_target n target curr *)
+
+(* let _render_prev_curr *)
+(*       n *)
+(*       (t : (float option * float, 'total) metric Typed_variant.t) *)
+(*       good_dir *)
+(*       target *)
+(*       ((prev, curr) : float option * float) *)
+(*   = *)
+(*   let packed = Typed_variant.Packed.pack t in *)
+(*   Vdom.Node.div *)
+(*     ~attrs:[ css_attr_prev_curr n good_dir target prev curr ] *)
+(*     [ render_measurement packed curr ] *)
+(* ;; *)
+
+(* let table_color = Tailwind_v3_colors.slate900 *)
+
+let grid_attr ?(padding = "1rem") cols =
   let cols = Int.to_string cols in
   [%css
     {|
       display: grid;
       grid-template-columns: repeat(%{cols}, 1fr);
       gap: 1px;
-      background: %{Tailwind_v3_colors.slate600#Css_gen.Color};
-      border-radius: 12px;
+      background: %{Design.(Card.border_color theme)#Css_gen.Color};
       overflow: hidden;
+      width: 100%;
 
-      & > div {
-        background: %{Tailwind_v3_colors.slate700#Css_gen.Color};
-        padding: 0.5rem;
+      & > header {
+        background: %{Design.(Card.background_color theme)#Css_gen.Color};
+        font-weight: bold;
+        padding: %{padding};
+        margin: ${padding};
+        text-align: center;
+        font-family: monospace;
+      }
+
+      & > cell, & > total {
+        background: %{Design.(Card.background_color theme)#Css_gen.Color};
+        padding: 0;
         text-align: center;
         font-family: monospace;
       }
     |}]
 ;;
 
-let render_detailed (t : ((string * float) list, 'total) metric Typed_variant.t) worst =
-  let packed = Typed_variant.Packed.pack t in
+let render_detailed
+      (_t : ((string * float) list * float, float) metric Typed_variant.t)
+      (worst, per_finger_total)
+      _total
+  =
+  (* let packed = Typed_variant.Packed.pack t in *)
   Vdom.Node.div
-    ~attrs:[]
+    ~attrs:[ Design.Card.attr; [%css {|border: unset;|}] ]
     [ Vdom.Node.div
-        ~attrs:[ grid_attr 2 ]
-        (List.concat_map worst ~f:(fun (corpus_key, metric) ->
-           [ Vdom.Node.div [ Vdom.Node.text corpus_key ]
-           ; Vdom.Node.div [ Vdom.Node.text (render_measurement packed metric) ]
+        ~attrs:[ grid_attr ~padding:"0.5rem" 2 ]
+        (List.concat_map worst ~f:(fun (corpus_key, breakdown) ->
+           let height = breakdown /. per_finger_total in
+           [ Vdom.Node.header [ Vdom.Node.text corpus_key ]
+           ; Vdom.Node.create
+               "cell"
+               ~attrs:[ [%css {|padding: unset;|}] ]
+               [ bar ~dir:`H ~color:"tomato" ~pct:height ]
            ]))
     ]
 ;;
 
-let render_breakdown
-  : type breakdown. (breakdown, 'total) metric Typed_variant.t -> breakdown -> Vdom.Node.t
+let render_breakdown_1
+  : float -> (float, float) metric Typed_variant.t -> float -> float -> Vdom.Node.t
   =
-  fun t breakdown ->
+  fun n t breakdown total ->
   match t with
-  | Sfb -> render_simple_with_target Sfb 0. breakdown
-  | Sfs -> render_simple_with_target Sfs 0. breakdown
-  | Speed -> render_simple_with_target Speed 0. breakdown
-  | Sfb_worst -> render_detailed Sfb_worst breakdown
-  | Sfs_worst -> render_detailed Sfs_worst breakdown
-  | Speed_worst -> render_detailed Speed_worst breakdown
+  | Sfb -> render_simple_with_target n Sfb 0. breakdown total
+  | Sfs -> render_simple_with_target n Sfs 0. breakdown total
+  | Speed -> render_simple_with_target n Speed 0. breakdown total
 ;;
 
-let render_total t total = Vdom.Node.text (render_measurement t total)
+let render_breakdown_2
+  :  float
+  -> ((string * float) list * float, float) metric Typed_variant.t
+  -> (string * float) list * float
+  -> float
+  -> Vdom.Node.t
+  =
+  fun _n t breakdown total ->
+  match t with
+  | Sfb_worst -> render_detailed Sfb_worst breakdown total
+  | Sfs_worst -> render_detailed Sfs_worst breakdown total
+  | Speed_worst -> render_detailed Speed_worst breakdown total
+;;
 
-let row
-      (t : ('breakdown, 'total) metric Typed_variant.t)
-      ~(metric : ('breakdown, 'total) metric Bonsai.t)
+let render_total
+  : type breakdown total.
+    float -> (breakdown, float) metric Typed_variant.t -> float -> Vdom.Node.t
+  =
+  fun n t total ->
+  let packed = Typed_variant.Packed.pack t in
+  render_total2 n packed 0. total
+;;
+
+let row_1
+      (dexterity : (Analysis.Hand_finger.t -> float) Bonsai.t)
+      (variant : (float, float) metric Typed_variant.t)
+      ~(metric : (float, float) metric Bonsai.t)
       graph
   : Vdom.Node.t list Bonsai.t
   =
-  let packed = Typed_variant.Packed.pack t in
+  let packed = Typed_variant.Packed.pack variant in
   let%sub { breakdown; total } = metric in
   let breakdown =
     Bonsai.assoc
       (module Analysis.Hand_finger)
       breakdown
-      ~f:(fun _key data _graph ->
+      ~f:(fun hand_finger breakdown _graph ->
         let contents =
-          let%arr data = data in
-          render_breakdown t data
+          let open Bonsai.Applicative_infix in
+          let%arr dexterity = dexterity <*> hand_finger
+          and breakdown = breakdown
+          and total = total in
+          match variant with
+          | Sfb -> render_breakdown_1 dexterity Sfb breakdown total
+          | Sfs -> render_breakdown_1 dexterity Sfs breakdown total
+          | Speed -> render_breakdown_1 dexterity Speed breakdown total
         in
         let%arr contents = contents in
-        Vdom.Node.div [ contents ])
+        Vdom.Node.create
+          "cell"
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  justify-content: center;
+                |}]
+            ]
+          [ contents ])
       graph
   in
-  let total = Bonsai.map total ~f:(render_total packed) in
+  let total = Bonsai.map total ~f:(render_total 1. variant) in
   let label = label packed in
   let%arr breakdown = breakdown
   and total = total in
   let header =
-    Vdom.Node.div ~attrs:[ [%css {|font-weight: bold;|}] ] [ Vdom.Node.text label ]
+    Vdom.Node.header ~attrs:[ [%css {|font-weight: bold;|}] ] [ Vdom.Node.text label ]
   in
   let breakdown =
     List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
       Map.find breakdown hand_finger
       |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
   in
-  let total = Vdom.Node.div [ total ] in
+  let total = Vdom.Node.create "total" [ total ] in
+  (header :: breakdown) @ [ total ]
+;;
+
+let row_2
+      (dexterity : (Analysis.Hand_finger.t -> float) Bonsai.t)
+      (variant : ((string * float) list * float, float) metric Typed_variant.t)
+      ~(metric : ((string * float) list * float, float) metric Bonsai.t)
+      graph
+  : Vdom.Node.t list Bonsai.t
+  =
+  let packed = Typed_variant.Packed.pack variant in
+  let%sub { breakdown; total } = metric in
+  let breakdown =
+    Bonsai.assoc
+      (module Analysis.Hand_finger)
+      breakdown
+      ~f:(fun hand_finger breakdown _graph ->
+        let contents =
+          let open Bonsai.Applicative_infix in
+          let%arr dexterity = dexterity <*> hand_finger
+          and breakdown = breakdown
+          and total = total in
+          match variant with
+          | Sfb_worst -> render_breakdown_2 dexterity Sfb_worst breakdown total
+          | Sfs_worst -> render_breakdown_2 dexterity Sfs_worst breakdown total
+          | Speed_worst -> render_breakdown_2 dexterity Speed_worst breakdown total
+        in
+        let%arr contents = contents in
+        Vdom.Node.create
+          "cell"
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  justify-content: center;
+                |}]
+            ]
+          [ contents ])
+      graph
+  in
+  let total = Bonsai.map total ~f:(render_total 1. variant) in
+  let label = label packed in
+  let%arr breakdown = breakdown
+  and total = total in
+  let header = Vdom.Node.header [ Vdom.Node.text label ] in
+  let breakdown =
+    List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
+      Map.find breakdown hand_finger
+      |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
+  in
+  let total = Vdom.Node.create "total" [ total ] in
   (header :: breakdown) @ [ total ]
 ;;
 
 let table
+      (n : (Analysis.Hand_finger.t -> float) Bonsai.t)
       (t :
         ( Typed_variant.Packed.t
           , t
@@ -190,12 +364,12 @@ let table
       t
       ~f:(fun _key data graph ->
         match%sub data with
-        | Sfb metric -> row Sfb ~metric graph
-        | Sfs metric -> row Sfs ~metric graph
-        | Speed metric -> row Speed ~metric graph
-        | Sfb_worst metric -> row Sfb_worst ~metric graph
-        | Sfs_worst metric -> row Sfs_worst ~metric graph
-        | Speed_worst metric -> row Speed_worst ~metric graph)
+        | Sfb metric -> row_1 n Sfb ~metric graph
+        | Sfs metric -> row_1 n Sfs ~metric graph
+        | Speed metric -> row_1 n Speed ~metric graph
+        | Sfb_worst metric -> row_2 n Sfb_worst ~metric graph
+        | Sfs_worst metric -> row_2 n Sfs_worst ~metric graph
+        | Speed_worst metric -> row_2 n Speed_worst ~metric graph)
       graph
   in
   let%arr data = data in
@@ -204,33 +378,21 @@ let table
     let to_string = Analysis.Hand_finger.to_string in
     (all |> List.map ~f:to_string) @ [ "Total" ]
   in
-  Vdom.Node.div
-    ~attrs:
-      [ [%css
-          {|
-            padding: 0.25rem;
-            background: transparent;
-          |}]
-      ]
-    [ Vdom.Node.div (*table*)
-        ~attrs:[ grid_attr 10 ]
-        (let header =
-           Vdom.Node.div (*th*) ~attrs:[] [ (* empty corner cell *) ]
-           :: List.map header ~f:(fun label ->
-             Vdom.Node.div (*th*)
-               ~attrs:[ [%css {|font-weight: bold;|}] ]
-               [ Vdom.Node.text label ])
-         in
-         let rows =
-           List.map metrics_order ~f:(fun metric -> Map.find data metric)
-           |> List.filter_opt
-         in
-         let grid = header :: rows in
-         List.concat grid)
-    ]
+  Vdom.Node.div (*table*)
+    ~attrs:[ grid_attr ~padding:"0" 10 ]
+    (let header =
+       Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
+       :: List.map header ~f:(fun label ->
+         Vdom.Node.header (*th*) [ Vdom.Node.text label ])
+     in
+     let rows =
+       List.map metrics_order ~f:(fun metric -> Map.find data metric) |> List.filter_opt
+     in
+     let grid = header :: rows in
+     List.concat grid)
 ;;
 
-let component ~keyboard ~corpus graph =
+let component ~keyboard ~finger_dexterity ~corpus graph =
   let worst_counter, worst_counter_vdom =
     let n, inject = Analysis.Counter.counter 6 graph in
     let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
@@ -253,7 +415,7 @@ let component ~keyboard ~corpus graph =
     Form.map_view controls ~f:(fun vdom ->
       Vdom.Node.div
         ~attrs:
-          [ Design.card
+          [ Design.Card.attr
           ; [%css
               {|
                 display: flex;
@@ -281,27 +443,18 @@ let component ~keyboard ~corpus graph =
       graph
   in
   let table =
-    table stats_same_finger Analysis.Stats_same_finger.Typed_variant.Packed.all graph
+    table
+      finger_dexterity
+      stats_same_finger
+      Analysis.Stats_same_finger.Typed_variant.Packed.all
+      graph
   in
   let vdom =
     let%arr metrics = metrics
     and table = table in
     if Set.is_empty metrics
     then Vdom.Node.none
-    else
-      Vdom.Node.div
-        ~attrs:
-          [ [%css
-              {|
-              background: %{table_color#Css_gen.Color};
-              color: %{Tailwind_v3_colors.neutral200#Css_gen.Color};
-              border: 1px solid #e7e9ee;
-              border-radius: 12px;
-              padding: 16px;
-              box-shadow: 0 1px 2px rgba(0,0,0,.4);
-            |}]
-          ]
-        [ table ]
+    else Vdom.Node.div ~attrs:[ Design.Card.attr ] [ table ]
   in
   stats_same_finger, controls, vdom
 ;;

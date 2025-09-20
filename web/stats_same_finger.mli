@@ -7,6 +7,7 @@ val selected_metrics : ('a list, 'b) Form.t Bonsai.t -> 'a list Bonsai.t
 
 val component
   :  keyboard:Keyboard.t Bonsai.t
+  -> finger_dexterity:(Analysis.Hand_finger.t -> float) Bonsai.t
   -> corpus:Corpus.t Bonsai.t
   -> Bonsai.graph
   -> (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Map.t Bonsai.t

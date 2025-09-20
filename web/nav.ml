@@ -60,6 +60,7 @@ let component
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
       ~corpus_vdom
+      ~finger_dexterity_vdom
       graph
   =
   let brute_force_indexes_button =
@@ -84,7 +85,7 @@ let component
     and brute_force_indexes_button = brute_force_indexes_button in
     Vdom.Node.div
       ~attrs:
-        [ Design.card
+        [ Design.Card.attr
         ; [%css
             {|
               display: flex;
@@ -100,6 +101,7 @@ let component
   let%arr same_finger_controls_vdom = same_finger_controls_vdom
   and actions_vdom = actions_vdom
   and runtime_mode_vdom = runtime_mode_vdom
+  and finger_dexterity_vdom = finger_dexterity_vdom
   and corpus_vdom = corpus_vdom in
   Vdom.Node.create
     "nav"
@@ -119,5 +121,10 @@ let component
           overscroll-behavior: contain;
       |}]
       ]
-    [ corpus_vdom; same_finger_controls_vdom; runtime_mode_vdom; actions_vdom ]
+    [ corpus_vdom
+    ; same_finger_controls_vdom
+    ; runtime_mode_vdom
+    ; actions_vdom
+    ; finger_dexterity_vdom
+    ]
 ;;

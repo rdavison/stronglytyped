@@ -24,8 +24,28 @@ module Style =
 let app graph =
   let keyboard, keyboard_inject, keyboard_cancel = Keyboard.state_machine graph in
   let corpus, corpus_vdom = Corpus.Select.component graph in
+  let finger_dexterity =
+    Bonsai_web_ui_form.With_manual_view.Elements.Range.float
+      ~min:(Bonsai.return 1.)
+      ~max:(Bonsai.return 5000.)
+      ~step:(Bonsai.return 1.)
+      ~default:(Bonsai.return 2000.)
+      ()
+      graph
+  in
+  let finger_dexterity_vdom =
+    let%arr finger_dexterity = finger_dexterity in
+    Bonsai_web_ui_form.With_manual_view.view finger_dexterity
+  in
   let same_finger_stats, same_finger_controls, stats_section_vdom =
-    Stats_same_finger.component ~keyboard ~corpus graph
+    let finger_dexterity =
+      let%arr finger_dexterity = finger_dexterity in
+      fun _hand_finger ->
+        Bonsai_web_ui_form.With_manual_view.value_or_default
+          finger_dexterity
+          ~default:2000.
+    in
+    Stats_same_finger.component ~keyboard ~finger_dexterity ~corpus graph
   in
   let score = Score.component ~same_finger_stats graph in
   let keyboard_section_vdom =
@@ -51,6 +71,7 @@ let app graph =
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
       ~corpus_vdom
+      ~finger_dexterity_vdom
       graph
   in
   let%arr stats_section_vdom = stats_section_vdom
@@ -63,17 +84,18 @@ let app graph =
         [ [%css
             {|
               z-index: -1;
+              width: 100%;
               padding: 1rem;
               background-color: %{Tailwind_v3_colors.slate500#Css_gen.Color};
               color: white;
               text-shadow: 0.2rem 0.2rem 0.5rem black;
-              min-height: 1rem;
               display: flex;
               flex-direction: row-reverse;
               justify-content: space-between;
 
               & > h1 {
                 font-size: 2rem;
+                height: 2rem;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -122,7 +144,6 @@ let app graph =
           ~attrs:
             [ [%css
                 {|
-                  width: 100%;
                 |}]
             ]
           [ vdom ])
@@ -136,6 +157,7 @@ let app graph =
               width: 100%;
               overflow: auto;
               overscroll-behavior: contain;
+              align-items: center;
             |}]
         ]
       [ header
