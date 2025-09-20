@@ -51,7 +51,7 @@ module Select = struct
       in
       Vdom.Node.div
         ~attrs:
-          [ Design.card
+          [ Design.Card.attr
           ; [%css
               {|
               display: flex;

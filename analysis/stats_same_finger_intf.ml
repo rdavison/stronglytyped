@@ -12,9 +12,9 @@ module type S = sig
     | Sfb of (float, float) metric
     | Sfs of (float, float) metric
     | Speed of (float, float) metric
-    | Sfb_worst of ((string * float) list, float) metric
-    | Sfs_worst of ((string * float) list, float) metric
-    | Speed_worst of ((string * float) list, float) metric
+    | Sfb_worst of ((string * float) list * float, float) metric
+    | Sfs_worst of ((string * float) list * float, float) metric
+    | Speed_worst of ((string * float) list * float, float) metric
   [@@deriving sexp, compare, equal, typed_variants]
 
   val bigram : Typed_variant.Packed.t -> Bigram_data.info -> float

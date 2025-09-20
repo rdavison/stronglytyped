@@ -12,9 +12,9 @@ type t =
   | Sfb of (float, float) metric
   | Sfs of (float, float) metric
   | Speed of (float, float) metric
-  | Sfb_worst of ((string * float) list, float) metric
-  | Sfs_worst of ((string * float) list, float) metric
-  | Speed_worst of ((string * float) list, float) metric
+  | Sfb_worst of ((string * float) list * float, float) metric
+  | Sfs_worst of ((string * float) list * float, float) metric
+  | Speed_worst of ((string * float) list * float, float) metric
 [@@deriving sexp, compare, equal, typed_variants]
 
 let bigram (t : Typed_variant.Packed.t) (bigram_info : Bigram_data.info) =
@@ -83,7 +83,10 @@ let component
     and total = total in
     Typed_variant.create metric { breakdown; total }
   in
-  let detailed (metric : ((string * float) list, float) metric Typed_variant.t) graph =
+  let detailed
+        (metric : ((string * float) list * float, float) metric Typed_variant.t)
+        graph
+    =
     let worst_n =
       Bonsai.assoc
         (module Hand_finger)
@@ -91,19 +94,23 @@ let component
         ~f:(fun _hand_finger bigram_data _graph ->
           let%arr worst_counter = worst_counter
           and bigram_data = bigram_data in
-          bigram_data
-          |> Map.to_alist
-          |> List.map ~f:(fun (_, bigram_info) ->
-            bigram_info.bigram, bigram (Typed_variant.Packed.pack metric) bigram_info)
-          |> List.sort ~compare:(fun (_, a) (_, b) -> Float.compare b a)
-          |> Fn.flip List.take worst_counter)
+          let breakdown =
+            bigram_data
+            |> Map.to_alist
+            |> List.map ~f:(fun (_, bigram_info) ->
+              bigram_info.bigram, bigram (Typed_variant.Packed.pack metric) bigram_info)
+            |> List.sort ~compare:(fun (_, a) (_, b) -> Float.compare b a)
+            |> Fn.flip List.take worst_counter
+          in
+          let per_finger_total = List.sum (module Float) breakdown ~f:(fun (_, x) -> x) in
+          breakdown, per_finger_total)
         graph
     in
     let worst_n_total =
       Bonsai.Map.sum
         worst_n
         (module Float)
-        ~f:(fun worst_bigrams ->
+        ~f:(fun (worst_bigrams, _per_finger_total) ->
           List.sum (module Float) worst_bigrams ~f:(fun (_bigram, freq) -> freq))
         graph
     in
