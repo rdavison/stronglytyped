@@ -23,6 +23,9 @@ module Style =
 
 let app graph =
   let keyboard, keyboard_inject, keyboard_cancel = Keyboard.state_machine graph in
+  let _namedlayout, namedlayout_vdom =
+    Namedlayout.Select.component ~keyboard_inject graph
+  in
   let corpus, corpus_vdom = Corpus.Select.component graph in
   let finger_dexterity =
     Bonsai_web_ui_form.With_manual_view.Elements.Range.float
@@ -67,6 +70,7 @@ let app graph =
       ~keyboard
       ~keyboard_inject
       ~keyboard_cancel
+      ~namedlayout_vdom
       ~runtime_mode
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
