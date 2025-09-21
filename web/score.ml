@@ -22,8 +22,12 @@ let score
 let vdom score = Vdom.Node.textf "%.2f" score
 
 let component ~same_finger_stats _graph =
-  let%arr score = score ~same_finger_stats in
-  match score with
-  | None -> Vdom.Node.text "???"
-  | Some score -> vdom score
+  let score = score ~same_finger_stats in
+  let vdom =
+    let%arr score = score in
+    match score with
+    | None -> Vdom.Node.text "???"
+    | Some score -> vdom score
+  in
+  score, vdom
 ;;

@@ -47,7 +47,7 @@ let app graph =
     in
     Stats_same_finger.component ~keyboard ~finger_dexterity ~corpus graph
   in
-  let score = Score.component ~same_finger_stats graph in
+  let _score, score_vdom = Score.component ~same_finger_stats graph in
   let keyboard_section_vdom =
     Keyboard.section_component ~keyboard ~keyboard_inject ~corpus graph
   in
@@ -76,7 +76,7 @@ let app graph =
   in
   let%arr stats_section_vdom = stats_section_vdom
   and keyboard_section_vdom = keyboard_section_vdom
-  and score = score
+  and score_vdom = score_vdom
   and nav = nav in
   let header =
     Vdom.Node.header
@@ -134,7 +134,7 @@ let app graph =
                       padding-left: 0.5rem;
                     |}]
                 ]
-              [ score ]
+              [ score_vdom ]
           ]
       ; keyboard_section_vdom
       ; stats_section_vdom
@@ -144,6 +144,7 @@ let app graph =
           ~attrs:
             [ [%css
                 {|
+                  width: 100%;
                 |}]
             ]
           [ vdom ])
