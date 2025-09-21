@@ -160,7 +160,7 @@ let render_total2 n (packed : Typed_variant.Packed.t) target total =
 
 (* let table_color = Tailwind_v3_colors.slate900 *)
 
-let grid_attr ?(padding = "1rem") cols =
+let grid_attr ~padding ~cell_height cols =
   let cols = Int.to_string cols in
   [%css
     {|
@@ -169,7 +169,6 @@ let grid_attr ?(padding = "1rem") cols =
       gap: 1px;
       background: %{Design.(Card.border_color theme)#Css_gen.Color};
       overflow: hidden;
-      width: 100%;
 
       & > header {
         background: %{Design.(Card.background_color theme)#Css_gen.Color};
@@ -185,6 +184,7 @@ let grid_attr ?(padding = "1rem") cols =
         padding: 0;
         text-align: center;
         font-family: monospace;
+        height: %{cell_height};
       }
     |}]
 ;;
@@ -198,7 +198,7 @@ let render_detailed
   Vdom.Node.div
     ~attrs:[ Design.Card.attr; [%css {|border: unset;|}] ]
     [ Vdom.Node.div
-        ~attrs:[ grid_attr ~padding:"0.5rem" 2 ]
+        ~attrs:[ grid_attr ~padding:"0.5rem" ~cell_height:"2rem" 2 ]
         (List.concat_map worst ~f:(fun (corpus_key, breakdown) ->
            let height = breakdown /. per_finger_total in
            [ Vdom.Node.header [ Vdom.Node.text corpus_key ]
@@ -347,7 +347,7 @@ let row_2
   (header :: breakdown) @ [ total ]
 ;;
 
-let table
+let table_simple
       (n : (Analysis.Hand_finger.t -> float) Bonsai.t)
       (t :
         ( Typed_variant.Packed.t
@@ -364,32 +364,94 @@ let table
       t
       ~f:(fun _key data graph ->
         match%sub data with
-        | Sfb metric -> row_1 n Sfb ~metric graph
-        | Sfs metric -> row_1 n Sfs ~metric graph
-        | Speed metric -> row_1 n Speed ~metric graph
-        | Sfb_worst metric -> row_2 n Sfb_worst ~metric graph
-        | Sfs_worst metric -> row_2 n Sfs_worst ~metric graph
-        | Speed_worst metric -> row_2 n Speed_worst ~metric graph)
+        | Sfb metric -> row_1 n Sfb ~metric graph |> Bonsai.map ~f:Option.return
+        | Sfs metric -> row_1 n Sfs ~metric graph |> Bonsai.map ~f:Option.return
+        | Speed metric -> row_1 n Speed ~metric graph |> Bonsai.map ~f:Option.return
+        | Sfb_worst _ -> Bonsai.return None
+        | Sfs_worst _ -> Bonsai.return None
+        | Speed_worst _ -> Bonsai.return None)
       graph
+    |> Bonsai.Map.filter_map ~f:Fn.id
   in
-  let%arr data = data in
+  let%arr data = data graph in
   let header =
     let all = Analysis.Hand_finger.all in
     let to_string = Analysis.Hand_finger.to_string in
     (all |> List.map ~f:to_string) @ [ "Total" ]
   in
-  Vdom.Node.div (*table*)
-    ~attrs:[ grid_attr ~padding:"0" 10 ]
-    (let header =
-       Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
-       :: List.map header ~f:(fun label ->
-         Vdom.Node.header (*th*) [ Vdom.Node.text label ])
-     in
-     let rows =
-       List.map metrics_order ~f:(fun metric -> Map.find data metric) |> List.filter_opt
-     in
-     let grid = header :: rows in
-     List.concat grid)
+  Vdom.Node.create
+    "card"
+    ~attrs:[ Design.Card.attr; [%css {|width: 50%;|}] ]
+    [ Vdom.Node.create
+        "hand-finger-table" (*table*)
+        ~attrs:[ grid_attr ~padding:"0" ~cell_height:"4rem" 10 ]
+        (let header =
+           Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
+           :: List.map header ~f:(fun label ->
+             Vdom.Node.header (*th*) [ Vdom.Node.text label ])
+         in
+         let rows =
+           List.map metrics_order ~f:(fun metric -> Map.find data metric)
+           |> List.filter_opt
+         in
+         let grid = header :: rows in
+         List.concat grid)
+    ]
+;;
+
+let table_detailed
+      (n : (Analysis.Hand_finger.t -> float) Bonsai.t)
+      (t :
+        ( Typed_variant.Packed.t
+          , t
+          , Typed_variant.Packed.comparator_witness )
+          Map_intf.Map.t
+          Bonsai.t)
+      metrics_order
+      graph
+  =
+  let data =
+    Bonsai.assoc
+      (module Typed_variant.Packed)
+      t
+      ~f:(fun _key data graph ->
+        match%sub data with
+        | Sfb _ -> Bonsai.return None
+        | Sfs _ -> Bonsai.return None
+        | Speed _ -> Bonsai.return None
+        | Sfb_worst metric ->
+          row_2 n Sfb_worst ~metric graph |> Bonsai.map ~f:Option.return
+        | Sfs_worst metric ->
+          row_2 n Sfs_worst ~metric graph |> Bonsai.map ~f:Option.return
+        | Speed_worst metric ->
+          row_2 n Speed_worst ~metric graph |> Bonsai.map ~f:Option.return)
+      graph
+    |> Bonsai.Map.filter_map ~f:Fn.id
+  in
+  let%arr data = data graph in
+  let header =
+    let all = Analysis.Hand_finger.all in
+    let to_string = Analysis.Hand_finger.to_string in
+    (all |> List.map ~f:to_string) @ [ "Total" ]
+  in
+  Vdom.Node.create
+    "card"
+    ~attrs:[ Design.Card.attr; [%css {|width: 100%;|}] ]
+    [ Vdom.Node.create
+        "hand-finger-table" (*table*)
+        ~attrs:[ grid_attr ~padding:"0" ~cell_height:"unset" 10 ]
+        (let header =
+           Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
+           :: List.map header ~f:(fun label ->
+             Vdom.Node.header (*th*) [ Vdom.Node.text label ])
+         in
+         let rows =
+           List.map metrics_order ~f:(fun metric -> Map.find data metric)
+           |> List.filter_opt
+         in
+         let grid = header :: rows in
+         List.concat grid)
+    ]
 ;;
 
 let component ~keyboard ~finger_dexterity ~corpus graph =
@@ -442,8 +504,15 @@ let component ~keyboard ~finger_dexterity ~corpus graph =
       ~diff_row_bigram_data
       graph
   in
-  let table =
-    table
+  let table_simple =
+    table_simple
+      finger_dexterity
+      stats_same_finger
+      Analysis.Stats_same_finger.Typed_variant.Packed.all
+      graph
+  in
+  let table_detailed =
+    table_detailed
       finger_dexterity
       stats_same_finger
       Analysis.Stats_same_finger.Typed_variant.Packed.all
@@ -451,10 +520,22 @@ let component ~keyboard ~finger_dexterity ~corpus graph =
   in
   let vdom =
     let%arr metrics = metrics
-    and table = table in
+    and table_simple = table_simple
+    and table_detailed = table_detailed in
     if Set.is_empty metrics
     then Vdom.Node.none
-    else Vdom.Node.div ~attrs:[ Design.Card.attr ] [ table ]
+    else
+      Vdom.Node.div
+        ~attrs:
+          [ [%css
+              {|
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+                align-items: center;
+              |}]
+          ]
+        [ table_simple; table_detailed ]
   in
   stats_same_finger, controls, vdom
 ;;
