@@ -560,7 +560,7 @@ let state_machine id graph =
       ~apply_action:(fun _ model action ->
         match action with
         | Action.Set kc ->
-          print_s ([%sexp_of: Id.t * Keycode.t] (model.id, kc));
+          (* print_s ([%sexp_of: Id.t * Keycode.t] (model.id, kc)); *)
           { model with kc })
       graph
   in

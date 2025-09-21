@@ -62,6 +62,7 @@ module Action = struct
   type t =
     | Swap of (Key.Id.t * Key.Id.t)
     | Random_swap
+    | Overwrite of Keycode.t Key.Id.Map.t
   [@@deriving sexp, compare, equal]
 end
 
@@ -85,14 +86,27 @@ let state_machine graph
   let inject =
     let%arr state_machines_by_id = state_machines_by_id in
     fun (action : Action.t) ->
-      let a, b =
-        match action with
-        | Random_swap -> Key.Id.rand2 ()
-        | Swap ab -> ab
+      let swap (a, b) =
+        let a_key, a_set = Map.find_exn state_machines_by_id a in
+        let b_key, b_set = Map.find_exn state_machines_by_id b in
+        Ui_effect.all_parallel_unit [ a_set (Set b_key.kc); b_set (Set a_key.kc) ]
       in
-      let a_key, a_set = Map.find_exn state_machines_by_id a in
-      let b_key, b_set = Map.find_exn state_machines_by_id b in
-      Ui_effect.all_unit [ a_set (Set b_key.kc); b_set (Set a_key.kc) ]
+      match action with
+      | Random_swap -> swap (Key.Id.rand2 ())
+      | Swap ab -> swap ab
+      | Overwrite mapping ->
+        let foo2 =
+          Map.to_alist state_machines_by_id
+          |> List.fold ~init:(Ui_effect.return ()) ~f:(fun eff (id, (_key, set)) ->
+            let keycode =
+              match Map.find mapping id with
+              | None -> Key.Id.default_kc id
+              | Some keycode -> keycode
+            in
+            let%bind.Ui_effect.Par () = eff in
+            set (Set keycode))
+        in
+        foo2
   in
   let inject, cancel = One_per_frame_after_display.component inject graph in
   keyboard, inject, cancel

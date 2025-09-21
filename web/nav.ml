@@ -37,7 +37,7 @@ let brute_force_indexes_button ~keyboard_inject ~keyboard_cancel ~keyboard graph
                   Some k12
                 | _, _ -> None))
             |> List.map ~f:(fun x ->
-              print_s ([%sexp_of: Key.Id.t * Key.Id.t] x);
+              (* print_s ([%sexp_of: Key.Id.t * Key.Id.t] x); *)
               x))
       in
       List.concat (Map.data x)
@@ -56,6 +56,7 @@ let component
       ~keyboard
       ~keyboard_inject
       ~keyboard_cancel
+      ~namedlayout_vdom
       ~runtime_mode
       ~runtime_mode_vdom
       ~same_finger_controls_vdom
@@ -82,7 +83,8 @@ let component
   in
   let actions_vdom =
     let%arr random_swap_vdom = random_swap_vdom
-    and brute_force_indexes_button = brute_force_indexes_button in
+    and brute_force_indexes_button = brute_force_indexes_button
+    and namedlayout_vdom = namedlayout_vdom in
     Vdom.Node.div
       ~attrs:
         [ Design.Card.attr
@@ -96,6 +98,7 @@ let component
       [ Vdom.Node.label [ Vdom.Node.text "Actions" ]
       ; random_swap_vdom
       ; brute_force_indexes_button
+      ; namedlayout_vdom
       ]
   in
   let%arr same_finger_controls_vdom = same_finger_controls_vdom

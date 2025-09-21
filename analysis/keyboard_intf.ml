@@ -7,6 +7,7 @@ module type S = sig
     type t =
       | Swap of (Key.Id.t * Key.Id.t)
       | Random_swap
+      | Overwrite of Keycode.t Key.Id.Map.t
     [@@deriving sexp, compare, equal]
   end
 
