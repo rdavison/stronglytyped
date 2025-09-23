@@ -246,34 +246,70 @@ module Foo = struct
   (* ;; *)
 end
 
-let () = Bonsai_web.Start.start app
+let _debug () =
+  Bonsai_web.Start.start (fun _ ->
+    Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot app)))
+;;
 
-(* let _ = *)
-(*   let open Async_kernel in *)
-(*   let open Async_rpc_kernel in *)
-(*   Async_js.init (); *)
-(*   don't_wait_for *)
-(*     (let conn = *)
-(*        let r, w = Pipe.create () in *)
-(*        Rpc.Connection.create *)
-(*          ~connection_state:(fun _ -> ()) *)
-(*          (Pipe_transport.create Pipe_transport.Kind.string r w) *)
-(*      in *)
-(*      match%bind conn with *)
-(*      | Error exn -> *)
-(*        printf "Connection failed: %s\n" (Exn.to_string exn); *)
-(*        return () *)
-(*      | Ok conn -> *)
-(*        let%bind response = *)
-(*          Rpc.Rpc.dispatch Stronglytyped_rpc.Protocol.Version.t conn () *)
-(*        in *)
-(*        (match response with *)
-(*         | Ok s -> printf "Server replied: %s\n" s *)
-(*         | Error e -> printf "Error: %s\n" (Error.to_string_hum e)); *)
-(*        Rpc.Connection.close conn) *)
-(* ;; *)
-(**)
-(* let () = *)
-(*   Bonsai_web.Start.start (fun _ -> *)
-(*     Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot _app))) *)
-(* ;; *)
+open! Async_kernel
+open! Async_rpc_kernel
+
+let _version = Bonsai.Expert.Var.create `Init
+
+let refresh_on_version_change graph =
+  let open Bonsai.Let_syntax in
+  let poll_result =
+    (Bonsai_web.Rpc_effect.Rpc.poll
+     : ?here:Lexing.position
+       -> ?sexp_of_query:('query -> Sexp.t)
+       -> ?sexp_of_response:('response -> Sexp.t)
+       -> equal_query:('query -> 'query -> bool)
+       -> ?equal_response:('response -> 'response -> bool)
+       -> ?clear_when_deactivated:bool
+       -> ?on_response_received:
+            ('query -> 'response Or_error.t -> unit Ui_effect.t) Bonsai.t
+       -> ('query, 'response) Rpc.Rpc.t
+       -> ?where_to_connect:Rpc_effect.Where_to_connect.t Bonsai.t
+       -> every:Time_ns.Span.t Bonsai.t
+       -> 'query Bonsai.t
+       -> Bonsai.graph
+       -> ('query, 'response) Rpc_effect.Poll_result.t Bonsai.t)
+      ~equal_query:Unit.equal
+      Stronglytyped_rpc.Protocol.Version.t
+      ~every:(Bonsai.return (Time_ns.Span.of_ms 500.))
+      (Bonsai.return ())
+      graph
+  in
+  let version, set_version = Bonsai.state `Init graph in
+  let eff =
+    let%arr version = version
+    and set_version = set_version
+    and poll_result = poll_result in
+    match version with
+    | `Init ->
+      (match poll_result.last_ok_response with
+       | None -> Ui_effect.Ignore
+       | Some ((), version) -> set_version (`Version version))
+    | `Version curr ->
+      (match poll_result.last_ok_response with
+       | None -> Ui_effect.Ignore
+       | Some ((), version) ->
+         if String.equal version curr
+         then Ui_effect.Ignore
+         else Bonsai_web.Effect.reload_page)
+    | `Term -> Bonsai_web.Effect.reload_page
+  in
+  Bonsai.Edge.after_display eff graph
+;;
+
+let async_main () =
+  Async_js.init ();
+  let () =
+    Bonsai_web.Start.start (fun graph ->
+      refresh_on_version_change graph;
+      app graph)
+  in
+  return ()
+;;
+
+let _ = don't_wait_for (async_main ())
