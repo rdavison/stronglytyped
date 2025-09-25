@@ -1,9 +1,14 @@
 open! Core
 open! Bonsai_web
 
-let theme = `Light
-let light = Tailwind_v3_colors.slate100
-let dark = Tailwind_v3_colors.slate900
+let light = Tailwind_v3_colors.neutral100
+let dark = Tailwind_v3_colors.neutral900
+
+let accent theme =
+  match theme with
+  | `Dark -> Tailwind_v3_colors.blue900
+  | `Light -> Tailwind_v3_colors.orange500
+;;
 
 module Card = struct
   let background_color theme =
@@ -18,9 +23,12 @@ module Card = struct
     | `Light -> dark
   ;;
 
-  let border_color _theme = Tailwind_v3_colors.slate900
+  let border_color = function
+    | `Light -> dark
+    | `Dark -> light
+  ;;
 
-  let attr : Vdom.Attr.t =
+  let attr theme : Vdom.Attr.t =
     let background_color = background_color theme in
     let color = color theme in
     let border_color = border_color theme in

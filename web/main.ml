@@ -1,11 +1,13 @@
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
+module Form = Bonsai_web_ui_form.With_manual_view
 
-module Style =
-  [%css
-    stylesheet
-      {|
+module Style = struct
+  include
+    [%css
+      stylesheet
+        {|
         * {
           margin: 0;
           padding: 0;
@@ -15,20 +17,43 @@ module Style =
         html, body {
           height: 100%;
         }
-
-        body {
-          background-color: #94A3B8;
-        }
       |}]
+end
 
 let app graph =
+  let theme, theme_checkbox =
+    let default = false in
+    let form = Form.Elements.Checkbox.bool ~default () graph in
+    let value =
+      let%arr form = form in
+      match Form.value_or_default form ~default with
+      | false -> `Light
+      | true -> `Dark
+    in
+    let vdom =
+      let%arr form = form
+      and value = value in
+      Vdom.Node.div
+        ~attrs:
+          [ Design.Card.attr value
+          ; [%css
+              {|
+                display: flex;
+                flex-direction: row;
+                gap: 1rem;
+              |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Dark Mode" ]; Form.view form ]
+    in
+    value, vdom
+  in
   let keyboard, keyboard_inject, keyboard_cancel = Keyboard.state_machine graph in
   let _namedlayout, namedlayout_vdom =
     Namedlayout.Select.component ~keyboard_inject graph
   in
-  let corpus, corpus_vdom = Corpus.Select.component graph in
+  let corpus, corpus_vdom = Corpus.Select.component ~theme graph in
   let finger_dexterity =
-    Bonsai_web_ui_form.With_manual_view.Elements.Range.float
+    Form.Elements.Range.float
       ~min:(Bonsai.return 1.)
       ~max:(Bonsai.return 5000.)
       ~step:(Bonsai.return 1.)
@@ -38,27 +63,24 @@ let app graph =
   in
   let finger_dexterity_vdom =
     let%arr finger_dexterity = finger_dexterity in
-    Bonsai_web_ui_form.With_manual_view.view finger_dexterity
+    Form.view finger_dexterity
   in
   let same_finger_stats, same_finger_controls, stats_section_vdom =
     let finger_dexterity =
       let%arr finger_dexterity = finger_dexterity in
-      fun _hand_finger ->
-        Bonsai_web_ui_form.With_manual_view.value_or_default
-          finger_dexterity
-          ~default:2000.
+      fun _hand_finger -> Form.value_or_default finger_dexterity ~default:2000.
     in
-    Stats_same_finger.component ~keyboard ~finger_dexterity ~corpus graph
+    Stats_same_finger.component ~keyboard ~finger_dexterity ~corpus ~theme graph
   in
   let _score, score_vdom = Score.component ~same_finger_stats graph in
   let keyboard_section_vdom =
-    Keyboard.section_component ~keyboard ~keyboard_inject ~corpus graph
+    Keyboard.section_component ~keyboard ~keyboard_inject ~corpus ~theme graph
   in
   let same_finger_controls_vdom =
     let%arr same_finger_controls = same_finger_controls in
-    Bonsai_web_ui_form.With_manual_view.view same_finger_controls
+    Form.view same_finger_controls
   in
-  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component graph in
+  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component ~theme graph in
   Runtime.Mode.start
     runtime_mode
     ~f:
@@ -66,49 +88,98 @@ let app graph =
        keyboard_inject [ Keyboard.Action.Random_swap ])
     graph;
   let nav =
-    Nav.component
-      ~keyboard
-      ~keyboard_inject
-      ~keyboard_cancel
-      ~namedlayout_vdom
-      ~runtime_mode
-      ~runtime_mode_vdom
-      ~same_finger_controls_vdom
-      ~corpus_vdom
-      ~finger_dexterity_vdom
-      graph
+    let brute_force_indexes_button =
+      let%arr effects =
+        Actions.brute_force_indexes ~keyboard_inject ~keyboard_cancel ~keyboard graph
+      in
+      Vdom.Node.button
+        ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
+        [ Vdom.Node.text "Brute Force indexes" ]
+    in
+    let random_swap_vdom =
+      let%arr keyboard_inject = keyboard_inject
+      and runtime_mode = runtime_mode in
+      let name = "Random Swap" in
+      match (runtime_mode : Runtime.Mode.t) with
+      | Auto -> Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
+      | Manual ->
+        Vdom.Node.button
+          ~attrs:[ Vdom.Attr.on_click (fun _event -> keyboard_inject [ Random_swap ]) ]
+          [ Vdom.Node.text name ]
+    in
+    let actions_vdom =
+      let%arr random_swap_vdom = random_swap_vdom
+      and brute_force_indexes_button = brute_force_indexes_button
+      and namedlayout_vdom = namedlayout_vdom
+      and theme = theme in
+      Vdom.Node.div
+        ~attrs:
+          [ Design.Card.attr theme
+          ; [%css
+              {|
+              display: flex;
+              flex-direction: column;
+              gap: 0.5rem;
+            |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Actions" ]
+        ; random_swap_vdom
+        ; brute_force_indexes_button
+        ; namedlayout_vdom
+        ]
+    in
+    let%arr same_finger_controls_vdom = same_finger_controls_vdom
+    and actions_vdom = actions_vdom
+    and runtime_mode_vdom = runtime_mode_vdom
+    and finger_dexterity_vdom = finger_dexterity_vdom
+    and corpus_vdom = corpus_vdom
+    and theme = theme
+    and theme_checkbox = theme_checkbox in
+    let logo =
+      Vdom.Node.h1
+        ~attrs:
+          [ [%css
+              {|
+                color: white;
+                padding: 0.5rem;
+                text-shadow: 0.1rem 0.1rem 2px black;
+              |}]
+          ]
+        [ Vdom.Node.text "stronglytyped" ]
+    in
+    let background_color = Design.accent theme in
+    Vdom.Node.create
+      "nav"
+      ~attrs:
+        [ [%css
+            {|
+          display: flex;
+          flex-direction: column;
+          background-color: %{background_color#Css_gen.Color};
+          width: 20rem;
+          justify-content: flex-start;
+          gap: 2rem;
+          padding: 2rem;
+          align-items: center;
+          box-shadow: 2px 0px 10px black;
+          overflow: auto;
+          overscroll-behavior: contain;
+      |}]
+        ]
+      [ logo
+      ; theme_checkbox
+      ; corpus_vdom
+      ; same_finger_controls_vdom
+      ; runtime_mode_vdom
+      ; actions_vdom
+      ; finger_dexterity_vdom
+      ]
   in
   let%arr stats_section_vdom = stats_section_vdom
   and keyboard_section_vdom = keyboard_section_vdom
   and score_vdom = score_vdom
+  and theme = theme
   and nav = nav in
-  let header =
-    Vdom.Node.header
-      ~attrs:
-        [ [%css
-            {|
-              z-index: -1;
-              width: 100%;
-              padding: 1rem;
-              background-color: %{Tailwind_v3_colors.slate500#Css_gen.Color};
-              color: white;
-              text-shadow: 0.2rem 0.2rem 0.5rem black;
-              display: flex;
-              flex-direction: row-reverse;
-              justify-content: space-between;
-
-              & > h1 {
-                font-size: 2rem;
-                height: 2rem;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              }
-            |}]
-        ]
-      [ Vdom.Node.h1 [ Vdom.Node.text "Stronglytyped Keyboard Layout Analysis" ] ]
-  in
-  let footer = Vdom.Node.footer [] in
   let main =
     let sections =
       [ Vdom.Node.div
@@ -165,8 +236,7 @@ let app graph =
               align-items: center;
             |}]
         ]
-      [ header
-      ; Vdom.Node.div
+      [ Vdom.Node.div
           ~attrs:
             [ [%css
                 {|
@@ -178,8 +248,17 @@ let app graph =
                 |}]
             ]
           sections
-      ; footer
       ]
+  in
+  let background_color =
+    match theme with
+    | `Dark -> Design.dark
+    | `Light -> Design.light
+  in
+  let color =
+    match theme with
+    | `Dark -> Design.light
+    | `Light -> Design.dark
   in
   Vdom.Node.div
     ~attrs:
@@ -190,61 +269,13 @@ let app graph =
             min-width: 100%;
             height: 100%;
             font-family: monospace;
-            color: black;
+            background-color: %{background_color#Css_gen.Color};
+            color: %{color#Css_gen.Color};
             overflow: hidden;
           |}]
       ]
     [ nav; main ]
 ;;
-
-module Foo = struct
-  (* open! Async_kernel *)
-  (* open! Async_js *)
-
-  (* let wait ms = after (Time_float.Span.of_int_ms ms) *)
-
-  (* let rec connect_and_reload_on_reconnect ~(uri : Uri.t) () : unit Deferred.t = *)
-  (*   Monitor.try_with (fun () -> *)
-  (*     Cohttp_async_websocket.Client.with_websocket_client *)
-  (*       uri *)
-  (*       ~f:(fun _resp (ws : string Websocket.t) -> *)
-  (*         let read_pipe, _write_pipe = Websocket.pipes ws in *)
-  (*         let closed = Ivar.create () in *)
-  (*         (* consume frames just to keep the pipe drained *) *)
-  (*         let rec reader () = *)
-  (*           match%bind Pipe.read read_pipe with *)
-  (*           | `Eof -> *)
-  (*             Ivar.fill_if_empty closed (); *)
-  (*             return () *)
-  (*           | `Ok _ -> reader () *)
-  (*         in *)
-  (*         don't_wait_for (reader ()); *)
-  (*         (* if we got here after a previous failure, we just reconnected → reload *) *)
-  (*         Js_of_ocaml.Dom_html.window##.location##reload; *)
-  (*         Ivar.read closed)) *)
-  (*   >>= function *)
-  (*   | Ok _ -> *)
-  (*     (* socket closed normally; start over *) *)
-  (*     connect_and_reload_on_reconnect ~uri () *)
-  (*   | Error _exn -> *)
-  (*     (* failed to connect — retry with backoff *) *)
-  (*     let rec loop delay = *)
-  (*       Monitor.try_with (fun () -> *)
-  (*         Cohttp_async_websocket.Client.with_websocket_client uri ~f:(fun _ _ -> *)
-  (*           return ())) *)
-  (*       >>= function *)
-  (*       | Ok _ -> *)
-  (*         (* success → reload *) *)
-  (*         Js_of_ocaml.Dom_html.window##.location##reload; *)
-  (*         Deferred.unit *)
-  (*       | Error _ -> *)
-  (*         let next = Int.min 3000 (int_of_float (float delay *. 1.6) |> max 300) in *)
-  (*         let%bind () = wait delay in *)
-  (*         loop next *)
-  (*     in *)
-  (*     loop 300 *)
-  (* ;; *)
-end
 
 let _debug () =
   Bonsai_web.Start.start (fun _ ->
@@ -254,26 +285,10 @@ let _debug () =
 open! Async_kernel
 open! Async_rpc_kernel
 
-let _version = Bonsai.Expert.Var.create `Init
-
 let refresh_on_version_change graph =
   let open Bonsai.Let_syntax in
   let poll_result =
-    (Bonsai_web.Rpc_effect.Rpc.poll
-     : ?here:Lexing.position
-       -> ?sexp_of_query:('query -> Sexp.t)
-       -> ?sexp_of_response:('response -> Sexp.t)
-       -> equal_query:('query -> 'query -> bool)
-       -> ?equal_response:('response -> 'response -> bool)
-       -> ?clear_when_deactivated:bool
-       -> ?on_response_received:
-            ('query -> 'response Or_error.t -> unit Ui_effect.t) Bonsai.t
-       -> ('query, 'response) Rpc.Rpc.t
-       -> ?where_to_connect:Rpc_effect.Where_to_connect.t Bonsai.t
-       -> every:Time_ns.Span.t Bonsai.t
-       -> 'query Bonsai.t
-       -> Bonsai.graph
-       -> ('query, 'response) Rpc_effect.Poll_result.t Bonsai.t)
+    Bonsai_web.Rpc_effect.Rpc.poll
       ~equal_query:Unit.equal
       Stronglytyped_rpc.Protocol.Version.t
       ~every:(Bonsai.return (Time_ns.Span.of_ms 500.))

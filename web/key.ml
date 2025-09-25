@@ -28,10 +28,10 @@ let vdom_optional (id : Id.t) (key : t option) =
   | Some key -> render_legend key.kc
 ;;
 
-let vdom ?dnd_element id k corpus_freq_a max_value =
+let vdom ?dnd_element id k corpus_freq_a max_value theme =
   let common_css =
-    let width = `Em_float (4. *. Id.key_width id) in
-    let height = `Em_float 4. in
+    let width = `Em_float (2.5 *. Id.key_width id) in
+    let height = `Em_float 2.5 in
     [%css
       {|
           display: flex;
@@ -49,21 +49,48 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
   match k with
   | None ->
     let css =
-      let background_color = Tailwind_v3_colors.slate900 in
-      let color = Tailwind_v3_colors.slate100 in
+      let background_color =
+        match theme with
+        | `Light -> Design.dark
+        | `Dark -> Design.light
+      in
+      let color =
+        match theme with
+        | `Light -> Design.light
+        | `Dark -> Design.dark
+      in
+      let shadow_color =
+        Util.Color.hex2rgba (Design.accent `Light) ~a:(Percent.of_mult 0.25)
+      in
       [%css
         {|
           background-color: %{background_color#Css_gen.Color};
           color: %{color#Css_gen.Color};
-          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+          box-shadow: 0 25px 50px -12px %{shadow_color#Css_gen.Color};
         |}]
     in
     Vdom.Node.div ~attrs:[ common_css; css ] [ vdom_optional id (Option.map k ~f:fst) ]
   | Some (k, dnd_attr) ->
-    let keyboard_key_background_color = Tailwind_v3_colors.slate900 in
-    let keyboard_key_color = Tailwind_v3_colors.slate100 in
-    let hover_background_color = Tailwind_v3_colors.slate100 in
-    let hover_color = Tailwind_v3_colors.slate900 in
+    let keyboard_key_background_color =
+      match theme with
+      | `Light -> Design.dark
+      | `Dark -> Design.light
+    in
+    let keyboard_key_color =
+      match theme with
+      | `Light -> Design.light
+      | `Dark -> Design.dark
+    in
+    let hover_color =
+      match theme with
+      | `Light -> Design.dark
+      | `Dark -> Design.light
+    in
+    let hover_background_color =
+      match theme with
+      | `Light -> Design.light
+      | `Dark -> Design.dark
+    in
     let box_shadow =
       match dnd_element with
       | None -> "0 25px 50px -12px rgb(0 0 0 / 0.25)"
@@ -88,8 +115,22 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
         |}]
     in
     let overlay_css =
-      let active_background_color = Tailwind_v3_colors.amber500 in
-      let active_color = Tailwind_v3_colors.slate900 in
+      let active_background_color =
+        match theme with
+        | `Light -> Tailwind_v3_colors.amber500
+        | `Dark -> Tailwind_v3_colors.amber500
+      in
+      let active_color =
+        match theme with
+        | `Light -> Design.dark
+        | `Dark -> Design.light
+      in
+      let overlay_color =
+        Design.accent theme
+        (* match theme with *)
+        (* | `Light -> Tailwind_v3_colors.blue500 *)
+        (* | `Dark -> Tailwind_v3_colors.blue500 *)
+      in
       let background_color =
         match dnd_element with
         | Some _ -> (active_background_color :> Css_gen.Color.t)
@@ -104,9 +145,7 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
             (Map.find corpus_freq_a a |> Option.value ~default:0.)
             +. (Map.find corpus_freq_a b |> Option.value ~default:0.)
           in
-          let (`RGB (r, g, b)) =
-            Util.Color.convert_hex_to_rgb Tailwind_v3_colors.blue500
-          in
+          let (`RGB (r, g, b)) = Util.Color.hex2rgb overlay_color in
           let a = Percent.of_mult (freq /. max_value) in
           `RGBA (Css_gen.Color.RGBA.create ~r ~g ~b ~a ())
       in
@@ -136,16 +175,17 @@ let vdom ?dnd_element id k corpus_freq_a max_value =
       [ Vdom.Node.div ~attrs:[ overlay_css ] [ vdom_optional id (Some k) ] ]
 ;;
 
-let component ?dnd_element id ~keyboard ~corpus_freq_a ~max_value ~dnd _graph =
+let component ?dnd_element id ~keyboard ~corpus_freq_a ~max_value ~dnd ~theme _graph =
   let%arr id = id
   and keyboard = keyboard
   and corpus_freq_a = corpus_freq_a
   and max_value = max_value
   and dnd_source = dnd >>| Bonsai_web_ui_drag_and_drop.source
-  and dnd_target = dnd >>| Bonsai_web_ui_drag_and_drop.drop_target in
+  and dnd_target = dnd >>| Bonsai_web_ui_drag_and_drop.drop_target
+  and theme = theme in
   let dnd_attr id = Vdom.Attr.( @ ) (dnd_source ~id) (dnd_target ~id) in
   let k = Map.find keyboard id |> Option.map ~f:(fun key -> key, dnd_attr id) in
-  vdom ?dnd_element id k corpus_freq_a max_value
+  vdom ?dnd_element id k corpus_freq_a max_value theme
 ;;
 
 let dragged_component = component ~dnd_element:()
