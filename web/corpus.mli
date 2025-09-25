@@ -7,5 +7,8 @@ include
    and type t = Analysis.Corpus.t
 
 module Select : sig
-  val component : Bonsai.graph -> t Bonsai.t * Vdom.Node.t Bonsai.t
+  val component
+    :  theme:[ `Dark | `Light ] Bonsai.t
+    -> Bonsai.graph
+    -> t Bonsai.t * Vdom.Node.t Bonsai.t
 end

@@ -6,7 +6,7 @@ module M = Bonsai.Effect_throttling
 module Mode = struct
   include Analysis.Runtime.Mode
 
-  let component graph =
+  let component ~theme graph =
     let mode, mode_toggle =
       Bonsai.state_machine
         ~default_model:Manual
@@ -29,10 +29,11 @@ module Mode = struct
       | Manual -> button "Auto"
     in
     let vdom =
-      let%arr button = button in
+      let%arr button = button
+      and theme = theme in
       Vdom.Node.div
         ~attrs:
-          [ Design.Card.attr
+          [ Design.Card.attr theme
           ; [%css
               {|
                 display: flex;

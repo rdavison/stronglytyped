@@ -16,7 +16,7 @@ module Select = struct
 
   let default = Fast
 
-  let component graph =
+  let component ~theme graph =
     let dropdown =
       Form.Elements.Dropdown.enumerable
         ~init:(`This (Bonsai.return default))
@@ -43,7 +43,8 @@ module Select = struct
     in
     let view =
       let%arr dropdown = dropdown
-      and textarea = textarea in
+      and textarea = textarea
+      and theme = theme in
       let textarea_wrapper =
         match Form.value_or_default dropdown ~default with
         | Fast -> []
@@ -51,7 +52,7 @@ module Select = struct
       in
       Vdom.Node.div
         ~attrs:
-          [ Design.Card.attr
+          [ Design.Card.attr theme
           ; [%css
               {|
               display: flex;
