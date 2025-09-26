@@ -50,3 +50,10 @@ let ansi : t =
     ]
   ]
 ;;
+
+let k10x3 : t =
+  [ [ `Q; `W; `E; `R; `T; `Y; `U; `I; `O; `P ]
+  ; [ `A; `S; `D; `F; `G; `H; `J; `K; `L; `SEMICOLON ]
+  ; [ `Z; `X; `C; `V; `B; `N; `M; `COMMA; `PERIOD; `SLASH ]
+  ]
+;;
