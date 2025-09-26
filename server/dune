@@ -1,13 +1,17 @@
 (library
  (name stronglytyped_server)
  (libraries
+  analysis
   async_extra.async_bus
   async_rpc_websocket
+  async
+  bonsai
+  bonsai.driver
   cohttp-async
   cohttp_async_websocket
   stronglytyped_rpc)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane bonsai.ppx_bonsai)))
 
 (rule
  (targets embedded_files.ml embedded_files.mli)

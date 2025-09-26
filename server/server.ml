@@ -55,6 +55,10 @@ let main ~port =
   let () = Random.self_init () in
   let hostname = Unix.gethostname () in
   printf "Serving http://%s:%d/\n%!" hostname port;
+  let app = Driver.start App.component in
+  Deferred.forever () (fun () ->
+    let%map app = app () in
+    app.schedule_event (app.actions.set_counter Increment));
   let%bind server =
     let http_handler () = handler in
     Rpc_websocket.Rpc.serve
@@ -62,7 +66,7 @@ let main ~port =
       ~mode:`TCP
       ~where_to_listen:(Tcp.Where_to_listen.of_port port)
       ~http_handler
-      ~implementations:Rpc_implementations.implementations
+      ~implementations:(Rpc_implementations.implementations app)
       ~initial_connection_state:initialize_connection
       ()
   in

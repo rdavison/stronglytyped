@@ -22,7 +22,7 @@ end
 
 let app graph =
   let theme, theme_checkbox =
-    let default = false in
+    let default = true in
     let form = Form.Elements.Checkbox.bool ~default () graph in
     let value =
       let%arr form = form in
@@ -80,12 +80,41 @@ let app graph =
     let%arr same_finger_controls = same_finger_controls in
     Form.view same_finger_controls
   in
-  let runtime_mode, runtime_mode_vdom = Runtime.Mode.component ~theme graph in
+  let runtime_mode, runtime_mode_inject = Bonsai.state `Manual graph in
+  let runtime_mode_vdom =
+    let _selected_form, form_vdom =
+      Runtime.Mode.Select.component ~runtime_mode_inject graph
+    in
+    form_vdom
+  in
+  let poll_rate, poll_rate_vdom =
+    let min = 0.5 in
+    let form =
+      Form.Elements.Range.float
+        ~min:(Bonsai.return min)
+        ~max:(Bonsai.return 1.)
+        ~step:(Bonsai.return 0.1)
+        ~default:(Bonsai.return min)
+        ()
+        graph
+    in
+    let value =
+      let%arr form = form in
+      let multiplier = 1. -. Form.value_or_default form ~default:min in
+      Time_ns.Span.of_ms (multiplier *. 500.)
+    in
+    let vdom =
+      let%arr form = form in
+      Form.view form
+    in
+    value, vdom
+  in
   Runtime.Mode.start
     runtime_mode
-    ~f:
-      (let%map keyboard_inject = keyboard_inject in
-       keyboard_inject [ Keyboard.Action.Random_swap ])
+    ~keyboard
+    ~keyboard_inject
+    ~keyboard_cancel
+    ~every:poll_rate
     graph;
   let nav =
     let brute_force_indexes_button =
@@ -101,8 +130,9 @@ let app graph =
       and runtime_mode = runtime_mode in
       let name = "Random Swap" in
       match (runtime_mode : Runtime.Mode.t) with
-      | Auto -> Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
-      | Manual ->
+      | `Auto | `Poll ->
+        Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
+      | `Manual ->
         Vdom.Node.button
           ~attrs:[ Vdom.Attr.on_click (fun _event -> keyboard_inject [ Random_swap ]) ]
           [ Vdom.Node.text name ]
@@ -133,6 +163,7 @@ let app graph =
     and runtime_mode_vdom = runtime_mode_vdom
     and finger_dexterity_vdom = finger_dexterity_vdom
     and corpus_vdom = corpus_vdom
+    and poll_rate_vdom = poll_rate_vdom
     and theme = theme
     and theme_checkbox = theme_checkbox in
     let logo =
@@ -173,6 +204,7 @@ let app graph =
       ; runtime_mode_vdom
       ; actions_vdom
       ; finger_dexterity_vdom
+      ; poll_rate_vdom
       ]
   in
   let%arr stats_section_vdom = stats_section_vdom
