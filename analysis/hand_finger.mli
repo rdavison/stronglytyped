@@ -1,8 +1,8 @@
 open! Core
 
-type t = Hand.t * Finger.t [@@deriving sexp, compare, equal, enumerate]
+type t = Hand.t * Finger.t [@@deriving sexp, compare, equal, enumerate, bin_io]
 
-include Comparable.S with type t := t
+include Comparable.S_binable with type t := t
 
 val to_string : t -> string
 

@@ -7,7 +7,7 @@ module Mode = struct
   module T = struct
     type t =
       [ Analysis.Runtime.Mode.t
-      | `Poll
+      | `Optimize
       ]
     [@@deriving sexp, equal, compare, enumerate]
   end
@@ -54,7 +54,15 @@ module Mode = struct
     ;;
   end
 
-  let start (t : t Bonsai.t) ~keyboard ~keyboard_inject ~keyboard_cancel ~every graph =
+  let start
+        (t : t Bonsai.t)
+        ~keyboard
+        ~keyboard_inject
+        ~keyboard_cancel
+        ~set_best_layouts
+        ~every
+        graph
+    =
     let bonsai =
       match%sub t with
       | `Manual -> Bonsai.return ()
@@ -65,11 +73,11 @@ module Mode = struct
         in
         Bonsai.Edge.lifecycle ~after_display:eff graph;
         Bonsai.return ()
-      | `Poll ->
+      | `Optimize ->
         let poll_result =
           Bonsai_web.Rpc_effect.Rpc.poll
             ~equal_query:Unit.equal
-            Stronglytyped_rpc.Protocol.Keyboard.t
+            Stronglytyped_rpc.Protocol.Gen.t
             ~every
             (Bonsai.return ())
             graph
@@ -87,10 +95,11 @@ module Mode = struct
           and set_keeb = set_keeb
           and poll_result = poll_result
           and keyboard_inject = keyboard_inject
-          and keyboard_cancel = keyboard_cancel in
+          and keyboard_cancel = keyboard_cancel
+          and set_best_layouts = set_best_layouts in
           match poll_result.last_ok_response with
           | None -> Ui_effect.Ignore
-          | Some ((), server_keeb) ->
+          | Some ((), (server_keeb, window)) ->
             if Analysis.Keyboard.equal keyboard server_keeb
             then Ui_effect.Ignore
             else
@@ -101,6 +110,7 @@ module Mode = struct
                         (Map.map server_keeb ~f:(fun key -> key.kc))
                     ]
                 ; set_keeb (Some keyboard)
+                ; set_best_layouts window
                 ]
         in
         Bonsai.Edge.after_display eff graph;

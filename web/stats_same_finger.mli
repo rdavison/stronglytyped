@@ -1,7 +1,12 @@
 open! Core
 open! Bonsai_web
 module Form := Bonsai_web_ui_form.With_manual_view
-include Analysis.Stats_same_finger_intf.S
+
+include
+  Analysis.Stats_same_finger_intf.S
+  with type ('a, 'b) metric = ('a, 'b) Analysis.Stats_same_finger.metric
+   and type t = Analysis.Stats_same_finger.t
+   and module Typed_variant = Analysis.Stats_same_finger.Typed_variant
 
 val selected_metrics : ('a list, 'b) Form.t Bonsai.t -> 'a list Bonsai.t
 

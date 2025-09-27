@@ -6,7 +6,7 @@ module type S = sig
     { breakdown : 'breakdown Hand_finger.Map.t
     ; total : 'total
     }
-  [@@deriving sexp, compare, equal]
+  [@@deriving sexp, compare, equal, bin_io]
 
   type t =
     | Sfb of (float, float) metric
@@ -15,7 +15,7 @@ module type S = sig
     | Sfb_worst of ((string * float) list * float, float) metric
     | Sfs_worst of ((string * float) list * float, float) metric
     | Speed_worst of ((string * float) list * float, float) metric
-  [@@deriving sexp, compare, equal, typed_variants]
+  [@@deriving sexp, compare, equal, typed_variants, bin_io]
 
   val bigram : Typed_variant.Packed.t -> Bigram_data.info -> float
 

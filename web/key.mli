@@ -1,6 +1,6 @@
 open! Core
 open! Bonsai_web
-include Analysis.Key_intf.S with type t = Analysis.Key.t
+include Analysis.Key_intf.S with type t = Analysis.Key.t and module Id = Analysis.Key.Id
 
 val component
   :  Id.t Bonsai.t

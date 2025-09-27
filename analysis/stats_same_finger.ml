@@ -6,7 +6,7 @@ type ('breakdown, 'total) metric =
   { breakdown : 'breakdown Hand_finger.Map.t
   ; total : 'total
   }
-[@@deriving sexp, compare, equal]
+[@@deriving sexp, compare, equal, bin_io]
 
 type t =
   | Sfb of (float, float) metric
@@ -15,7 +15,7 @@ type t =
   | Sfb_worst of ((string * float) list * float, float) metric
   | Sfs_worst of ((string * float) list * float, float) metric
   | Speed_worst of ((string * float) list * float, float) metric
-[@@deriving sexp, compare, equal, typed_variants]
+[@@deriving sexp, compare, equal, typed_variants, bin_io]
 
 let bigram (t : Typed_variant.Packed.t) (bigram_info : Bigram_data.info) =
   match t.f with
