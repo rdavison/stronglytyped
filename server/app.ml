@@ -1,36 +1,16 @@
 open! Core
 open! Bonsai
-
-type actions = { set_counter : Analysis.Counter.Action.t -> unit Ui_effect.t }
+open! Bonsai.Let_syntax
 
 type t =
-  { counter : int
-  ; keyboard : Analysis.Keyboard.t
+  { keyboard : Analysis.Keyboard.t
+  ; window : (float * Analysis.Keyboard.t) list
   ; schedule_event : unit Ui_effect.t -> unit
-  ; actions : actions
   }
 
 let component graph =
-  let open Bonsai.Let_syntax in
-  let keyboard, keyboard_inject, cancel = Analysis.Keyboard.state_machine graph in
-  let runtime_mode, _runtime_mode_toggle =
-    Analysis.Runtime.Mode.state_machine ~default_model:`Auto graph
-  in
-  Analysis.Runtime.Mode.start
-    runtime_mode
-    ~f:
-      (let%map keyboard_inject = keyboard_inject in
-       keyboard_inject [ Analysis.Keyboard.Action.Random_swap ])
-    graph;
-  let _overwrite keys =
-    let%arr keyboard_inject = keyboard_inject
-    and cancel = cancel in
-    let%bind.Ui_effect () = cancel in
-    keyboard_inject [ Analysis.Keyboard.Action.Overwrite keys ]
-  in
-  let counter, set_counter = Analysis.Counter.counter 1 graph in
-  let%arr counter = counter
-  and set_counter = set_counter
+  let keyboard, window = Analysis.Gen_actor.gen graph in
+  let%arr window = window
   and keyboard = keyboard in
-  fun schedule_event -> { counter; keyboard; actions = { set_counter }; schedule_event }
+  fun schedule_event -> { window; keyboard; schedule_event }
 ;;

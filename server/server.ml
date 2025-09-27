@@ -56,9 +56,6 @@ let main ~port =
   let hostname = Unix.gethostname () in
   printf "Serving http://%s:%d/\n%!" hostname port;
   let app = Driver.start App.component in
-  Deferred.forever () (fun () ->
-    let%map app = app () in
-    app.schedule_event (app.actions.set_counter Increment));
   let%bind server =
     let http_handler () = handler in
     Rpc_websocket.Rpc.serve

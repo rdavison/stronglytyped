@@ -8,3 +8,7 @@ end
 module Keyboard : sig
   val t : (unit, Analysis.Keyboard.t) Rpc.Rpc.t
 end
+
+module Gen : sig
+  val t : (unit, Analysis.Keyboard.t * (float * Analysis.Keyboard.t) list) Rpc.Rpc.t
+end
