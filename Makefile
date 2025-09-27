@@ -5,6 +5,7 @@ CONTAINER_PATH := $(CONTAINER_HOME)/app
 CONTAINER_PATH_SKIP_DEPEXT := $(CONTAINER_PATH)-skip-depext
 VOLUME_NAME := $(TAG)
 DOCKER := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(HOME)/.ssh:$(CONTAINER_HOME)/.ssh -v $(VOLUME_NAME):$(CONTAINER_PATH)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH) -w $(CONTAINER_PATH) $(TAG)
+DOCKER_NO_RM := docker run --name $(TAG) -it -p 5500:5500 -v $(HOME)/.ssh:$(CONTAINER_HOME)/.ssh -v $(VOLUME_NAME):$(CONTAINER_PATH)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH) -w $(CONTAINER_PATH) $(TAG)
 DOCKER_SKIP_DEPEXT := docker run --name $(TAG) --rm -it -p 5500:5500 -v $(HOME)/.ssh:$(CONTAINER_HOME)/.ssh -v $(VOLUME_NAME):$(CONTAINER_PATH_SKIP_DEPEXT)/_build -v $(HOME)/.config/nvim:$(CONTAINER_HOME)/.config/nvim -v $(HOST_PATH):$(CONTAINER_PATH_SKIP_DEPEXT) -w $(CONTAINER_PATH_SKIP_DEPEXT) $(TAG)
 
 .PHONY: default
@@ -51,6 +52,14 @@ nvim:
 start: volume
 	# $(DOCKER) dune build web/main.bc.js
 	$(DOCKER) make nvim
+
+.PHONY: start-no-rm
+start-no-rm: volume
+	$(DOCKER_NO_RM) make nvim
+
+.PHONY: resume
+resume: volume
+	docker start -ai $(TAG)
 
 .PHONY: stop
 stop:
