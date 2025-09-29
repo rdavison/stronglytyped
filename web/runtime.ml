@@ -4,24 +4,16 @@ open! Bonsai.Let_syntax
 module Form = Bonsai_web_ui_form.With_manual_view
 
 module Mode = struct
-  module T = struct
-    type t =
-      [ Analysis.Runtime.Mode.t
-      | `Optimize
-      ]
-    [@@deriving sexp, equal, compare, enumerate]
-  end
-
-  include T
+  include Analysis.Runtime.Mode
 
   module Select = struct
-    let default = `Manual
+    let default = Manual
 
     let component ~runtime_mode_inject graph =
       let dropdown =
         Form.Elements.Dropdown.enumerable
           ~init:(`This (Bonsai.return default))
-          (module T)
+          (module Analysis.Runtime.Mode)
           graph
       in
       let data =
@@ -31,7 +23,7 @@ module Mode = struct
       let () =
         Bonsai.Edge.on_change
           data
-          ~equal:T.equal
+          ~equal:Analysis.Runtime.Mode.equal
           ~callback:
             (let%arr runtime_mode_inject = runtime_mode_inject in
              fun (t : t) -> runtime_mode_inject t)
@@ -65,15 +57,15 @@ module Mode = struct
     =
     let bonsai =
       match%sub t with
-      | `Manual -> Bonsai.return ()
-      | `Auto ->
+      | Manual -> Bonsai.return ()
+      | Auto ->
         let eff =
           let%map keyboard_inject = keyboard_inject in
           keyboard_inject [ Keyboard.Action.Random_swap ]
         in
         Bonsai.Edge.lifecycle ~after_display:eff graph;
         Bonsai.return ()
-      | `Optimize ->
+      | Optimize ->
         let poll_result =
           Bonsai_web.Rpc_effect.Rpc.poll
             ~equal_query:Unit.equal

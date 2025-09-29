@@ -51,7 +51,7 @@ let app graph =
   let _namedlayout, namedlayout_vdom =
     Namedlayout.Select.component ~keyboard_inject graph
   in
-  let runtime_mode, runtime_mode_inject = Bonsai.state `Manual graph in
+  let runtime_mode, runtime_mode_inject = Bonsai.state Runtime.Mode.Manual graph in
   let runtime_mode_vdom =
     let _selected_form, form_vdom =
       Runtime.Mode.Select.component ~runtime_mode_inject graph
@@ -83,7 +83,7 @@ let app graph =
   in
   let () =
     let dispatch =
-      Bonsai_web.Rpc_effect.Rpc.dispatcher Stronglytyped_rpc.Protocol.Config.set graph
+      Bonsai_web.Rpc_effect.Rpc.dispatcher Stronglytyped_rpc.Protocol.Config.t graph
     in
     Bonsai.Edge.on_change
       ~equal:Analysis.Config.equal
@@ -172,7 +172,7 @@ let app graph =
          | Some keyboard ->
            let overwrite = Key.Id.Map.map keyboard ~f:(fun (key : Key.t) -> key.kc) in
            Ui_effect.all_unit
-             [ runtime_mode_inject `Manual
+             [ runtime_mode_inject Manual
              ; keyboard_cancel
              ; keyboard_inject [ Analysis.Keyboard.Action.Overwrite overwrite ]
              ])
@@ -262,9 +262,9 @@ let app graph =
       and runtime_mode = runtime_mode in
       let name = "Random Swap" in
       match (runtime_mode : Runtime.Mode.t) with
-      | `Auto | `Optimize ->
+      | Auto | Optimize ->
         Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
-      | `Manual ->
+      | Manual ->
         Vdom.Node.button
           ~attrs:[ Vdom.Attr.on_click (fun _event -> keyboard_inject [ Random_swap ]) ]
           [ Vdom.Node.text name ]

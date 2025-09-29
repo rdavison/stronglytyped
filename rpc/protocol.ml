@@ -36,7 +36,7 @@ module Gen = struct
 end
 
 module Config = struct
-  let set =
+  let t =
     Rpc.Rpc.create
       ~name:"set_config"
       ~version:0
