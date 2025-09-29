@@ -12,3 +12,7 @@ end
 module Gen : sig
   val t : (unit, Analysis.Keyboard.t * (float * Analysis.Keyboard.t) list) Rpc.Rpc.t
 end
+
+module Config : sig
+  val set : (Analysis.Config.t, unit) Rpc.Rpc.t
+end

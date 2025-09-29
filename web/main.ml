@@ -51,19 +51,50 @@ let app graph =
   let _namedlayout, namedlayout_vdom =
     Namedlayout.Select.component ~keyboard_inject graph
   in
+  let runtime_mode, runtime_mode_inject = Bonsai.state `Manual graph in
+  let runtime_mode_vdom =
+    let _selected_form, form_vdom =
+      Runtime.Mode.Select.component ~runtime_mode_inject graph
+    in
+    form_vdom
+  in
   let corpus, corpus_vdom = Corpus.Select.component ~theme graph in
+  let finger_dexterity_default = 2000. in
   let finger_dexterity =
     Form.Elements.Range.float
       ~min:(Bonsai.return 1.)
       ~max:(Bonsai.return 5000.)
       ~step:(Bonsai.return 1.)
-      ~default:(Bonsai.return 2000.)
+      ~default:(Bonsai.return finger_dexterity_default)
       ()
       graph
   in
   let finger_dexterity_vdom =
     let%arr finger_dexterity = finger_dexterity in
     Form.view finger_dexterity
+  in
+  let config =
+    let%map corpus = corpus
+    and finger_dexterity = finger_dexterity in
+    let finger_dexterity =
+      Form.value_or_default finger_dexterity ~default:finger_dexterity_default
+    in
+    { Analysis.Config.corpus; finger_dexterity }
+  in
+  let () =
+    let dispatch =
+      Bonsai_web.Rpc_effect.Rpc.dispatcher Stronglytyped_rpc.Protocol.Config.set graph
+    in
+    Bonsai.Edge.on_change
+      ~equal:Analysis.Config.equal
+      config
+      ~callback:
+        (let%map dispatch = dispatch in
+         fun config ->
+           match%map.Ui_effect dispatch config with
+           | Ok () -> ()
+           | Error e -> Error.to_string_hum e |> print_endline)
+      graph
   in
   let same_finger_stats, same_finger_controls, stats_section_vdom =
     let finger_dexterity =
@@ -79,13 +110,6 @@ let app graph =
   let same_finger_controls_vdom =
     let%arr same_finger_controls = same_finger_controls in
     Form.view same_finger_controls
-  in
-  let runtime_mode, runtime_mode_inject = Bonsai.state `Manual graph in
-  let runtime_mode_vdom =
-    let _selected_form, form_vdom =
-      Runtime.Mode.Select.component ~runtime_mode_inject graph
-    in
-    form_vdom
   in
   let poll_rate, poll_rate_vdom =
     let min = 0.5 in

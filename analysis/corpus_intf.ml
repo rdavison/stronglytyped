@@ -13,7 +13,7 @@ module type S = sig
       ; axc : 'a String.Map.t
       ; vbcv : 'a String.Map.t
       }
-    [@@deriving sexp, equal]
+    [@@deriving sexp, equal, compare, bin_io]
   end
 
   module Bigrams : sig
@@ -30,7 +30,7 @@ module type S = sig
     { count : int Maps.t
     ; freq : float Maps.t
     }
-  [@@deriving sexp, equal]
+  [@@deriving sexp, equal, compare, bin_io]
 
   val empty : t
   val of_string : string -> t

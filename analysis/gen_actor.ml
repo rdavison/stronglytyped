@@ -7,8 +7,7 @@ module Action = struct
   type t = |
 end
 
-let gen graph =
-  let corpus = Bonsai.return Corpus.fast in
+let gen ~corpus graph =
   let keyboard, keyboard_inject, _cancel = Keyboard.state_machine graph in
   let random_swap_effect =
     let%arr keyboard_inject = keyboard_inject in
