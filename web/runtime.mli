@@ -2,12 +2,7 @@ open! Core
 open! Bonsai_web
 
 module Mode : sig
-  type t =
-    [ `Auto
-    | `Manual
-    | `Optimize
-    ]
-  [@@deriving sexp, equal, compare]
+  include module type of Analysis.Runtime.Mode
 
   val start
     :  t Bonsai.t

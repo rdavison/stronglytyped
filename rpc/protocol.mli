@@ -14,5 +14,5 @@ module Gen : sig
 end
 
 module Config : sig
-  val set : (Analysis.Config.t, unit) Rpc.Rpc.t
+  val t : (Analysis.Config.t, unit) Rpc.Rpc.t
 end
