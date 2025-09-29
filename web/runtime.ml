@@ -7,7 +7,7 @@ module Mode = struct
   include Analysis.Runtime.Mode
 
   module Select = struct
-    let default = Manual
+    let default = Optimize_browser
 
     let component ~runtime_mode_inject graph =
       let dropdown =
@@ -58,14 +58,14 @@ module Mode = struct
     let bonsai =
       match%sub t with
       | Manual -> Bonsai.return ()
-      | Auto ->
+      | Optimize_browser ->
         let eff =
           let%map keyboard_inject = keyboard_inject in
           keyboard_inject [ Keyboard.Action.Random_swap ]
         in
         Bonsai.Edge.lifecycle ~after_display:eff graph;
         Bonsai.return ()
-      | Optimize ->
+      | Optimize_server ->
         let poll_result =
           Bonsai_web.Rpc_effect.Rpc.poll
             ~equal_query:Unit.equal

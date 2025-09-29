@@ -4,8 +4,8 @@ open! Bonsai.Let_syntax
 
 module Mode = struct
   type t =
-    | Auto
     | Manual
-    | Optimize
+    | Optimize_browser
+    | Optimize_server
   [@@deriving sexp, equal, compare, enumerate, bin_io]
 end

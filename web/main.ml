@@ -262,7 +262,7 @@ let app graph =
       and runtime_mode = runtime_mode in
       let name = "Random Swap" in
       match (runtime_mode : Runtime.Mode.t) with
-      | Auto | Optimize ->
+      | Optimize_browser | Optimize_server ->
         Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
       | Manual ->
         Vdom.Node.button
