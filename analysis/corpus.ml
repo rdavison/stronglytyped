@@ -12,7 +12,7 @@ module Maps = struct
     ; axc : 'a String.Map.t
     ; vbcv : 'a String.Map.t
     }
-  [@@deriving sexp, equal]
+  [@@deriving sexp, equal, compare, bin_io]
 end
 
 module Bigrams = struct
@@ -29,7 +29,7 @@ type t =
   { count : int Maps.t
   ; freq : float Maps.t
   }
-[@@deriving sexp, equal]
+[@@deriving sexp, equal, compare, bin_io]
 
 let empty =
   let count =

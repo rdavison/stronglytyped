@@ -34,3 +34,14 @@ module Gen = struct
       ~include_in_error_count:Only_on_exn
   ;;
 end
+
+module Config = struct
+  let set =
+    Rpc.Rpc.create
+      ~name:"set_config"
+      ~version:0
+      ~bin_query:[%bin_type_class: Analysis.Config.t]
+      ~bin_response:[%bin_type_class: Unit.t]
+      ~include_in_error_count:Only_on_exn
+  ;;
+end
