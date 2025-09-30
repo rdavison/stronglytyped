@@ -60,3 +60,21 @@ module Select = struct
     data, view
   ;;
 end
+
+module With_score = struct
+  type t =
+    { name : string option
+    ; score : float option
+    ; keyboard : Analysis.Keyboard.t
+    }
+  [@@deriving sexp, equal]
+
+  let to_string (t : t) =
+    match t.name with
+    | Some name -> name
+    | None ->
+      (match t.score with
+       | Some score -> sprintf "%.2f" score
+       | None -> "???")
+  ;;
+end

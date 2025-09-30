@@ -38,7 +38,8 @@ let gen app =
 let config app =
   let f (_conn : Rpc.Connection.t) (config : Analysis.Config.t) =
     let%map (app : App.t) = app () in
-    app.set_corpus config.corpus
+    app.set_corpus config.corpus;
+    app.clear_window ()
   in
   Rpc.Rpc.implement Stronglytyped_rpc.Protocol.Config.t f
 ;;
