@@ -1,8 +1,6 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
+open! Import
 module Form = Bonsai_web_ui_form.With_manual_view
-include Analysis.Corpus
+include Stem.Corpus
 
 module Select = struct
   module T = struct

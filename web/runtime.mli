@@ -1,8 +1,7 @@
-open! Core
-open! Bonsai_web
+open! Import
 
 module Mode : sig
-  include module type of Analysis.Runtime.Mode
+  include module type of Stem.Runtime.Mode
 
   val start
     :  t Bonsai.t

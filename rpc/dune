@@ -1,5 +1,0 @@
-(library
- (name stronglytyped_rpc)
- (libraries analysis async_kernel async_rpc_kernel core stronglytyped_common)
- (preprocess
-  (pps ppx_jane)))

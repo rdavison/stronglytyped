@@ -1,19 +1,17 @@
-open! Core
-open! Bonsai
-open! Bonsai.Let_syntax
+open! Import
 
 type t =
-  { keyboard : Analysis.Keyboard.t
-  ; window : (float * Analysis.Keyboard.t) list
+  { keyboard : Stem.Keyboard.t
+  ; window : (float * Stem.Keyboard.t) list
   ; schedule_event : unit Ui_effect.t -> unit
-  ; set_corpus : Analysis.Corpus.t -> unit
+  ; set_corpus : Stem.Corpus.t -> unit
   ; clear_window : unit -> unit
   }
 
 let component graph =
-  let corpus_var = Bonsai.Expert.Var.create Analysis.Corpus.fast in
+  let corpus_var = Bonsai.Expert.Var.create Stem.Corpus.fast in
   let corpus = Bonsai.Expert.Var.value corpus_var in
-  let keyboard, window, window_reset = Analysis.Gen_actor.gen ~corpus graph in
+  let keyboard, window, window_reset = Stem.Gen_actor.gen ~corpus graph in
   let%arr window = window
   and window_reset = window_reset
   and keyboard = keyboard in

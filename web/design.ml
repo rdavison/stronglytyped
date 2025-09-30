@@ -1,5 +1,4 @@
-open! Core
-open! Bonsai_web
+open! Import
 
 let light = Tailwind_v3_colors.neutral100
 let dark = Tailwind_v3_colors.neutral900

@@ -1,15 +1,19 @@
 (library
  (name stronglytyped_server)
  (libraries
-  analysis
   async_extra.async_bus
   async_rpc_websocket
+  async_rpc_kernel
   async
   bonsai
   bonsai.driver
   cohttp-async
   cohttp_async_websocket
-  stronglytyped_rpc)
+  stronglytyped_stem)
+ (flags
+   -open Core
+   -open Bonsai
+   -open Bonsai.Let_syntax)
  (preprocess
   (pps ppx_jane bonsai.ppx_bonsai)))
 

@@ -1,11 +1,12 @@
+open! Import
 open! Core
 open! Bonsai_web
 open! Bonsai.Let_syntax
-include Analysis.Key
+include Stem.Key
 
 let render_legend kc =
   match kc with
-  | `Alpha _ -> Vdom.Node.text (Analysis.Keycode.to_string_upper kc)
+  | `Alpha _ -> Vdom.Node.text (Stem.Keycode.to_string_upper kc)
   | `Sym (_, _) ->
     Vdom.Node.div
       ~attrs:
@@ -15,8 +16,8 @@ let render_legend kc =
               flex-direction: column;
             |}]
         ]
-      [ Vdom.Node.div [ Vdom.Node.text (Analysis.Keycode.to_string_upper kc) ]
-      ; Vdom.Node.div [ Vdom.Node.text (Analysis.Keycode.to_string_lower kc) ]
+      [ Vdom.Node.div [ Vdom.Node.text (Stem.Keycode.to_string_upper kc) ]
+      ; Vdom.Node.div [ Vdom.Node.text (Stem.Keycode.to_string_lower kc) ]
       ]
   | `Legend legend -> Vdom.Node.text legend
   | `Power -> Vdom.Node.text "O"
@@ -24,7 +25,7 @@ let render_legend kc =
 
 let vdom_optional (id : Id.t) (key : t option) =
   match key with
-  | None -> render_legend (Analysis.Key.Id.default_kc id)
+  | None -> render_legend (Stem.Key.Id.default_kc id)
   | Some key -> render_legend key.kc
 ;;
 

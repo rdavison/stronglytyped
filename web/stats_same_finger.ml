@@ -1,8 +1,5 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-module Form = Bonsai_web_ui_form.With_manual_view
-include Analysis.Stats_same_finger
+open! Import
+include Stem.Stats_same_finger
 
 let bar ~dir ~color ~pct =
   let flex_direction =
@@ -159,7 +156,7 @@ let render_detailed (worst, per_finger_total) ~theme =
 
 let render_breakdown_1
   :  float
-  -> (float Analysis.Hand_finger.Map.t, float) metric Typed_variant.t
+  -> (float Stem.Hand_finger.Map.t, float) metric Typed_variant.t
   -> float
   -> float
   -> Vdom.Node.t
@@ -172,8 +169,7 @@ let render_breakdown_1
 ;;
 
 let render_breakdown_2
-  :  (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
-       Typed_variant.t
+  :  (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric Typed_variant.t
   -> (string * float) list * float
   -> theme:[ `Dark | `Light ]
   -> Vdom.Node.t
@@ -195,9 +191,9 @@ let render_total
 ;;
 
 let row_1
-      (dexterity : (Analysis.Hand_finger.t -> float) Bonsai.t)
-      (variant : (float Analysis.Hand_finger.Map.t, float) metric Typed_variant.t)
-      ~(metric : (float Analysis.Hand_finger.Map.t, float) metric Bonsai.t)
+      (dexterity : (Stem.Hand_finger.t -> float) Bonsai.t)
+      (variant : (float Stem.Hand_finger.Map.t, float) metric Typed_variant.t)
+      ~(metric : (float Stem.Hand_finger.Map.t, float) metric Bonsai.t)
       graph
   : Vdom.Node.t list Bonsai.t
   =
@@ -205,7 +201,7 @@ let row_1
   let%sub { breakdown; total } = metric in
   let breakdown =
     Bonsai.assoc
-      (module Analysis.Hand_finger)
+      (module Stem.Hand_finger)
       breakdown
       ~f:(fun hand_finger breakdown _graph ->
         let contents =
@@ -239,7 +235,7 @@ let row_1
     Vdom.Node.header ~attrs:[ [%css {|font-weight: bold;|}] ] [ Vdom.Node.text label ]
   in
   let breakdown =
-    List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
+    List.map Stem.Hand_finger.all ~f:(fun hand_finger ->
       Map.find breakdown hand_finger
       |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
   in
@@ -249,11 +245,10 @@ let row_1
 
 let row_2
       (variant :
-        (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
+        (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric
           Typed_variant.t)
       ~(metric :
-         (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
-           Bonsai.t)
+         (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric Bonsai.t)
       ~theme
       graph
   : Vdom.Node.t list Bonsai.t
@@ -262,7 +257,7 @@ let row_2
   let%sub { breakdown; total } = metric in
   let breakdown =
     Bonsai.assoc
-      (module Analysis.Hand_finger)
+      (module Stem.Hand_finger)
       breakdown
       ~f:(fun _hand_finger breakdown _graph ->
         let contents =
@@ -292,7 +287,7 @@ let row_2
   and total = total in
   let header = Vdom.Node.header [ Vdom.Node.text label ] in
   let breakdown =
-    List.map Analysis.Hand_finger.all ~f:(fun hand_finger ->
+    List.map Stem.Hand_finger.all ~f:(fun hand_finger ->
       Map.find breakdown hand_finger
       |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
   in
@@ -301,7 +296,7 @@ let row_2
 ;;
 
 let table_simple
-      (n : (Analysis.Hand_finger.t -> float) Bonsai.t)
+      (n : (Stem.Hand_finger.t -> float) Bonsai.t)
       (t :
         ( Typed_variant.Packed.t
           , t
@@ -330,8 +325,8 @@ let table_simple
   let%arr data = data graph
   and theme = theme in
   let header =
-    let all = Analysis.Hand_finger.all in
-    let to_string = Analysis.Hand_finger.to_string in
+    let all = Stem.Hand_finger.all in
+    let to_string = Stem.Hand_finger.to_string in
     (all |> List.map ~f:to_string) @ [ "Total" ]
   in
   Vdom.Node.create
@@ -386,8 +381,8 @@ let table_detailed
   let%arr data = data graph
   and theme = theme in
   let header =
-    let all = Analysis.Hand_finger.all in
-    let to_string = Analysis.Hand_finger.to_string in
+    let all = Stem.Hand_finger.all in
+    let to_string = Stem.Hand_finger.to_string in
     (all |> List.map ~f:to_string) @ [ "Total" ]
   in
   Vdom.Node.create
@@ -412,7 +407,7 @@ let table_detailed
 
 let component ~keyboard ~finger_dexterity ~corpus ~theme graph =
   let worst_counter, worst_counter_vdom =
-    let n, inject = Analysis.Counter.counter 6 graph in
+    let n, inject = Stem.Counter.counter 6 graph in
     let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
     n, vdom
   in
@@ -451,28 +446,24 @@ let component ~keyboard ~finger_dexterity ~corpus ~theme graph =
       ~default:(Set.of_list (module Typed_variant.Packed) Typed_variant.Packed.all)
   in
   let diff_row_bigram_data =
-    let data = Analysis.Bigram_data.make keyboard corpus graph in
+    let data = Stem.Bigram_data.make keyboard corpus graph in
     bigram_data data graph
   in
   let stats_same_finger =
-    Analysis.Stats_same_finger.component
-      ~metrics
-      ~worst_counter
-      ~diff_row_bigram_data
-      graph
+    Stem.Stats_same_finger.component ~metrics ~worst_counter ~diff_row_bigram_data graph
   in
   let table_simple =
     table_simple
       finger_dexterity
       stats_same_finger
-      Analysis.Stats_same_finger.Typed_variant.Packed.all
+      Stem.Stats_same_finger.Typed_variant.Packed.all
       ~theme
       graph
   in
   let table_detailed =
     table_detailed
       stats_same_finger
-      Analysis.Stats_same_finger.Typed_variant.Packed.all
+      Stem.Stats_same_finger.Typed_variant.Packed.all
       ~theme
       graph
   in

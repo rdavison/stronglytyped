@@ -1,6 +1,5 @@
-open! Core
-open! Bonsai_web
-open! Analysis.Counter
+open! Import
+open! Stem.Counter
 
 val vdom
   :  n:int Bonsai.t

@@ -1,4 +1,4 @@
-open! Core
+open! Import
 
 module Color = struct
   let hex2rgb =

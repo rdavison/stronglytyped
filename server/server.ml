@@ -1,4 +1,4 @@
-open! Core
+open! Import
 open! Async
 
 let not_found_html =

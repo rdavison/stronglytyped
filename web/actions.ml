@@ -1,6 +1,4 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
+open! Import
 
 let brute_force_indexes ~keyboard_inject ~keyboard_cancel ~keyboard graph =
   let%arr keyboard_inject = keyboard_inject
@@ -8,17 +6,17 @@ let brute_force_indexes ~keyboard_inject ~keyboard_cancel ~keyboard graph =
   and indexes_swaps_for_brute_forcing =
     let%arr x =
       Bonsai.assoc
-        (module Analysis.Hand)
+        (module Stem.Hand)
         (Bonsai.Map.index_by
            keyboard
-           ~comparator:(module Analysis.Hand)
-           ~index:(fun (key : Analysis.Key.t) ->
-             if Analysis.Finger.equal key.finger `i then Some key.hand else None)
+           ~comparator:(module Stem.Hand)
+           ~index:(fun (key : Stem.Key.t) ->
+             if Stem.Finger.equal key.finger `i then Some key.hand else None)
            graph)
         ~f:(fun _ data graph ->
           let%arr keys = Bonsai.Map.keys data graph in
           let keys = Set.to_list keys in
-          let visited = ref Analysis.Key.Id.Pair.Set.empty in
+          let visited = ref Stem.Key.Id.Pair.Set.empty in
           List.cartesian_product keys keys
           |> List.filter_map ~f:(fun (k1, k2) ->
             if Key.Id.equal k1 k2

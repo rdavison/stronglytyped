@@ -1,8 +1,5 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-module Form = Bonsai_web_ui_form.With_manual_view
-include Analysis.Namedlayout
+open! Import
+include Stem.Namedlayout
 
 module Select = struct
   module T = struct
@@ -65,7 +62,7 @@ module With_score = struct
   type t =
     { name : string option
     ; score : float option
-    ; keyboard : Analysis.Keyboard.t
+    ; keyboard : Stem.Keyboard.t
     }
   [@@deriving sexp, equal]
 

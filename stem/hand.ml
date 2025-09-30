@@ -1,0 +1,26 @@
+open! Import
+
+module T = struct
+  type t =
+    [ `l
+    | `r
+    ]
+  [@@deriving sexp, bin_io, equal, compare, enumerate]
+end
+
+include T
+include Comparable.Make_binable (T)
+
+let to_string = function
+  | `l -> "L"
+  | `r -> "R"
+;;
+
+module Tuple2 = struct
+  module T = struct
+    type t = T.t * T.t [@@deriving sexp, compare, equal]
+  end
+
+  include T
+  include Comparable.Make (T)
+end
