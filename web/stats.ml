@@ -1,6 +1,4 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
+open! Import
 
 let component ~same_finger_vdom _graph =
   let%arr same_finger_vdom = same_finger_vdom in

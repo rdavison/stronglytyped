@@ -1,10 +1,9 @@
-open! Core
-open! Bonsai_web
+open! Import
 
 include
-  Analysis.Keyboard_intf.S
-  with type t = Analysis.Keyboard.t
-   and module Action = Analysis.Keyboard.Action
+  Stem.Keyboard_intf.S
+  with type t = Stem.Keyboard.t
+   and module Action = Stem.Keyboard.Action
 
 val section_component
   :  keyboard:t Bonsai.t

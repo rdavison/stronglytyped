@@ -1,7 +1,4 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-module Form = Bonsai_web_ui_form.With_manual_view
+open! Import
 
 module Style = struct
   include
@@ -93,14 +90,12 @@ let app graph =
     let finger_dexterity =
       Form.value_or_default finger_dexterity ~default:finger_dexterity_default
     in
-    { Analysis.Config.corpus; finger_dexterity }
+    { Stem.Config.corpus; finger_dexterity }
   in
   let () =
-    let dispatch =
-      Bonsai_web.Rpc_effect.Rpc.dispatcher Stronglytyped_rpc.Protocol.Config.t graph
-    in
+    let dispatch = Bonsai_web.Rpc_effect.Rpc.dispatcher Stem.Protocol.Config.t graph in
     Bonsai.Edge.on_change
-      ~equal:Analysis.Config.equal
+      ~equal:Stem.Config.equal
       config
       ~callback:
         (let%map dispatch = dispatch in
@@ -179,7 +174,7 @@ let app graph =
            Ui_effect.all_unit
              [ runtime_mode_inject mode
              ; keyboard_cancel
-             ; keyboard_inject [ Analysis.Keyboard.Action.Overwrite overwrite ]
+             ; keyboard_inject [ Stem.Keyboard.Action.Overwrite overwrite ]
              ])
       graph
   in
@@ -399,7 +394,7 @@ let refresh_on_version_change graph =
   let poll_result =
     Bonsai_web.Rpc_effect.Rpc.poll
       ~equal_query:Unit.equal
-      Stronglytyped_rpc.Protocol.Version.t
+      Stem.Protocol.Version.t
       ~every:(Bonsai.return (Time_ns.Span.of_ms 500.))
       (Bonsai.return ())
       graph

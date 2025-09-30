@@ -1,7 +1,5 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-open Analysis.Counter
+open! Import
+open Stem.Counter
 
 let vdom ~n ~inject ~msg =
   let%arr n = n

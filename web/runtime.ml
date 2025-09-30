@@ -1,10 +1,7 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-module Form = Bonsai_web_ui_form.With_manual_view
+open! Import
 
 module Mode = struct
-  include Analysis.Runtime.Mode
+  include Stem.Runtime.Mode
 
   module Select = struct
     let default = Optimize_server
@@ -13,7 +10,7 @@ module Mode = struct
       let dropdown =
         Form.Elements.Dropdown.enumerable
           ~init:(`This (Bonsai.return default))
-          (module Analysis.Runtime.Mode)
+          (module Stem.Runtime.Mode)
           graph
       in
       let data =
@@ -23,7 +20,7 @@ module Mode = struct
       let () =
         Bonsai.Edge.on_change
           data
-          ~equal:Analysis.Runtime.Mode.equal
+          ~equal:Stem.Runtime.Mode.equal
           ~callback:
             (let%arr runtime_mode_inject = runtime_mode_inject in
              fun (t : t) -> runtime_mode_inject t)
@@ -69,7 +66,7 @@ module Mode = struct
         let poll_result =
           Bonsai_web.Rpc_effect.Rpc.poll
             ~equal_query:Unit.equal
-            Stronglytyped_rpc.Protocol.Gen.t
+            Stem.Protocol.Gen.t
             ~every
             (Bonsai.return ())
             graph
@@ -92,13 +89,13 @@ module Mode = struct
           match poll_result.last_ok_response with
           | None -> Ui_effect.Ignore
           | Some ((), (server_keeb, window)) ->
-            if Analysis.Keyboard.equal keyboard server_keeb
+            if Stem.Keyboard.equal keyboard server_keeb
             then Ui_effect.Ignore
             else
               Ui_effect.all_unit
                 [ keyboard_cancel
                 ; keyboard_inject
-                    [ Analysis.Keyboard.Action.Overwrite
+                    [ Stem.Keyboard.Action.Overwrite
                         (Map.map server_keeb ~f:(fun key -> key.kc))
                     ]
                 ; set_keeb (Some keyboard)

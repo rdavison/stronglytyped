@@ -1,5 +1,4 @@
-open! Core
-open! Bonsai_web
+open! Import
 
 val component
   :  same_finger_vdom:Vdom.Node.t Bonsai.t

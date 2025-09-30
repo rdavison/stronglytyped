@@ -1,4 +1,4 @@
-open! Core
+open! Import
 open! Async
 
 let start (f : Bonsai.graph -> ((unit Ui_effect.t -> unit) -> App.t) Bonsai.t) =

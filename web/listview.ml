@@ -1,7 +1,4 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-module Form = Bonsai_web_ui_form.With_manual_view
+open! Import
 
 module type Model = sig
   type t [@@deriving sexp_of, equal]

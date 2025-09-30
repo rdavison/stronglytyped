@@ -1,13 +1,11 @@
-open! Core
-open! Bonsai_web
-open! Bonsai.Let_syntax
-include Analysis.Keyboard
+open! Import
+include Stem.Keyboard
 
 let component ~keyboard ~corpus_freq_a ~max_value ~dnd graph ~theme =
   let key id graph =
     Key.component id ~keyboard ~corpus_freq_a ~max_value ~dnd ~theme graph
   in
-  let arrangement = Analysis.Arrangement.ansi in
+  let arrangement = Stem.Arrangement.ansi in
   let row row =
     row
     |> List.map ~f:(fun id -> key (Bonsai.return id) graph)
