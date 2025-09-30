@@ -86,24 +86,6 @@ let label (t : Typed_variant.Packed.t) =
   | T Speed_worst -> "Worst Speed"
 ;;
 
-let render_speed x = Vdom.Node.textf "%.2fd/t" (Float.abs (x *. 100.))
-let render_freq x = Vdom.Node.textf "%.2f%%" (Float.abs (x *. 100.))
-
-let render_measurement (t : Typed_variant.Packed.t) =
-  match t.f with
-  | T Sfb -> render_freq
-  | T Sfs -> render_freq
-  | T Speed -> render_speed
-  | T Sfb_worst -> render_freq
-  | T Sfs_worst -> render_freq
-  | T Speed_worst -> render_speed
-;;
-
-let _render_simple (t : (float, 'total) metric Typed_variant.t) data =
-  let packed = Typed_variant.Packed.pack t in
-  render_measurement packed data
-;;
-
 let css_attr_target n target curr =
   let scale x =
     let open Float in
@@ -113,13 +95,7 @@ let css_attr_target n target curr =
   [%string "hsl(calc(0 + (142 - 0) * %{a}),70%,45%)"]
 ;;
 
-let render_simple_with_target
-      n
-      (_t : (float, float) metric Typed_variant.t)
-      target
-      breakdown
-      total
-  =
+let render_simple_with_target n target breakdown total =
   (* let packed = Typed_variant.Packed.pack t in *)
   let scale x = Float.sqrt (1. -. ((x -. 1.) ** 2.)) in
   let height = scale (breakdown /. total) in
@@ -165,13 +141,7 @@ let grid_attr ~padding ~cell_height ~theme cols =
     |}]
 ;;
 
-let render_detailed
-      (_t : ((string * float) list * float, float) metric Typed_variant.t)
-      (worst, per_finger_total)
-      ~theme
-      _total
-  =
-  (* let packed = Typed_variant.Packed.pack t in *)
+let render_detailed (worst, per_finger_total) ~theme =
   Vdom.Node.div
     ~attrs:[ Design.Card.attr theme; [%css {|border: unset;|}] ]
     [ Vdom.Node.div
@@ -188,28 +158,31 @@ let render_detailed
 ;;
 
 let render_breakdown_1
-  : float -> (float, float) metric Typed_variant.t -> float -> float -> Vdom.Node.t
+  :  float
+  -> (float Analysis.Hand_finger.Map.t, float) metric Typed_variant.t
+  -> float
+  -> float
+  -> Vdom.Node.t
   =
   fun n t breakdown total ->
   match t with
-  | Sfb -> render_simple_with_target n Sfb 0. breakdown total
-  | Sfs -> render_simple_with_target n Sfs 0. breakdown total
-  | Speed -> render_simple_with_target n Speed 0. breakdown total
+  | Sfb -> render_simple_with_target n 0. breakdown total
+  | Sfs -> render_simple_with_target n 0. breakdown total
+  | Speed -> render_simple_with_target n 0. breakdown total
 ;;
 
 let render_breakdown_2
-  :  float
-  -> ((string * float) list * float, float) metric Typed_variant.t
+  :  (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
+       Typed_variant.t
   -> (string * float) list * float
-  -> float
   -> theme:[ `Dark | `Light ]
   -> Vdom.Node.t
   =
-  fun _n t breakdown total ~theme ->
+  fun t breakdown ~theme ->
   match t with
-  | Sfb_worst -> render_detailed Sfb_worst breakdown total ~theme
-  | Sfs_worst -> render_detailed Sfs_worst breakdown total ~theme
-  | Speed_worst -> render_detailed Speed_worst breakdown total ~theme
+  | Sfb_worst -> render_detailed breakdown ~theme
+  | Sfs_worst -> render_detailed breakdown ~theme
+  | Speed_worst -> render_detailed breakdown ~theme
 ;;
 
 let render_total
@@ -223,8 +196,8 @@ let render_total
 
 let row_1
       (dexterity : (Analysis.Hand_finger.t -> float) Bonsai.t)
-      (variant : (float, float) metric Typed_variant.t)
-      ~(metric : (float, float) metric Bonsai.t)
+      (variant : (float Analysis.Hand_finger.Map.t, float) metric Typed_variant.t)
+      ~(metric : (float Analysis.Hand_finger.Map.t, float) metric Bonsai.t)
       graph
   : Vdom.Node.t list Bonsai.t
   =
@@ -275,9 +248,12 @@ let row_1
 ;;
 
 let row_2
-      (dexterity : (Analysis.Hand_finger.t -> float) Bonsai.t)
-      (variant : ((string * float) list * float, float) metric Typed_variant.t)
-      ~(metric : ((string * float) list * float, float) metric Bonsai.t)
+      (variant :
+        (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
+          Typed_variant.t)
+      ~(metric :
+         (((string * float) list * float) Analysis.Hand_finger.Map.t, float) metric
+           Bonsai.t)
       ~theme
       graph
   : Vdom.Node.t list Bonsai.t
@@ -288,17 +264,14 @@ let row_2
     Bonsai.assoc
       (module Analysis.Hand_finger)
       breakdown
-      ~f:(fun hand_finger breakdown _graph ->
+      ~f:(fun _hand_finger breakdown _graph ->
         let contents =
-          let open Bonsai.Applicative_infix in
-          let%arr dexterity = dexterity <*> hand_finger
-          and breakdown = breakdown
-          and total = total
+          let%arr breakdown = breakdown
           and theme = theme in
           match variant with
-          | Sfb_worst -> render_breakdown_2 dexterity Sfb_worst breakdown total ~theme
-          | Sfs_worst -> render_breakdown_2 dexterity Sfs_worst breakdown total ~theme
-          | Speed_worst -> render_breakdown_2 dexterity Speed_worst breakdown total ~theme
+          | Sfb_worst -> render_breakdown_2 Sfb_worst breakdown ~theme
+          | Sfs_worst -> render_breakdown_2 Sfs_worst breakdown ~theme
+          | Speed_worst -> render_breakdown_2 Speed_worst breakdown ~theme
         in
         let%arr contents = contents in
         Vdom.Node.create
@@ -382,7 +355,6 @@ let table_simple
 ;;
 
 let table_detailed
-      (n : (Analysis.Hand_finger.t -> float) Bonsai.t)
       (t :
         ( Typed_variant.Packed.t
           , t
@@ -403,11 +375,11 @@ let table_detailed
         | Sfs _ -> Bonsai.return None
         | Speed _ -> Bonsai.return None
         | Sfb_worst metric ->
-          row_2 n Sfb_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
+          row_2 Sfb_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
         | Sfs_worst metric ->
-          row_2 n Sfs_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
+          row_2 Sfs_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
         | Speed_worst metric ->
-          row_2 n Speed_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return)
+          row_2 Speed_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return)
       graph
     |> Bonsai.Map.filter_map ~f:Fn.id
   in
@@ -499,7 +471,6 @@ let component ~keyboard ~finger_dexterity ~corpus ~theme graph =
   in
   let table_detailed =
     table_detailed
-      finger_dexterity
       stats_same_finger
       Analysis.Stats_same_finger.Typed_variant.Packed.all
       ~theme
