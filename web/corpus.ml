@@ -22,7 +22,7 @@ module Select = struct
     in
     let textarea =
       let extra_attrs =
-        let%map dropdown = dropdown in
+        let%arr dropdown = dropdown in
         match Form.value_or_default dropdown ~default with
         | Fast -> [ Vdom.Attr.disabled ]
         | Custom -> []

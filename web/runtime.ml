@@ -57,7 +57,7 @@ module Mode = struct
       | Manual -> Bonsai.return ()
       | Optimize_browser ->
         let eff =
-          let%map keyboard_inject = keyboard_inject in
+          let%arr keyboard_inject = keyboard_inject in
           keyboard_inject [ Keyboard.Action.Random_swap ]
         in
         Bonsai.Edge.lifecycle ~after_display:eff graph;
