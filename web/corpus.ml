@@ -1,5 +1,4 @@
 open! Import
-module Form = Bonsai_web_ui_form.With_manual_view
 include Stem.Corpus
 
 module Select = struct
