@@ -109,3 +109,27 @@ let state_machine graph
   let inject, cancel = One_per_frame_after_display.component inject graph in
   keyboard, inject, cancel
 ;;
+
+let swap (t : t) (id_a, id_b) =
+  let t =
+    let%map.Option item_b = Map.find t id_a in
+    Map.set t ~key:id_a ~data:item_b
+  in
+  let t =
+    let open Option.Let_syntax in
+    let%bind t = t in
+    let%map item_a = Map.find t id_b in
+    Map.set t ~key:id_b ~data:item_a
+  in
+  t
+;;
+
+let all_swaps (t : t) =
+  let key_set =
+    List.fold (Map.keys t) ~init:Key.Id.Pair.Set.empty ~f:(fun acc a ->
+      List.fold (Map.keys t) ~init:acc ~f:(fun acc b ->
+        let cmp = Key.Id.compare a b in
+        if cmp = 0 then acc else Core.Set.add acc (if cmp < 0 then a, b else b, a)))
+  in
+  Map.of_key_set key_set ~f:(swap t)
+;;
