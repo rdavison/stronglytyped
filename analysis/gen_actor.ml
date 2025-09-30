@@ -32,7 +32,7 @@ let gen ~corpus graph =
     Stats_same_finger.component ~metrics ~worst_counter ~diff_row_bigram_data graph
   in
   let score = Score.score ~same_finger_stats in
-  let window, window_insert =
+  let window, window_insert, window_reset =
     Window.descending ~size:(Bonsai.return 10) ~compare:Float.compare graph
   in
   let score =
@@ -48,5 +48,5 @@ let gen ~corpus graph =
     let%map window = window in
     List.rev window
   in
-  keyboard, window
+  keyboard, window, window_reset
 ;;

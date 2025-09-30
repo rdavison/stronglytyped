@@ -7,7 +7,7 @@ module Mode = struct
   include Analysis.Runtime.Mode
 
   module Select = struct
-    let default = Optimize_browser
+    let default = Optimize_server
 
     let component ~runtime_mode_inject graph =
       let dropdown =
@@ -102,7 +102,12 @@ module Mode = struct
                         (Map.map server_keeb ~f:(fun key -> key.kc))
                     ]
                 ; set_keeb (Some keyboard)
-                ; set_best_layouts window
+                ; set_best_layouts
+                    (List.map window ~f:(fun (score, keyboard) ->
+                       { Namedlayout.With_score.name = None
+                       ; score = Some score
+                       ; keyboard
+                       }))
                 ]
         in
         Bonsai.Edge.after_display eff graph;

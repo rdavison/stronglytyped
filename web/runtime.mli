@@ -9,7 +9,7 @@ module Mode : sig
     -> keyboard:Keyboard.t Bonsai.t
     -> keyboard_inject:(Keyboard.Action.t list -> unit Ui_effect.t) Bonsai.t
     -> keyboard_cancel:unit Ui_effect.t Bonsai.t
-    -> set_best_layouts:((float * Analysis.Keyboard.t) list -> unit Ui_effect.t) Bonsai.t
+    -> set_best_layouts:(Namedlayout.With_score.t list -> unit Ui_effect.t) Bonsai.t
     -> every:Time_ns.Span.t Bonsai.t
     -> Bonsai.graph
     -> unit

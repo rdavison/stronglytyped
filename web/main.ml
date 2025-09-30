@@ -70,8 +70,22 @@ let app graph =
       graph
   in
   let finger_dexterity_vdom =
-    let%arr finger_dexterity = finger_dexterity in
-    Form.view finger_dexterity
+    let%arr finger_dexterity = finger_dexterity
+    and theme = theme in
+    let value =
+      Form.value_or_default finger_dexterity ~default:finger_dexterity_default
+    in
+    let vdom = Form.view finger_dexterity in
+    Vdom.Node.div
+      ~attrs:
+        [ Design.Card.attr theme
+        ; [%css
+            {|
+              display: flex;
+              flex-direction: column;
+            |}]
+        ]
+      [ Vdom.Node.label [ Vdom.Node.textf "Finger dexterity: %.2f" value ]; vdom ]
   in
   let config =
     let%map corpus = corpus
@@ -135,110 +149,39 @@ let app graph =
   in
   let best_layouts, set_best_layouts = Bonsai.state [] graph in
   let best_layout_history_vdom =
-    let module Model = struct
-      type t = float * Analysis.Keyboard.t [@@deriving sexp, equal]
-
-      let to_string (t : t) =
-        let score, _ = t in
-        sprintf "%.2f" score
-      ;;
-    end
+    let best_layouts =
+      let%map keyboard = keyboard
+      and best_layouts = best_layouts in
+      { Namedlayout.With_score.name = Some "[LIVE]"; score = None; keyboard }
+      :: best_layouts
     in
-    let form =
-      Form.Elements.Radio_buttons.list
-        (module Model)
-        ~equal:Model.equal
-        ~to_string:Model.to_string
-        ~layout:`Vertical
-        best_layouts
-        graph
-    in
-    let value =
-      form
-      >>| Form.value
-      >>| function
-      | Error _ -> None
-      | Ok (_, keyboard) -> Some keyboard
-    in
-    Bonsai.Edge.on_change
-      ~equal:(Option.equal Keyboard.equal)
-      value
+    Listview.component
+      (module Namedlayout.With_score)
+      best_layouts
+      ~equal:Namedlayout.With_score.equal
+      ~f:Fn.id
+      ~theme
       ~callback:
         (let%arr keyboard_inject = keyboard_inject
          and runtime_mode_inject = runtime_mode_inject
          and keyboard_cancel = keyboard_cancel in
          function
          | None -> Ui_effect.Ignore
-         | Some keyboard ->
-           let overwrite = Key.Id.Map.map keyboard ~f:(fun (key : Key.t) -> key.kc) in
+         | Some (namedlayout : Namedlayout.With_score.t) ->
+           let overwrite =
+             Key.Id.Map.map namedlayout.keyboard ~f:(fun (key : Key.t) -> key.kc)
+           in
+           let mode =
+             if [%equal: string option] (Some "[LIVE]") namedlayout.name
+             then Runtime.Mode.Optimize_server
+             else Manual
+           in
            Ui_effect.all_unit
-             [ runtime_mode_inject Manual
+             [ runtime_mode_inject mode
              ; keyboard_cancel
              ; keyboard_inject [ Analysis.Keyboard.Action.Overwrite overwrite ]
              ])
-      graph;
-    let%arr form = form
-    and theme = theme in
-    let view = Form.view form in
-    Vdom.Node.div
-      ~attrs:
-        [ Design.Card.attr theme
-        ; [%css
-            {|
-              display: flex;
-              gap: 0.5rem;
-              flex-direction: column;
-
-              /* Container */
-              .widget-radio-buttons.radio-button-container {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-                max-width: 100%;
-                border: 1px solid #000;
-              }
-
-              /* Each row */
-              .widget-radio-buttons.radio-button-container li {
-                display: block;
-                border-bottom: 1px solid #eee;
-              }
-
-              .widget-radio-buttons.radio-button-container li:last-child {
-                border-bottom: none;
-              }
-
-              /* Hide the native radio */
-              .widget-radio-buttons.radio-button-container .radio-button {
-                display: none;
-              }
-
-              /* Label as row */
-              .widget-radio-buttons.radio-button-container label {
-                display: block;
-                padding: 0.5rem 1rem;
-                cursor: pointer;
-                transition: background-color 0.2s, color 0.2s;
-                background-color: #f5f5f5;
-                color: #000;
-              }
-
-              /* Hover */
-              .widget-radio-buttons.radio-button-container label:hover {
-                background-color: #e5e5e5;
-              }
-
-              /* Selected row using :has() */
-              .widget-radio-buttons.radio-button-container label:has(.radio-button:checked) {
-                background-color: #007acc;
-                color: #fff;
-                font-weight: 600;
-              }
-
-
-             |}]
-        ]
-      [ Vdom.Node.label [ Vdom.Node.text "Best Layout History" ]; view ]
+      graph
   in
   Runtime.Mode.start
     runtime_mode
@@ -331,14 +274,14 @@ let app graph =
       |}]
         ]
       [ logo
-      ; theme_checkbox
+      ; finger_dexterity_vdom
       ; best_layout_history_vdom
       ; corpus_vdom
       ; same_finger_controls_vdom
       ; runtime_mode_vdom
       ; actions_vdom
-      ; finger_dexterity_vdom
       ; poll_rate_vdom
+      ; theme_checkbox
       ]
   in
   let%arr stats_section_vdom = stats_section_vdom
