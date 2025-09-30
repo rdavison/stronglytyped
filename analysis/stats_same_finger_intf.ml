@@ -3,18 +3,18 @@ open! Bonsai
 
 module type S = sig
   type ('breakdown, 'total) metric =
-    { breakdown : 'breakdown Hand_finger.Map.t
+    { breakdown : 'breakdown
     ; total : 'total
     }
   [@@deriving sexp, compare, equal, bin_io]
 
   type t =
-    | Sfb of (float, float) metric
-    | Sfs of (float, float) metric
-    | Speed of (float, float) metric
-    | Sfb_worst of ((string * float) list * float, float) metric
-    | Sfs_worst of ((string * float) list * float, float) metric
-    | Speed_worst of ((string * float) list * float, float) metric
+    | Sfb of (float Hand_finger.Map.t, float) metric
+    | Sfs of (float Hand_finger.Map.t, float) metric
+    | Speed of (float Hand_finger.Map.t, float) metric
+    | Sfb_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
+    | Sfs_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
+    | Speed_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
   [@@deriving sexp, compare, equal, typed_variants, bin_io]
 
   val bigram : Typed_variant.Packed.t -> Bigram_data.info -> float

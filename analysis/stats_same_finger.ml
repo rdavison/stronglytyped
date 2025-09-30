@@ -3,18 +3,18 @@ open! Bonsai
 open! Bonsai.Let_syntax
 
 type ('breakdown, 'total) metric =
-  { breakdown : 'breakdown Hand_finger.Map.t
+  { breakdown : 'breakdown
   ; total : 'total
   }
 [@@deriving sexp, compare, equal, bin_io]
 
 type t =
-  | Sfb of (float, float) metric
-  | Sfs of (float, float) metric
-  | Speed of (float, float) metric
-  | Sfb_worst of ((string * float) list * float, float) metric
-  | Sfs_worst of ((string * float) list * float, float) metric
-  | Speed_worst of ((string * float) list * float, float) metric
+  | Sfb of (float Hand_finger.Map.t, float) metric
+  | Sfs of (float Hand_finger.Map.t, float) metric
+  | Speed of (float Hand_finger.Map.t, float) metric
+  | Sfb_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
+  | Sfs_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
+  | Speed_worst of (((string * float) list * float) Hand_finger.Map.t, float) metric
 [@@deriving sexp, compare, equal, typed_variants, bin_io]
 
 let bigram (t : Typed_variant.Packed.t) (bigram_info : Bigram_data.info) =
@@ -36,7 +36,7 @@ let component
       ~diff_row_bigram_data
       graph
   =
-  let simple (metric : (float, float) metric Typed_variant.t) graph =
+  let simple (metric : (float Hand_finger.Map.t, float) metric Typed_variant.t) graph =
     let freqs =
       Bonsai.assoc
         (module Hand_finger)
@@ -54,37 +54,10 @@ let component
     and total = total in
     Typed_variant.create metric { breakdown; total }
   in
-  let _prev_curr (metric : (float option * float, float) metric Typed_variant.t) graph =
-    let freqs =
-      Bonsai.assoc
-        (module Hand_finger)
-        diff_row_bigram_data
-        ~f:(fun _hand_finger bigram_data graph ->
-          let curr =
-            Bonsai.Map.sum
-              bigram_data
-              (module Float)
-              ~f:(bigram (Typed_variant.Packed.pack metric))
-              graph
-          in
-          let prev = Bonsai.previous_value ~equal:Float.equal curr graph in
-          Bonsai.both prev curr
-          |> Bonsai.cutoff ~equal:(fun (_, a) (_, b) -> Float.equal a b))
-        graph
-    in
-    let total =
-      let curr =
-        Bonsai.Map.sum freqs (module Float) ~f:(fun (_prev, curr) -> curr) graph
-      in
-      let _prev = () in
-      curr
-    in
-    let%arr breakdown = freqs
-    and total = total in
-    Typed_variant.create metric { breakdown; total }
-  in
   let detailed
-        (metric : ((string * float) list * float, float) metric Typed_variant.t)
+        (metric :
+          (((string * float) list * float) Hand_finger.Map.t, float) metric
+            Typed_variant.t)
         graph
     =
     let worst_n =
