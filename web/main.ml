@@ -85,7 +85,7 @@ let app graph =
       [ Vdom.Node.label [ Vdom.Node.textf "Finger dexterity: %.2f" value ]; vdom ]
   in
   let config =
-    let%map corpus = corpus
+    let%arr corpus = corpus
     and finger_dexterity = finger_dexterity in
     let finger_dexterity =
       Form.value_or_default finger_dexterity ~default:finger_dexterity_default
@@ -98,7 +98,7 @@ let app graph =
       ~equal:Stem.Config.equal
       config
       ~callback:
-        (let%map dispatch = dispatch in
+        (let%arr dispatch = dispatch in
          fun config ->
            match%map.Ui_effect dispatch config with
            | Ok () -> ()
@@ -145,7 +145,7 @@ let app graph =
   let best_layouts, set_best_layouts = Bonsai.state [] graph in
   let best_layout_history_vdom =
     let best_layouts =
-      let%map keyboard = keyboard
+      let%arr keyboard = keyboard
       and best_layouts = best_layouts in
       { Namedlayout.With_score.name = Some "[LIVE]"; score = None; keyboard }
       :: best_layouts

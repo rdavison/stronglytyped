@@ -33,7 +33,7 @@ let gen ~corpus graph =
     Window.descending ~size:(Bonsai.return 10) ~compare:Float.compare graph
   in
   let score =
-    let%map score = score in
+    let%arr score = score in
     Option.value score ~default:Float.max_value
   in
   Bonsai.Edge.on_change
@@ -42,7 +42,7 @@ let gen ~corpus graph =
     ~callback:window_insert
     graph;
   let window =
-    let%map window = window in
+    let%arr window = window in
     List.rev window
   in
   keyboard, window, window_reset
