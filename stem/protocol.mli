@@ -16,3 +16,7 @@ end
 module Config : sig
   val t : (Config.t, unit) Rpc.Rpc.t
 end
+
+module Optimizer : sig
+  val t : (Optimizer.t, unit) Rpc.Rpc.t
+end

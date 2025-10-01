@@ -55,6 +55,24 @@ let app graph =
     in
     form_vdom
   in
+  let optimizer, optimizer_inject = Bonsai.state Optimizer.default graph in
+  let optimizer_vdom =
+    let _selected_form, form_vdom = Optimizer.Select.component ~optimizer_inject graph in
+    form_vdom
+  in
+  let () =
+    let dispatch = Bonsai_web.Rpc_effect.Rpc.dispatcher Stem.Protocol.Optimizer.t graph in
+    Bonsai.Edge.on_change
+      ~equal:Stem.Optimizer.equal
+      optimizer
+      ~callback:
+        (let%arr dispatch = dispatch in
+         fun optimizer ->
+           match%map.Ui_effect dispatch optimizer with
+           | Ok () -> ()
+           | Error e -> Error.to_string_hum e |> print_endline)
+      graph
+  in
   let corpus, corpus_vdom = Corpus.Select.component ~theme graph in
   let finger_dexterity_default = 2000. in
   let finger_dexterity =
@@ -232,6 +250,7 @@ let app graph =
     and best_layout_history_vdom = best_layout_history_vdom
     and actions_vdom = actions_vdom
     and runtime_mode_vdom = runtime_mode_vdom
+    and optimizer_vdom = optimizer_vdom
     and finger_dexterity_vdom = finger_dexterity_vdom
     and corpus_vdom = corpus_vdom
     and poll_rate_vdom = poll_rate_vdom
@@ -274,6 +293,7 @@ let app graph =
       ; corpus_vdom
       ; same_finger_controls_vdom
       ; runtime_mode_vdom
+      ; optimizer_vdom
       ; actions_vdom
       ; poll_rate_vdom
       ; theme_checkbox

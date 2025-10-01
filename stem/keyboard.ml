@@ -56,6 +56,32 @@ end
 
 type t = Key.t Key.Id.Map.t [@@deriving sexp, bin_io, equal, compare]
 
+let swap (t : t) (id_a, id_b) =
+  Option.both (Map.find t id_a) (Map.find t id_b)
+  |> Option.map ~f:(fun (a, b) ->
+    t
+    |> Map.set ~key:id_a ~data:{ a with kc = b.kc }
+    |> Map.set ~key:id_b ~data:{ b with kc = a.kc })
+;;
+
+let to_string (t : t) =
+  let arrangement = Arrangement.k10x3 in
+  let key id =
+    let keycode =
+      match
+        let%map.Option key = Map.find t id in
+        key.Key.kc
+      with
+      | None -> Key.Id.default_kc id
+      | Some kc -> kc
+    in
+    Keycode.to_string_lower keycode
+  in
+  let row row = row |> List.map ~f:key |> String.concat ~sep:"" in
+  let keyboard = arrangement |> List.map ~f:row |> String.concat ~sep:"" in
+  keyboard
+;;
+
 module Action = struct
   type t =
     | Swap of (Key.Id.t * Key.Id.t)
@@ -93,43 +119,65 @@ let state_machine graph
       | Random_swap -> swap (Key.Id.rand2 ())
       | Swap ab -> swap ab
       | Overwrite mapping ->
-        let foo2 =
-          Map.to_alist state_machines_by_id
-          |> List.fold ~init:(Ui_effect.return ()) ~f:(fun eff (id, (_key, set)) ->
-            let keycode =
-              match Map.find mapping id with
-              | None -> Key.Id.default_kc id
-              | Some keycode -> keycode
-            in
-            let%bind.Ui_effect.Par () = eff in
-            set (Set keycode))
-        in
-        foo2
+        Map.to_alist state_machines_by_id
+        |> List.fold ~init:(Ui_effect.return ()) ~f:(fun eff (id, (_key, set)) ->
+          let keycode =
+            match Map.find mapping id with
+            | None -> Key.Id.default_kc id
+            | Some keycode -> keycode
+          in
+          let%bind.Ui_effect.Par () = eff in
+          set (Set keycode))
   in
   let inject, cancel = One_per_frame_after_display.component inject graph in
   keyboard, inject, cancel
 ;;
 
-let swap (t : t) (id_a, id_b) =
-  let t =
-    let%map.Option item_b = Map.find t id_a in
-    Map.set t ~key:id_a ~data:item_b
+let all_swaps (t : t Bonsai.t) graph =
+  let keys = Bonsai.Map.keys t graph in
+  let id_pair_set =
+    let prod = Bonsai.Set.cartesian_product keys keys graph in
+    Bonsai.Set.filter prod ~f:(fun (id_a, id_b) -> not (Key.Id.equal id_a id_b)) graph
   in
-  let t =
-    let open Option.Let_syntax in
-    let%bind t = t in
-    let%map item_a = Map.find t id_b in
-    Map.set t ~key:id_b ~data:item_a
+  let id_pair_set =
+    let to_ab a b = if Key.Id.compare a b <= 0 then a, b else b, a in
+    let res =
+      Bonsai.Set.unordered_fold
+        id_pair_set
+        ~init:Key.Id.Pair.Set.empty
+        ~add:(fun acc (a, b) -> Core.Set.add acc (to_ab a b))
+        ~remove:(fun acc (a, b) -> Core.Set.remove acc (to_ab a b))
+        graph
+    in
+    let count =
+      let%arr res = res in
+      printf "id_pair_set: %d\n" (Core.Set.length res)
+    in
+    let res =
+      let%arr () = count
+      and res = res in
+      res
+    in
+    res
   in
-  t
-;;
-
-let all_swaps (t : t) =
-  let key_set =
-    List.fold (Map.keys t) ~init:Key.Id.Pair.Set.empty ~f:(fun acc a ->
-      List.fold (Map.keys t) ~init:acc ~f:(fun acc b ->
-        let cmp = Key.Id.compare a b in
-        if cmp = 0 then acc else Core.Set.add acc (if cmp < 0 then a, b else b, a)))
+  let res = Bonsai.Map.of_set id_pair_set graph in
+  let res =
+    Bonsai.assoc
+      (module Key.Id.Pair)
+      res
+      ~f:(fun id_pair _unit graph ->
+        let%arr id_pair = id_pair
+        and t = t in
+        let after = swap t id_pair |> Option.value_exn in
+        (* let before = t in *)
+        (* printf "before: %s\n" (to_string before); *)
+        (* printf *)
+        (*   " after: %s\n" *)
+        (*   (match after with *)
+        (*    | None -> "None" *)
+        (*    | Some after -> to_string after); *)
+        after)
+      graph
   in
-  Map.of_key_set key_set ~f:(swap t)
+  res
 ;;
