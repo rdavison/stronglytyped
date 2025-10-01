@@ -3,11 +3,16 @@ open! Import
 let descending ~size ~compare graph =
   let rec insert lst (weight, item) =
     match lst with
-    | [] -> [ weight, item ]
+    | [] -> Some [ weight, item ]
     | (biggest_weight, biggest_item) :: rest ->
-      if compare weight biggest_weight >= 0
-      then (weight, item) :: (biggest_weight, biggest_item) :: rest
-      else (biggest_weight, biggest_item) :: insert rest (weight, item)
+      let cmp = compare weight biggest_weight in
+      if cmp > 0
+      then Some ((weight, item) :: (biggest_weight, biggest_item) :: rest)
+      else if cmp < 0
+      then
+        insert rest (weight, item)
+        |> Option.map ~f:(fun rest -> (biggest_weight, biggest_item) :: rest)
+      else None
   in
   let default_model = 0, [] in
   let (n_window, inject), reset =
@@ -21,8 +26,12 @@ let descending ~size ~compare graph =
             match input with
             | Inactive -> n, window
             | Active size ->
-              let window = insert window (weight, item) in
-              if n + 1 <= size then n + 1, window else n, List.drop window (n + 1 - size))
+              (match insert window (weight, item) with
+               | None -> n, window
+               | Some window ->
+                 if n + 1 <= size
+                 then n + 1, window
+                 else n, List.drop window (n + 1 - size)))
           size
           graph)
       graph
