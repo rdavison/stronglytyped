@@ -18,5 +18,6 @@ module type S = sig
        * unit Ui_effect.t Bonsai.t
 
   val swap : t -> Key.Id.Pair.t -> t option
-  val all_swaps : t -> t option Key.Id.Pair.Map.t
+  val all_swaps : t Bonsai.t -> Bonsai.graph -> t Key.Id.Pair.Map.t Bonsai.t
+  val to_string : t -> string
 end
