@@ -15,7 +15,7 @@ let component graph =
   let action_var = Bonsai.Expert.Var.create Stem.Optimizer.Random in
   let action = Bonsai.Expert.Var.value action_var in
   let%arr keyboard, window, window_reset =
-    Stem.Gen_actor.component ~action ~corpus graph
+    Stem.Optimizer.component ~action ~corpus graph
   in
   fun schedule_event ->
     { window
