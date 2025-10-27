@@ -40,9 +40,17 @@ let optimizer app =
   Rpc.Rpc.implement Stem.Protocol.Optimizer.t f
 ;;
 
+let dot app =
+  let f (_conn : Rpc.Connection.t) data =
+    let%map (app : App.t) = app () in
+    app.set_dot data
+  in
+  Rpc.Rpc.implement Stem.Protocol.Dot.t f
+;;
+
 let implementations (app : unit -> App.t Deferred.t) =
   let implementations =
-    let%map.List make = [ version; keyboard; gen; config; optimizer ] in
+    let%map.List make = [ version; keyboard; gen; config; optimizer; dot ] in
     make app
   in
   Rpc.Implementations.create_exn

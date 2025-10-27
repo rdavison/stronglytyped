@@ -5,14 +5,13 @@ type t =
   | Greedy
 [@@deriving sexp, compare, equal, enumerate, bin_io]
 
-let default = Random
+let default = Greedy
 
-let score ~keyboard ~metrics ~worst_counter ~diff_row_bigram_data graph =
-  let same_finger_stats =
-    Stats_same_finger.component ~metrics ~worst_counter ~diff_row_bigram_data graph
-  in
-  Score.score ~same_finger_stats
-;;
+(* let score kind ~keyboard ~corpus graph = *)
+(*   match%sub kind with *)
+(*   | Greedy -> Score.greedy_descend keyboard ~corpus graph *)
+(*   | Random -> Score.greedy_descend keyboard ~corpus graph *)
+(* ;; *)
 
 module Scored_keyboard = struct
   module T = struct
@@ -23,150 +22,94 @@ module Scored_keyboard = struct
   include Comparator.Make (T)
 end
 
-let random
-      ~corpus
-      ~keyboard
-      ~keyboard_inject
-      ~window_insert
-      ~metrics
-      ~worst_counter
-      ~diff_row_bigram_data
-      ~score
-      graph
-  =
-  Bonsai.Edge.on_change
-    ~equal:Scored_keyboard.equal
-    (Bonsai.both (score keyboard) keyboard)
-    ~callback:
-      (let%arr window_insert = window_insert
-       and keyboard_inject = keyboard_inject in
-       fun ((score, keyboard) : Scored_keyboard.t) ->
-         let%bind.Ui_effect () = window_insert (score, keyboard) in
-         keyboard_inject [ Keyboard.Action.Random_swap ])
-    graph
-;;
+let epsilon = Float.epsilon_float
+let i = ref 0
+let j = ref 0
+(* let greedy ~keyboard ~corpus graph = Score.greedy_descend keyboard ~corpus graph *)
 
-let greedy
-      ~corpus
-      ~keyboard
-      ~keyboard_inject
-      ~window_insert
-      ~metrics
-      ~worst_counter
-      ~diff_row_bigram_data
-      ~score
-      graph
-  =
-  let all_swaps = Keyboard.all_swaps keyboard graph in
-  let id_pairs_to_score_and_keyboard =
-    Bonsai.assoc
-      (module Key.Id.Pair)
-      all_swaps
-      ~f:(fun _keypair keyboard graph ->
-        let%arr keyboard = keyboard
-        and score = score keyboard in
-        score, keyboard)
-      graph
-  in
-  let min_score =
-    Bonsai.Map.min_value
-      id_pairs_to_score_and_keyboard
-      ~comparator:(module Scored_keyboard)
-      graph
-  in
-  let curr_score = score keyboard in
-  Bonsai.Edge.on_change
-    ~equal:(Option.equal Scored_keyboard.equal)
-    min_score
-    ~callback:
-      (let%arr curr_score = curr_score
-       and keyboard = keyboard
-       and window_insert = window_insert
-       and keyboard_inject = keyboard_inject in
-       fun (min_score : Scored_keyboard.t option) ->
-         let next_effect = [ Keyboard.Action.Random_swap ] in
-         match min_score with
-         | None ->
-           printf "curr / min: %.2f / None\n%!" curr_score;
-           keyboard_inject next_effect
-         | Some (min_score, min_keyboard) ->
-           printf "curr / min: %.2f / Some(%.2f)\n%!" curr_score min_score;
-           if Float.( < ) min_score curr_score
-           then (
-             let%bind.Ui_effect () = window_insert (min_score, min_keyboard) in
-             let overwrite = Map.map min_keyboard ~f:(fun (key : Key.t) -> key.kc) in
-             keyboard_inject [ Overwrite overwrite ])
-           else if Scored_keyboard.equal (min_score, min_keyboard) (curr_score, keyboard)
-           then
-             keyboard_inject (Core.List.init 30 ~f:(fun _ -> Keyboard.Action.Random_swap))
-           else keyboard_inject [ Random_swap ])
-    graph
-;;
+(* Bonsai.Edge.on_change *)
+(*   ~equal:(Option.equal Scored_keyboard.equal) *)
+(*   min_scoring *)
+(*   ~callback: *)
+(*     (let%arr curr_score = curr_score *)
+(*      and window_insert = window_insert *)
+(*      and keyboard_inject = keyboard_inject in *)
+(*      fun (min_score : Scored_keyboard.t option) -> *)
+(*        printf "%d\n%!" !i; *)
+(*        incr i; *)
+(*        let next_effect = [ Keyboard.Action.Random_swap ] in *)
+(*        match min_score with *)
+(*        | None -> keyboard_inject next_effect *)
+(*        | Some (min_score, min_keyboard) -> *)
+(*          let delta = Float.abs (1. -. (curr_score /. min_score)) in *)
+(*          let epsilon = 100. *. Float.epsilon_float in *)
+(*          let reset_condition = Float.( < ) delta epsilon in *)
+(*          printf *)
+(*            "delta: %.20f ___ 10. *. epsilon: %.20f ___ reset: %b \n%!" *)
+(*            delta *)
+(*            epsilon *)
+(*            reset_condition; *)
+(*          if not reset_condition *)
+(*          then ( *)
+(*            let%bind.Ui_effect () = window_insert (min_score, min_keyboard) in *)
+(*            let overwrite = Map.map min_keyboard ~f:(fun (key : Key.t) -> key.kc) in *)
+(*            keyboard_inject [ Overwrite overwrite ]) *)
+(*          else ( *)
+(*            printf "Random 30\n%!"; *)
+(*            keyboard_inject (Core.List.init 30 ~f:(fun _ -> Keyboard.Action.Random_swap)))) *)
+(*   graph *)
 
-let component ~action ~corpus graph =
-  let keyboard, keyboard_inject, _cancel = Keyboard.state_machine graph in
-  let metrics =
-    Base.Set.of_list
-      (module Stats_same_finger.Typed_variant.Packed)
-      Stats_same_finger.Typed_variant.Packed.all
-    |> Bonsai.return
-  in
-  let worst_counter =
-    let n, _inject = Counter.counter 6 graph in
-    n
-  in
-  let diff_row_bigram_data keyboard =
-    let data = Bigram_data.make keyboard corpus graph in
-    Stats_same_finger.bigram_data data graph
-  in
+let m = ref 0
+
+let component ~keyboard ~keyboard_inject ~live_keyboard_inject ~action ~corpus graph =
   let window, window_insert, window_reset =
     let window, window_insert, window_reset =
       Window.descending ~size:(Bonsai.return 10) ~compare:Float.compare graph
     in
     let window =
       let%arr window = window in
-      let res = List.rev window in
-      List.iter res ~f:(fun (score, _keyboard) -> printf "list: %.2f\n" score);
-      res
+      List.rev window
     in
     window, window_insert, window_reset
   in
-  let score keyboard =
-    let%arr score =
-      score
-        ~keyboard
-        ~metrics
-        ~worst_counter
-        ~diff_row_bigram_data:(diff_row_bigram_data keyboard)
-        graph
-    in
-    Option.value score ~default:Float.max_value
+  (* let _score keyboard = score (Bonsai.return Greedy) ~keyboard ~corpus graph in *)
+  let tick =
+    match%sub [%lazy] action with
+    | Greedy ->
+      let scored_keyboard =
+        Score.greedy_descend ~input_keyboard:keyboard ~live_keyboard_inject ~corpus graph
+      in
+      let () =
+        Bonsai.Edge.on_change
+          ~equal:(Option.equal Scored_keyboard.equal)
+          scored_keyboard
+          ~callback:
+            (let%arr keyboard_inject = keyboard_inject
+             and window_insert = window_insert in
+             fun (score_keyboard : Scored_keyboard.t option) ->
+               printf "on_change_handler = %d\n%!" !m;
+               incr m;
+               match score_keyboard with
+               | None -> Ui_effect.Ignore
+               | Some (score, keyboard) ->
+                 print_endline (Keyboard.to_string keyboard);
+                 let%bind.Ui_effect () = window_insert (score, keyboard) in
+                 keyboard_inject
+                   [ Keyboard.Action.Overwrite
+                       (Map.map keyboard ~f:(fun (key : Key.t) -> key.kc))
+                   ])
+          graph
+      in
+      Bonsai.return Ui_effect.Ignore
+    | Random ->
+      (* let scored_keyboard = score keyboard in *)
+      (* let  () = on_change_handler scored_keyboard in *)
+      (* let random_swap = *)
+      (*   let%arr keyboard_inject = keyboard_inject in *)
+      (*   keyboard_inject [ Keyboard.Action.Random_swap ] *)
+      (* in *)
+      (* Bonsai.Edge.after_display random_swap graph; *)
+      Bonsai.return Ui_effect.Ignore
   in
-  (ignore : unit Bonsai.t -> unit)
-    (match%sub [%lazy] action with
-     | Greedy ->
-       greedy
-         ~corpus
-         ~keyboard
-         ~keyboard_inject
-         ~window_insert
-         ~metrics
-         ~worst_counter
-         ~diff_row_bigram_data
-         ~score
-         graph;
-       Bonsai.return ()
-     | Random ->
-       random
-         ~corpus
-         ~keyboard
-         ~keyboard_inject
-         ~window_insert
-         ~metrics
-         ~worst_counter
-         ~diff_row_bigram_data
-         ~score
-         graph;
-       Bonsai.return ());
-  keyboard, window, window_reset
+  keyboard, window, window_reset, tick
 ;;

@@ -10,10 +10,7 @@
   cohttp-async
   cohttp_async_websocket
   stronglytyped_stem)
- (flags
-   -open Core
-   -open Bonsai
-   -open Bonsai.Let_syntax)
+ (flags :standard -open Core -open Bonsai -open Bonsai.Let_syntax)
  (preprocess
   (pps ppx_jane bonsai.ppx_bonsai)))
 

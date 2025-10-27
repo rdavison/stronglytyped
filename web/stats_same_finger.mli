@@ -14,7 +14,9 @@ val component
   -> corpus:Corpus.t Bonsai.t
   -> theme:[ `Dark | `Light ] Bonsai.t
   -> Bonsai.graph
-  -> (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Map.t Bonsai.t
+  -> (Keyboard.t
+     * (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Map.t)
+       Bonsai.t
      * ( (Typed_variant.Packed.t, Typed_variant.Packed.comparator_witness) Set.t
          , Vdom.Node.t )
          Form.t
