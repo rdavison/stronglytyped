@@ -23,13 +23,14 @@ module type S = sig
          (Typed_variant.Packed.t, Typed_variant.Packed.comparator_witness) Base.Set.t
            Bonsai.t
     -> worst_counter:int Bonsai.t
-    -> diff_row_bigram_data:Bigram_data.t Hand_finger.Map.t Bonsai.t
+    -> diff_row_bigram_data:(Keyboard.t * Bigram_data.t Hand_finger.Map.t) Bonsai.t
     -> Bonsai.graph
-    -> (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Core.Map.t
+    -> (Keyboard.t
+       * (Typed_variant.Packed.t, t, Typed_variant.Packed.comparator_witness) Core.Map.t)
          Bonsai.t
 
   val bigram_data
-    :  Bigram_data.info Key.Id.Pair.Map.t Bonsai.t
+    :  (Keyboard.t * Bigram_data.info Key.Id.Pair.Map.t) Bonsai.t
     -> Bonsai.graph
-    -> Bigram_data.t Hand_finger.Map.t Bonsai.t
+    -> (Keyboard.t * Bigram_data.t Hand_finger.Map.t) Bonsai.t
 end

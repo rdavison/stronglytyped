@@ -20,3 +20,7 @@ end
 module Optimizer : sig
   val t : (Optimizer.t, unit) Rpc.Rpc.t
 end
+
+module Dot : sig
+  val t : (String.t, unit) Rpc.Rpc.t
+end

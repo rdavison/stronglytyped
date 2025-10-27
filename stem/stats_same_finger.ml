@@ -34,6 +34,14 @@ let component
       ~diff_row_bigram_data
       graph
   =
+  let keyboard =
+    let%map x, _ = diff_row_bigram_data in
+    x
+  in
+  let diff_row_bigram_data =
+    let%map _, x = diff_row_bigram_data in
+    x
+  in
   let simple (metric : (float Hand_finger.Map.t, float) metric Typed_variant.t) graph =
     let freqs =
       Bonsai.assoc
@@ -89,21 +97,36 @@ let component
     and total = worst_n_total in
     Typed_variant.create metric { breakdown; total }
   in
-  Bonsai.assoc_set
-    (module Typed_variant.Packed)
-    metrics
-    ~f:(fun key graph ->
-      match%sub key with
-      | { f = T Sfb } -> simple Sfb graph
-      | { f = T Sfs } -> simple Sfs graph
-      | { f = T Speed } -> simple Speed graph
-      | { f = T Sfb_worst } -> detailed Sfb_worst graph
-      | { f = T Sfs_worst } -> detailed Sfs_worst graph
-      | { f = T Speed_worst } -> detailed Speed_worst graph)
-    graph
+  let res =
+    Bonsai.assoc_set
+      (module Typed_variant.Packed)
+      metrics
+      ~f:(fun key graph ->
+        match%sub key with
+        | { f = T Sfb } -> simple Sfb graph
+        | { f = T Sfs } -> simple Sfs graph
+        | { f = T Speed } -> simple Speed graph
+        | { f = T Sfb_worst } -> detailed Sfb_worst graph
+        | { f = T Sfs_worst } -> detailed Sfs_worst graph
+        | { f = T Speed_worst } -> detailed Speed_worst graph)
+      graph
+  in
+  let%arr keyboard = keyboard
+  and res = res in
+  keyboard, res
 ;;
 
-let bigram_data bigram_data graph : Bigram_data.t Hand_finger.Map.t Bonsai.t =
+let bigram_data keyboard_bigram_data graph
+  : (Keyboard.t * Bigram_data.t Hand_finger.Map.t) Bonsai.t
+  =
+  let keyboard =
+    let%map x, _ = keyboard_bigram_data in
+    x
+  in
+  let bigram_data =
+    let%map _, x = keyboard_bigram_data in
+    x
+  in
   let same_hand_same_finger_bigram_data =
     Bonsai.Map.index_byi
       bigram_data
@@ -113,14 +136,19 @@ let bigram_data bigram_data graph : Bigram_data.t Hand_finger.Map.t Bonsai.t =
         if Hand_finger.equal x (Key.Id.hand b, Key.Id.finger b) then Some x else None)
       graph
   in
-  Bonsai.assoc
-    (module Hand_finger)
-    same_hand_same_finger_bigram_data
-    ~f:(fun _ (bigram_data : Bigram_data.t Bonsai.t) graph ->
-      Bonsai.Map.filter_mapi
-        bigram_data
-        ~f:(fun ~key:(a, b) ~data ->
-          if Int.equal (Key.Id.row a) (Key.Id.row b) then None else Some data)
-        graph)
-    graph
+  let res =
+    Bonsai.assoc
+      (module Hand_finger)
+      same_hand_same_finger_bigram_data
+      ~f:(fun _ (bigram_data : Bigram_data.t Bonsai.t) graph ->
+        Bonsai.Map.filter_mapi
+          bigram_data
+          ~f:(fun ~key:(a, b) ~data ->
+            if Int.equal (Key.Id.row a) (Key.Id.row b) then None else Some data)
+          graph)
+      graph
+  in
+  let%arr keyboard = keyboard
+  and res = res in
+  keyboard, res
 ;;

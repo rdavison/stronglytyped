@@ -455,14 +455,16 @@ let component ~keyboard ~finger_dexterity ~corpus ~theme graph =
   let table_simple =
     table_simple
       finger_dexterity
-      stats_same_finger
+      (let%map _, stats_same_finger = stats_same_finger in
+       stats_same_finger)
       Stem.Stats_same_finger.Typed_variant.Packed.all
       ~theme
       graph
   in
   let table_detailed =
     table_detailed
-      stats_same_finger
+      (let%map _, stats_same_finger = stats_same_finger in
+       stats_same_finger)
       Stem.Stats_same_finger.Typed_variant.Packed.all
       ~theme
       graph

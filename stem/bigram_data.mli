@@ -8,4 +8,8 @@ type info =
 
 type t = info Key.Id.Pair.Map.t
 
-val make : Keyboard.t Bonsai.t -> Corpus.t Bonsai.t -> Bonsai.graph -> t Bonsai.t
+val make
+  :  Keyboard.t Bonsai.t
+  -> Corpus.t Bonsai.t
+  -> Bonsai.graph
+  -> (Keyboard.t * t) Bonsai.t

@@ -165,7 +165,7 @@ let all_swaps (t : t Bonsai.t) graph =
     Bonsai.assoc
       (module Key.Id.Pair)
       res
-      ~f:(fun id_pair _unit graph ->
+      ~f:(fun id_pair _unit _graph ->
         let%arr id_pair = id_pair
         and t = t in
         let after = swap t id_pair |> Option.value_exn in

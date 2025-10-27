@@ -25,7 +25,7 @@ module Select = struct
       let%arr dropdown = dropdown in
       Form.value_or_default dropdown ~default
     in
-    let () =
+    let _commented_out () =
       Bonsai.Edge.on_change
         data
         ~equal:T.equal

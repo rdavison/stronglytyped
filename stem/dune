@@ -1,6 +1,6 @@
 (library
  (name stronglytyped_stem)
  (libraries bonsai async_rpc_kernel)
- (flags -open Core -open Bonsai -open Bonsai.Let_syntax)
+ (flags :standard -open Core -open Bonsai -open Bonsai.Let_syntax)
  (preprocess
   (pps ppx_jane bonsai.ppx_bonsai ppx_css)))

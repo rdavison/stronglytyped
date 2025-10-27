@@ -14,6 +14,7 @@ let component
       ~(callback : ('item option -> unit Ui_effect.t) Bonsai.t)
       ~(f : model -> 'item)
       ~theme
+      ~label
       graph
   =
   let form =
@@ -32,7 +33,7 @@ let component
     | Error _ -> None
     | Ok item -> Some (f item)
   in
-  Bonsai.Edge.on_change ~equal:(Option.equal equal) value ~callback graph;
+  let () = Bonsai.Edge.on_change ~equal:(Option.equal equal) value ~callback graph in
   let%arr form = form
   and theme = theme in
   let view = Form.view form in
@@ -92,5 +93,5 @@ let component
             }
            |}]
       ]
-    [ Vdom.Node.label [ Vdom.Node.text "Best Layout History" ]; view ]
+    [ Vdom.Node.label [ Vdom.Node.text label ]; view ]
 ;;

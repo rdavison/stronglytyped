@@ -27,5 +27,7 @@ let make (keyboard : Keyboard.t Bonsai.t) corpus graph =
             let dist = Key.dist key1 key2 in
             { bigram; dist; freqs = Corpus.bigrams corpus bigram }))
   in
-  Bonsai.Map.collapse id_id_map ~comparator:(module Key.Id) graph
+  let%arr keyboard = keyboard
+  and bigram_data = Bonsai.Map.collapse id_id_map ~comparator:(module Key.Id) graph in
+  keyboard, bigram_data
 ;;

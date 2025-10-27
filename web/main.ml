@@ -44,9 +44,11 @@ let app graph =
     in
     value, vdom
   in
-  let keyboard, keyboard_inject, keyboard_cancel = Keyboard.state_machine graph in
+  let live_keyboard, live_keyboard_inject, live_keyboard_cancel =
+    Keyboard.state_machine graph
+  in
   let _namedlayout, namedlayout_vdom =
-    Namedlayout.Select.component ~keyboard_inject graph
+    Namedlayout.Select.component ~keyboard_inject:live_keyboard_inject graph
   in
   let runtime_mode, runtime_mode_inject = Bonsai.state Runtime.Mode.Manual graph in
   let runtime_mode_vdom =
@@ -60,7 +62,7 @@ let app graph =
     let _selected_form, form_vdom = Optimizer.Select.component ~optimizer_inject graph in
     form_vdom
   in
-  let () =
+  let _commented_out () =
     let dispatch = Bonsai_web.Rpc_effect.Rpc.dispatcher Stem.Protocol.Optimizer.t graph in
     Bonsai.Edge.on_change
       ~equal:Stem.Optimizer.equal
@@ -110,7 +112,7 @@ let app graph =
     in
     { Stem.Config.corpus; finger_dexterity }
   in
-  let () =
+  let _commented_out () =
     let dispatch = Bonsai_web.Rpc_effect.Rpc.dispatcher Stem.Protocol.Config.t graph in
     Bonsai.Edge.on_change
       ~equal:Stem.Config.equal
@@ -128,11 +130,25 @@ let app graph =
       let%arr finger_dexterity = finger_dexterity in
       fun _hand_finger -> Form.value_or_default finger_dexterity ~default:2000.
     in
-    Stats_same_finger.component ~keyboard ~finger_dexterity ~corpus ~theme graph
+    Stats_same_finger.component
+      ~keyboard:live_keyboard
+      ~finger_dexterity
+      ~corpus
+      ~theme
+      graph
+  in
+  let same_finger_stats =
+    let%arr _, same_finger_stats = same_finger_stats in
+    same_finger_stats
   in
   let _score, score_vdom = Score.component ~same_finger_stats graph in
   let keyboard_section_vdom =
-    Keyboard.section_component ~keyboard ~keyboard_inject ~corpus ~theme graph
+    Keyboard.section_component
+      ~keyboard:live_keyboard
+      ~keyboard_inject:live_keyboard_inject
+      ~corpus
+      ~theme
+      graph
   in
   let same_finger_controls_vdom =
     let%arr same_finger_controls = same_finger_controls in
@@ -160,12 +176,59 @@ let app graph =
     in
     value, vdom
   in
-  let best_layouts, set_best_layouts = Bonsai.state [] graph in
+  let working_keyboard, _working_keyboard_inject, _working_keyboard_cancel =
+    Keyboard.state_machine graph
+  in
+  let layout_store, _add, _remove = Layoutstore.state_machine [] graph in
+  let layout_store =
+    let%arr layout_store = layout_store
+    and working_keyboard = working_keyboard
+    and live_keyboard = live_keyboard in
+    ("[WORK]", working_keyboard) :: ("[LIVE]", live_keyboard) :: layout_store
+  in
+  let layout_store_vdom =
+    Layoutstore.component
+      layout_store
+      ~set_keyboard:(Bonsai.return (fun _ -> Ui_effect.Ignore))
+      ~theme
+      ~label:"Layout Store"
+      graph
+  in
+  let _best_layouts, set_best_layouts = Bonsai.state [] graph in
+  let optimizer_keyboard, optimizer_keyboard_inject, _optimizer_keyboard_cancel =
+    Keyboard.state_machine graph
+  in
+  let _optimized_keyboard, window, _window_reset, tick =
+    Stem.Optimizer.component
+      ~keyboard:optimizer_keyboard
+      ~keyboard_inject:optimizer_keyboard_inject
+      ~live_keyboard_inject:(Bonsai.return (fun _ -> Bonsai.Effect.Ignore))
+      ~action:(Bonsai.return Stem.Optimizer.Greedy)
+      ~corpus
+      graph
+  in
+  let best_layouts =
+    let%arr window = window in
+    List.map window ~f:(fun (score, keyboard) ->
+      { Namedlayout.With_score.score = Some score
+      ; keyboard
+      ; name = Some (sprintf "%.2f" score)
+      })
+  in
+  let ticker =
+    let%arr tick = tick in
+    Vdom.Node.button
+      ~attrs:[ Vdom.Attr.on_click (fun _ -> tick) ]
+      [ Vdom.Node.text "Tick" ]
+  in
   let best_layout_history_vdom =
     let best_layouts =
-      let%arr keyboard = keyboard
+      let%arr live_keyboard = live_keyboard
       and best_layouts = best_layouts in
-      { Namedlayout.With_score.name = Some "[LIVE]"; score = None; keyboard }
+      { Namedlayout.With_score.name = Some "[LIVE]"
+      ; score = None
+      ; keyboard = live_keyboard
+      }
       :: best_layouts
     in
     Listview.component
@@ -174,47 +237,47 @@ let app graph =
       ~equal:Namedlayout.With_score.equal
       ~f:Fn.id
       ~theme
+      ~label:"Best Layout History"
       ~callback:
-        (let%arr keyboard_inject = keyboard_inject
-         and runtime_mode_inject = runtime_mode_inject
-         and keyboard_cancel = keyboard_cancel in
+        (let%arr live_keyboard_inject = live_keyboard_inject
+         and live_keyboard_cancel = live_keyboard_cancel in
          function
          | None -> Ui_effect.Ignore
          | Some (namedlayout : Namedlayout.With_score.t) ->
            let overwrite =
              Key.Id.Map.map namedlayout.keyboard ~f:(fun (key : Key.t) -> key.kc)
            in
-           let mode =
-             if [%equal: string option] (Some "[LIVE]") namedlayout.name
-             then Runtime.Mode.Optimize_server
-             else Manual
-           in
            Ui_effect.all_unit
-             [ runtime_mode_inject mode
-             ; keyboard_cancel
-             ; keyboard_inject [ Stem.Keyboard.Action.Overwrite overwrite ]
+             [ live_keyboard_cancel
+             ; live_keyboard_inject [ Stem.Keyboard.Action.Overwrite overwrite ]
              ])
       graph
   in
-  Runtime.Mode.start
-    runtime_mode
-    ~keyboard
-    ~keyboard_inject
-    ~keyboard_cancel
-    ~set_best_layouts
-    ~every:poll_rate
-    graph;
+  let _commented_out () =
+    Runtime.Mode.start
+      runtime_mode
+      ~keyboard:live_keyboard
+      ~keyboard_inject:live_keyboard_inject
+      ~keyboard_cancel:live_keyboard_cancel
+      ~set_best_layouts
+      ~every:poll_rate
+      graph
+  in
   let nav =
     let brute_force_indexes_button =
       let%arr effects =
-        Actions.brute_force_indexes ~keyboard_inject ~keyboard_cancel ~keyboard graph
+        Actions.brute_force_indexes
+          ~keyboard_inject:live_keyboard_inject
+          ~keyboard_cancel:live_keyboard_cancel
+          ~keyboard:live_keyboard
+          graph
       in
       Vdom.Node.button
         ~attrs:[ Vdom.Attr.on_click (fun _event -> effects) ]
         [ Vdom.Node.text "Brute Force indexes" ]
     in
     let random_swap_vdom =
-      let%arr keyboard_inject = keyboard_inject
+      let%arr live_keyboard_inject = live_keyboard_inject
       and runtime_mode = runtime_mode in
       let name = "Random Swap" in
       match (runtime_mode : Runtime.Mode.t) with
@@ -222,13 +285,15 @@ let app graph =
         Vdom.Node.button ~attrs:[ Vdom.Attr.disabled ] [ Vdom.Node.text name ]
       | Manual ->
         Vdom.Node.button
-          ~attrs:[ Vdom.Attr.on_click (fun _event -> keyboard_inject [ Random_swap ]) ]
+          ~attrs:
+            [ Vdom.Attr.on_click (fun _event -> live_keyboard_inject [ Random_swap ]) ]
           [ Vdom.Node.text name ]
     in
     let actions_vdom =
       let%arr random_swap_vdom = random_swap_vdom
       and brute_force_indexes_button = brute_force_indexes_button
       and namedlayout_vdom = namedlayout_vdom
+      and ticker = ticker
       and theme = theme in
       Vdom.Node.div
         ~attrs:
@@ -243,10 +308,12 @@ let app graph =
         [ Vdom.Node.label [ Vdom.Node.text "Actions" ]
         ; random_swap_vdom
         ; brute_force_indexes_button
+        ; ticker
         ; namedlayout_vdom
         ]
     in
     let%arr same_finger_controls_vdom = same_finger_controls_vdom
+    and layout_store_vdom = layout_store_vdom
     and best_layout_history_vdom = best_layout_history_vdom
     and actions_vdom = actions_vdom
     and runtime_mode_vdom = runtime_mode_vdom
@@ -289,6 +356,7 @@ let app graph =
         ]
       [ logo
       ; finger_dexterity_vdom
+      ; layout_store_vdom
       ; best_layout_history_vdom
       ; corpus_vdom
       ; same_finger_controls_vdom
@@ -401,13 +469,19 @@ let app graph =
     [ nav; main ]
 ;;
 
-let _debug () =
-  Bonsai_web.Start.start (fun _ ->
-    Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot app)))
-;;
-
 open! Async_kernel
 open! Async_rpc_kernel
+
+let dot data graph =
+  let open Bonsai.Let_syntax in
+  let eff =
+    let%arr dispatch = Bonsai_web.Rpc_effect.Rpc.dispatcher Stem.Protocol.Dot.t graph in
+    match%map.Ui_effect dispatch data with
+    | Ok () -> ()
+    | Error e -> Error.raise e
+  in
+  Bonsai.Edge.after_display eff graph
+;;
 
 let refresh_on_version_change graph =
   let open Bonsai.Let_syntax in
@@ -441,14 +515,20 @@ let refresh_on_version_change graph =
   Bonsai.Edge.after_display eff graph
 ;;
 
-let async_main () =
+let async_main mode =
   Async_js.init ();
   let () =
-    Bonsai_web.Start.start (fun graph ->
-      refresh_on_version_change graph;
-      app graph)
+    match mode with
+    | `Debug ->
+      Bonsai_web.Start.start (fun _ ->
+        Bonsai.return (Vdom.Node.text (Bonsai.Debug.to_dot app)))
+    | `Main ->
+      Bonsai_web.Start.start (fun graph ->
+        dot (Bonsai.Debug.to_dot app) graph;
+        refresh_on_version_change graph;
+        app graph)
   in
   return ()
 ;;
 
-let _ = don't_wait_for (async_main ())
+let _ = don't_wait_for (async_main `Main)

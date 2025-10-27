@@ -4,7 +4,7 @@ module Mode = struct
   include Stem.Runtime.Mode
 
   module Select = struct
-    let default = Optimize_server
+    let default = Manual
 
     let component ~runtime_mode_inject graph =
       let dropdown =
@@ -17,13 +17,15 @@ module Mode = struct
         let%arr dropdown = dropdown in
         Form.value_or_default dropdown ~default
       in
-      let () =
+      let _commented_out () =
         Bonsai.Edge.on_change
           data
           ~equal:Stem.Runtime.Mode.equal
           ~callback:
             (let%arr runtime_mode_inject = runtime_mode_inject in
-             fun (t : t) -> runtime_mode_inject t)
+             fun (t : t) ->
+               print_endline "Runtime mode inject";
+               runtime_mode_inject t)
           graph
       in
       let view =
@@ -60,7 +62,7 @@ module Mode = struct
           let%arr keyboard_inject = keyboard_inject in
           keyboard_inject [ Keyboard.Action.Random_swap ]
         in
-        Bonsai.Edge.lifecycle ~after_display:eff graph;
+        let _commented_out () = Bonsai.Edge.lifecycle ~after_display:eff graph in
         Bonsai.return ()
       | Optimize_server ->
         let poll_result =
@@ -107,7 +109,7 @@ module Mode = struct
                        }))
                 ]
         in
-        Bonsai.Edge.after_display eff graph;
+        let _commented_out () = Bonsai.Edge.after_display eff graph in
         Bonsai.return ()
     in
     (ignore : unit Bonsai.t -> unit) bonsai
