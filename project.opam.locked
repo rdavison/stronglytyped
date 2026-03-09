@@ -1,0 +1,248 @@
+opam-version: "2.0"
+synopsis: "Keyboard layout analysis"
+maintainer: "richardneildavison@gmail.com"
+depends: [
+  "abstract_algebra" {= "v0.18~preview.130.50+1016"}
+  "am_running_how_js" {= "v0.18~preview.130.50+1016"}
+  "angstrom" {= "0.16.1"}
+  "astring" {= "0.8.5"}
+  "async" {= "v0.18~preview.130.50+1016"}
+  "async_durable" {= "v0.18~preview.130.50+1016"}
+  "async_extra" {= "v0.18~preview.130.50+1016"}
+  "async_js" {= "v0.18~preview.130.50+1016"}
+  "async_kernel" {= "v0.18~preview.130.50+1016"}
+  "async_log" {= "v0.18~preview.130.50+1016"}
+  "async_rpc_kernel" {= "v0.18~preview.130.50+1016"}
+  "async_rpc_websocket" {= "v0.18~preview.130.50+1016"}
+  "async_ssl" {= "v0.18~preview.130.50+1016"}
+  "async_unix" {= "v0.18~preview.130.50+1016"}
+  "async_websocket" {= "v0.18~preview.130.50+1016"}
+  "babel" {= "v0.18~preview.130.50+1016"}
+  "base" {= "v0.18~preview.130.50+1016"}
+  "base-bigarray" {= "base"}
+  "base-bytes" {= "base+dune"}
+  "base-domains" {= "base"}
+  "base-nnp" {= "base"}
+  "base-threads" {= "base"}
+  "base-unix" {= "base"}
+  "base64" {= "3.5.1"}
+  "base_bigstring" {= "v0.18~preview.130.50+1016"}
+  "base_quickcheck" {= "v0.18~preview.130.50+1016"}
+  "basement" {= "v0.18~preview.130.50+1016"}
+  "bigarray-compat" {= "1.1.0"}
+  "bignum" {= "v0.18~preview.130.50+1016"}
+  "bigstringaf" {= "0.10.0"}
+  "bin_prot" {= "v0.18~preview.130.50+1016"}
+  "bonsai" {= "v0.18~preview.130.50+1016"}
+  "bonsai_concrete" {= "v0.18~preview.130.50+1016"}
+  "bonsai_test" {= "v0.18~preview.130.50+1016"}
+  "bonsai_web" {= "v0.18~preview.130.50+1016"}
+  "bonsai_web_components" {= "v0.18~preview.130.50+1016"}
+  "bonsai_web_test" {= "v0.18~preview.130.50+1016"}
+  "camlp-streams" {= "5.0.1"}
+  "capitalization" {= "v0.18~preview.130.50+1016"}
+  "cmdliner" {= "1.3.0+dune"}
+  "cohttp" {= "5.3.1"}
+  "cohttp-async" {= "5.3.0"}
+  "cohttp_async_websocket" {= "v0.18~preview.130.50+1016"}
+  "conduit" {= "8.0.0"}
+  "conduit-async" {= "8.0.0"}
+  "conf-gmp" {= "5"}
+  "conf-gmp-powm-sec" {= "4"}
+  "conf-libffi" {= "2.0.0"}
+  "conf-libssl" {= "4"}
+  "conf-pkg-config" {= "4"}
+  "conf-zlib" {= "1"}
+  "core" {= "v0.18~preview.130.50+1016"}
+  "core_extended" {= "v0.18~preview.130.50+1016"}
+  "core_kernel" {= "v0.18~preview.130.50+1016"}
+  "core_unix" {= "v0.18~preview.130.50+1016"}
+  "cryptokit" {= "1.16.1"}
+  "csexp" {= "1.5.2"}
+  "cstruct" {= "6.2.0"}
+  "ctypes" {= "0.23.0"}
+  "ctypes-foreign" {= "0.23.0"}
+  "dedent" {= "v0.18~preview.130.50+1016"}
+  "domain-name" {= "0.4.1"}
+  "dune" {= "3.20.1"}
+  "dune-configurator" {= "3.20.1"}
+  "expect_test_helpers_async" {= "v0.18~preview.130.50+1016"}
+  "expect_test_helpers_core" {= "v0.18~preview.130.50+1016"}
+  "expectable" {= "v0.18~preview.130.50+1016"}
+  "fieldslib" {= "v0.18~preview.130.50+1016"}
+  "file_path" {= "v0.18~preview.130.50+1016"}
+  "filesystem" {= "v0.18~preview.130.50+1016"}
+  "flexible_sexp" {= "v0.18~preview.130.50+1016"}
+  "fmt" {= "0.11.0+dune"}
+  "fuzzy_match" {= "v0.18~preview.130.50+1016"}
+  "gen" {= "1.1"}
+  "gen_js_api" {= "1.1.5"}
+  "incr_dom" {= "v0.18~preview.130.50+1016"}
+  "incr_map" {= "v0.18~preview.130.50+1016"}
+  "incr_select" {= "v0.18~preview.130.50+1016"}
+  "incremental" {= "v0.18~preview.130.50+1016"}
+  "int_repr" {= "v0.18~preview.130.50+1016"}
+  "integers" {= "0.7.0"}
+  "ipaddr" {= "5.6.1"}
+  "ipaddr-sexp" {= "5.6.1"}
+  "jane-street-headers" {= "v0.18~preview.130.50+1016"}
+  "janestreet_lru_cache" {= "v0.18~preview.130.50+1016"}
+  "js_of_ocaml" {= "6.2.0"}
+  "js_of_ocaml-compiler" {= "6.2.0"}
+  "js_of_ocaml-ppx" {= "6.2.0"}
+  "jsonm" {= "1.0.2"}
+  "jst-config" {= "v0.18~preview.130.50+1016"}
+  "lambdasoup" {= "1.1.1"}
+  "legacy_diffable" {= "v0.18~preview.130.50+1016"}
+  "logs" {= "0.9.0"}
+  "macaddr" {= "5.6.1"}
+  "magic-mime" {= "1.3.1"}
+  "markup" {= "1.0.3"}
+  "menhir" {= "20240715"}
+  "menhirCST" {= "20240715"}
+  "menhirLib" {= "20240715"}
+  "menhirSdk" {= "20240715"}
+  "num" {= "1.6"}
+  "ocaml" {= "5.2.1"}
+  "ocaml-base-compiler" {= "5.2.1"}
+  "ocaml-compiler-libs" {= "v0.17.0"}
+  "ocaml-config" {= "3"}
+  "ocaml-embed-file" {= "v0.18~preview.130.50+1016"}
+  "ocaml-options-vanilla" {= "1"}
+  "ocaml-syntax-shims" {= "1.0.0"}
+  "ocaml_intrinsics_kernel" {= "v0.18~preview.130.50+1016"}
+  "ocamlbuild" {= "0.16.1"}
+  "ocamlfind" {= "1.9.8"}
+  "ocamlgraph" {= "2.0.0"}
+  "odoc-parser" {= "3.1.0"}
+  "ojs" {= "1.1.5"}
+  "ordinal_abbreviation" {= "v0.18~preview.130.50+1016"}
+  "parsexp" {= "v0.18~preview.130.50+1016"}
+  "parsexp_prefix" {= "v0.18~preview.130.50+1016"}
+  "parsexp_symbolic_automaton" {= "v0.18~preview.130.50+1016"}
+  "patdiff" {= "v0.18~preview.130.50+1016"}
+  "patience_diff" {= "v0.18~preview.130.50+1016"}
+  "pipe_with_writer_error" {= "v0.18~preview.130.50+1016"}
+  "polling_state_rpc" {= "v0.18~preview.130.50+1016"}
+  "portable" {= "v0.18~preview.130.50+1016"}
+  "ppx_array_base" {= "v0.18~preview.130.50+1016"}
+  "ppx_assert" {= "v0.18~preview.130.50+1016"}
+  "ppx_base" {= "v0.18~preview.130.50+1016"}
+  "ppx_bench" {= "v0.18~preview.130.50+1016"}
+  "ppx_bin_prot" {= "v0.18~preview.130.50+1016"}
+  "ppx_cold" {= "v0.18~preview.130.50+1016"}
+  "ppx_compare" {= "v0.18~preview.130.50+1016"}
+  "ppx_css" {= "v0.18~preview.130.50+1016"}
+  "ppx_custom_printf" {= "v0.18~preview.130.50+1016"}
+  "ppx_derivers" {= "1.2.1"}
+  "ppx_diff" {= "v0.18~preview.130.50+1016"}
+  "ppx_disable_unused_warnings" {= "v0.18~preview.130.50+1016"}
+  "ppx_enumerate" {= "v0.18~preview.130.50+1016"}
+  "ppx_expect" {= "v0.18~preview.130.50+1016"}
+  "ppx_fields_conv" {= "v0.18~preview.130.50+1016"}
+  "ppx_fixed_literal" {= "v0.18~preview.130.50+1016"}
+  "ppx_fuelproof" {= "v0.18~preview.130.50+1016"}
+  "ppx_globalize" {= "v0.18~preview.130.50+1016"}
+  "ppx_hash" {= "v0.18~preview.130.50+1016"}
+  "ppx_helpers" {= "v0.18~preview.130.50+1016"}
+  "ppx_here" {= "v0.18~preview.130.50+1016"}
+  "ppx_html" {= "v0.18~preview.130.50+1016"}
+  "ppx_ignore_instrumentation" {= "v0.18~preview.130.50+1016"}
+  "ppx_inline_test" {= "v0.18~preview.130.50+1016"}
+  "ppx_jane" {= "v0.18~preview.130.50+1016"}
+  "ppx_js_style" {= "v0.18~preview.130.50+1016"}
+  "ppx_let" {= "v0.18~preview.130.50+1016"}
+  "ppx_log" {= "v0.18~preview.130.50+1016"}
+  "ppx_module_timer" {= "v0.18~preview.130.50+1016"}
+  "ppx_optcomp" {= "v0.18~preview.130.50+1016"}
+  "ppx_optional" {= "v0.18~preview.130.50+1016"}
+  "ppx_pattern_bind" {= "v0.18~preview.130.50+1016"}
+  "ppx_pipebang" {= "v0.18~preview.130.50+1016"}
+  "ppx_quick_test" {= "v0.18~preview.130.50+1016"}
+  "ppx_sexp_conv" {= "v0.18~preview.130.50+1016"}
+  "ppx_sexp_message" {= "v0.18~preview.130.50+1016"}
+  "ppx_sexp_value" {= "v0.18~preview.130.50+1016"}
+  "ppx_shorthand" {= "v0.18~preview.130.50+1016"}
+  "ppx_stable" {= "v0.18~preview.130.50+1016"}
+  "ppx_stable_witness" {= "v0.18~preview.130.50+1016"}
+  "ppx_string" {= "v0.18~preview.130.50+1016"}
+  "ppx_string_conv" {= "v0.18~preview.130.50+1016"}
+  "ppx_template" {= "v0.18~preview.130.50+1016"}
+  "ppx_tydi" {= "v0.18~preview.130.50+1016"}
+  "ppx_typed_fields" {= "v0.18~preview.130.50+1016"}
+  "ppx_typerep_conv" {= "v0.18~preview.130.50+1016"}
+  "ppx_var_name" {= "v0.18~preview.130.50+1016"}
+  "ppx_variants_conv" {= "v0.18~preview.130.50+1016"}
+  "ppxlib" {= "0.35.0"}
+  "ppxlib_jane" {= "v0.18~preview.130.50+1016"}
+  "profunctor" {= "v0.18~preview.130.50+1016"}
+  "protocol_version_header" {= "v0.18~preview.130.50+1016"}
+  "re" {= "1.13.2"}
+  "record_builder" {= "v0.18~preview.130.50+1016"}
+  "sedlex" {= "3.3"}
+  "seq" {= "base"}
+  "sexp_grammar" {= "v0.18~preview.130.50+1016"}
+  "sexp_pretty" {= "v0.18~preview.130.50+1016"}
+  "sexplib" {= "v0.18~preview.130.50+1016"}
+  "sexplib0" {= "v0.18~preview.130.50+1016"}
+  "spawn" {= "v0.17.0"}
+  "splittable_random" {= "v0.18~preview.130.50+1016"}
+  "stdio" {= "v0.18~preview.130.50+1016"}
+  "stdlib-shims" {= "0.3.0"}
+  "stored_reversed" {= "v0.18~preview.130.50+1016"}
+  "streamable" {= "v0.18~preview.130.50+1016"}
+  "string_dict" {= "v0.18~preview.130.50+1016"}
+  "stringext" {= "1.6.0"}
+  "testable_timeout" {= "v0.18~preview.130.50+1016"}
+  "textutils" {= "v0.18~preview.130.50+1016"}
+  "textutils_kernel" {= "v0.18~preview.130.50+1016"}
+  "tilde_f" {= "v0.18~preview.130.50+1016"}
+  "time_now" {= "v0.18~preview.130.50+1016"}
+  "topkg" {= "1.1.0"}
+  "toplayer" {= "v0.18~preview.130.50+1016"}
+  "typerep" {= "v0.18~preview.130.50+1016"}
+  "tyxml" {= "4.6.0"}
+  "uchar" {= "0.0.2+dune2"}
+  "unique" {= "v0.18~preview.130.50+1016"}
+  "univ_map" {= "v0.18~preview.130.50+1016"}
+  "uopt" {= "v0.18~preview.130.50+1016"}
+  "uri" {= "4.4.0"}
+  "uri-sexp" {= "4.4.0"}
+  "uri_parsing" {= "v0.18~preview.130.50+1016"}
+  "uucp" {= "16.0.0"}
+  "uutf" {= "1.0.4"}
+  "variantslib" {= "v0.18~preview.130.50+1016"}
+  "versioned_polling_state_rpc" {= "v0.18~preview.130.50+1016"}
+  "virtual_dom" {= "v0.18~preview.130.50+1016"}
+  "yojson" {= "2.2.2"}
+  "zarith" {= "1.14"}
+  "zarith_stubs_js" {= "v0.18~preview.130.50+1016"}
+]
+pin-depends: [
+  "ocaml-base-compiler.5.2.1"
+  "https://github.com/ocaml/ocaml/releases/download/5.2.1/ocaml-5.2.1.tar.gz"
+]
+name: "project"
+version: "0.01"
+build: [
+  ["dune" "subst"] {dev}
+  [
+  "dune"
+  "build"
+  "-p"
+  name
+  "-j"
+  jobs
+  "--promote-install-files=false"
+  "@install"
+  "@runtest" {with-test}
+  "@doc" {with-doc}
+]
+  ["dune" "install" "-p" name "--create-install-files" name]
+]
+authors: "Richard Davison"
+license: "MIT"
+homepage: "https://github.com/rdavison/stronglytyped"
+bug-reports: "https://github.com/rdavison/stronglytyped/issues"
+dev-repo: "git+https://github.com/rdavison/stronglytyped.git"
+x-maintenance-intent: ["(latest)"]

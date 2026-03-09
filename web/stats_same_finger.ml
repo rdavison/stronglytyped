@@ -1,0 +1,492 @@
+open! Import
+include Stem.Stats_same_finger
+
+let bar ~dir ~color ~pct =
+  let flex_direction =
+    match dir with
+    | `H -> "row"
+    | `V -> "column-reverse"
+  in
+  let flex_bar = pct |> Float.to_string in
+  let flex_blank = 1. -. pct |> Float.to_string in
+  let bar =
+    Vdom.Node.create
+      "bar-fill"
+      ~attrs:
+        [ [%css
+            {|
+              flex: %{flex_bar};
+              background: %{color};
+            |}]
+        ]
+      []
+  in
+  let blank =
+    Vdom.Node.create
+      "bar-blank"
+      ~attrs:
+        [ [%css
+            {|
+              flex: %{flex_blank};
+            |}]
+        ]
+      []
+  in
+  Vdom.Node.create
+    "bar"
+    ~attrs:
+      [ [%css
+          {|
+            display: flex;
+            width: 100%;
+            height: 100%;
+            flex-direction: %{flex_direction};
+          |}]
+      ]
+    [ bar; blank ]
+;;
+
+let multiselect graph =
+  let%arr form =
+    Form.Elements.Multiselect.set
+      ~default_selection_status:
+        (Bonsai.return Bonsai_web_ui_multi_select.Selection_status.Selected)
+      (module Typed_variant.Packed)
+      (Bonsai.return Typed_variant.Packed.all)
+      graph
+  in
+  Form.map_view form ~f:(fun view ->
+    Vdom.Node.div
+      ~attrs:
+        [ [%css
+            {|
+              .multi-select-container {
+                font-family: monospace;
+              }
+            |}]
+        ]
+      [ view ])
+;;
+
+let selected_metrics form =
+  let%arr form = form in
+  Form.value_or_default form ~default:[]
+;;
+
+let label (t : Typed_variant.Packed.t) =
+  match t.f with
+  | T Sfb -> "SFB"
+  | T Sfs -> "SFS"
+  | T Speed -> "Speed"
+  | T Sfb_worst -> "Worst SFB"
+  | T Sfs_worst -> "Worst SFS"
+  | T Speed_worst -> "Worst Speed"
+;;
+
+let css_attr_target n target curr =
+  let scale x =
+    let open Float in
+    5. *. exp (-1. *. n *. exp 1. *. (x ** 2.)) /. (2. *. sqrt (2. *. pi))
+  in
+  let a = Float.to_string (scale (Float.abs (target -. curr))) in
+  [%string "hsl(calc(0 + (142 - 0) * %{a}),70%,45%)"]
+;;
+
+let render_simple_with_target n target breakdown total =
+  (* let packed = Typed_variant.Packed.pack t in *)
+  let scale x = Float.sqrt (1. -. ((x -. 1.) ** 2.)) in
+  let height = scale (breakdown /. total) in
+  bar ~dir:`V ~color:(css_attr_target n target breakdown) ~pct:height
+;;
+
+let render_total2 n (packed : Typed_variant.Packed.t) target total =
+  let scale x =
+    match packed.f with
+    | T Sfb | T Sfs | T Sfb_worst | T Sfs_worst -> Float.sqrt (1. -. ((x -. 1.) ** 2.))
+    | T Speed | T Speed_worst -> total
+  in
+  let height = scale total in
+  bar ~dir:`V ~color:(css_attr_target n target total) ~pct:height
+;;
+
+let grid_attr ~padding ~cell_height ~theme cols =
+  let cols = Int.to_string cols in
+  [%css
+    {|
+      display: grid;
+      grid-template-columns: repeat(%{cols}, 1fr);
+      gap: 1px;
+      background: %{Design.(Card.border_color theme)#Css_gen.Color};
+      overflow: hidden;
+
+      & > header {
+        background: %{Design.(Card.background_color theme)#Css_gen.Color};
+        font-weight: bold;
+        padding: %{padding};
+        margin: ${padding};
+        text-align: center;
+        font-family: monospace;
+      }
+
+      & > cell, & > total {
+        background: %{Design.(Card.background_color theme)#Css_gen.Color};
+        padding: 0;
+        text-align: center;
+        font-family: monospace;
+        height: %{cell_height};
+      }
+    |}]
+;;
+
+let render_detailed (worst, per_finger_total) ~theme =
+  Vdom.Node.div
+    ~attrs:[ Design.Card.attr theme; [%css {|border: unset;|}] ]
+    [ Vdom.Node.div
+        ~attrs:[ grid_attr ~padding:"0" ~cell_height:"100%" ~theme 2 ]
+        (List.concat_map worst ~f:(fun (corpus_key, breakdown) ->
+           let height = breakdown /. per_finger_total in
+           [ Vdom.Node.header [ Vdom.Node.text corpus_key ]
+           ; Vdom.Node.create
+               "cell"
+               ~attrs:[ [%css {|padding: unset;|}] ]
+               [ bar ~dir:`H ~color:"tomato" ~pct:height ]
+           ]))
+    ]
+;;
+
+let render_breakdown_1
+  :  float
+  -> (float Stem.Hand_finger.Map.t, float) metric Typed_variant.t
+  -> float
+  -> float
+  -> Vdom.Node.t
+  =
+  fun n t breakdown total ->
+  match t with
+  | Sfb -> render_simple_with_target n 0. breakdown total
+  | Sfs -> render_simple_with_target n 0. breakdown total
+  | Speed -> render_simple_with_target n 0. breakdown total
+;;
+
+let render_breakdown_2
+  :  (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric Typed_variant.t
+  -> (string * float) list * float
+  -> theme:[ `Dark | `Light ]
+  -> Vdom.Node.t
+  =
+  fun t breakdown ~theme ->
+  match t with
+  | Sfb_worst -> render_detailed breakdown ~theme
+  | Sfs_worst -> render_detailed breakdown ~theme
+  | Speed_worst -> render_detailed breakdown ~theme
+;;
+
+let render_total
+  : type breakdown total.
+    float -> (breakdown, float) metric Typed_variant.t -> float -> Vdom.Node.t
+  =
+  fun n t total ->
+  let packed = Typed_variant.Packed.pack t in
+  render_total2 n packed 0. total
+;;
+
+let row_1
+      (dexterity : (Stem.Hand_finger.t -> float) Bonsai.t)
+      (variant : (float Stem.Hand_finger.Map.t, float) metric Typed_variant.t)
+      ~(metric : (float Stem.Hand_finger.Map.t, float) metric Bonsai.t)
+      graph
+  : Vdom.Node.t list Bonsai.t
+  =
+  let packed = Typed_variant.Packed.pack variant in
+  let%sub { breakdown; total } = metric in
+  let breakdown =
+    Bonsai.assoc
+      (module Stem.Hand_finger)
+      breakdown
+      ~f:(fun hand_finger breakdown _graph ->
+        let contents =
+          let open Bonsai.Applicative_infix in
+          let%arr dexterity = dexterity <*> hand_finger
+          and breakdown = breakdown
+          and total = total in
+          match variant with
+          | Sfb -> render_breakdown_1 dexterity Sfb breakdown total
+          | Sfs -> render_breakdown_1 dexterity Sfs breakdown total
+          | Speed -> render_breakdown_1 dexterity Speed breakdown total
+        in
+        let%arr contents = contents in
+        Vdom.Node.create
+          "cell"
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  justify-content: center;
+                |}]
+            ]
+          [ contents ])
+      graph
+  in
+  let total = Bonsai.map total ~f:(render_total 1. variant) in
+  let label = label packed in
+  let%arr breakdown = breakdown
+  and total = total in
+  let header =
+    Vdom.Node.header ~attrs:[ [%css {|font-weight: bold;|}] ] [ Vdom.Node.text label ]
+  in
+  let breakdown =
+    List.map Stem.Hand_finger.all ~f:(fun hand_finger ->
+      Map.find breakdown hand_finger
+      |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
+  in
+  let total = Vdom.Node.create "total" [ total ] in
+  (header :: breakdown) @ [ total ]
+;;
+
+let row_2
+      (variant :
+        (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric
+          Typed_variant.t)
+      ~(metric :
+         (((string * float) list * float) Stem.Hand_finger.Map.t, float) metric Bonsai.t)
+      ~theme
+      graph
+  : Vdom.Node.t list Bonsai.t
+  =
+  let packed = Typed_variant.Packed.pack variant in
+  let%sub { breakdown; total } = metric in
+  let breakdown =
+    Bonsai.assoc
+      (module Stem.Hand_finger)
+      breakdown
+      ~f:(fun _hand_finger breakdown _graph ->
+        let contents =
+          let%arr breakdown = breakdown
+          and theme = theme in
+          match variant with
+          | Sfb_worst -> render_breakdown_2 Sfb_worst breakdown ~theme
+          | Sfs_worst -> render_breakdown_2 Sfs_worst breakdown ~theme
+          | Speed_worst -> render_breakdown_2 Speed_worst breakdown ~theme
+        in
+        let%arr contents = contents in
+        Vdom.Node.create
+          "cell"
+          ~attrs:
+            [ [%css
+                {|
+                  display: flex;
+                  justify-content: center;
+                |}]
+            ]
+          [ contents ])
+      graph
+  in
+  let total = Bonsai.map total ~f:(render_total 1. variant) in
+  let label = label packed in
+  let%arr breakdown = breakdown
+  and total = total in
+  let header = Vdom.Node.header [ Vdom.Node.text label ] in
+  let breakdown =
+    List.map Stem.Hand_finger.all ~f:(fun hand_finger ->
+      Map.find breakdown hand_finger
+      |> Option.value ~default:(Vdom.Node.div [ Vdom.Node.none ]))
+  in
+  let total = Vdom.Node.create "total" [ total ] in
+  (header :: breakdown) @ [ total ]
+;;
+
+let table_simple
+      (n : (Stem.Hand_finger.t -> float) Bonsai.t)
+      (t :
+        ( Typed_variant.Packed.t
+          , t
+          , Typed_variant.Packed.comparator_witness )
+          Map_intf.Map.t
+          Bonsai.t)
+      metrics_order
+      ~theme
+      graph
+  =
+  let data =
+    Bonsai.assoc
+      (module Typed_variant.Packed)
+      t
+      ~f:(fun _key data graph ->
+        match%sub data with
+        | Sfb metric -> row_1 n Sfb ~metric graph |> Bonsai.map ~f:Option.return
+        | Sfs metric -> row_1 n Sfs ~metric graph |> Bonsai.map ~f:Option.return
+        | Speed metric -> row_1 n Speed ~metric graph |> Bonsai.map ~f:Option.return
+        | Sfb_worst _ -> Bonsai.return None
+        | Sfs_worst _ -> Bonsai.return None
+        | Speed_worst _ -> Bonsai.return None)
+      graph
+    |> Bonsai.Map.filter_map ~f:Fn.id
+  in
+  let%arr data = data graph
+  and theme = theme in
+  let header =
+    let all = Stem.Hand_finger.all in
+    let to_string = Stem.Hand_finger.to_string in
+    (all |> List.map ~f:to_string) @ [ "Total" ]
+  in
+  Vdom.Node.create
+    "card"
+    ~attrs:[ Design.Card.attr theme; [%css {|width: 50%;|}] ]
+    [ Vdom.Node.create
+        "hand-finger-table" (*table*)
+        ~attrs:[ grid_attr ~padding:"0" ~cell_height:"4rem" ~theme 10 ]
+        (let header =
+           Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
+           :: List.map header ~f:(fun label ->
+             Vdom.Node.header (*th*) [ Vdom.Node.text label ])
+         in
+         let rows =
+           List.map metrics_order ~f:(fun metric -> Map.find data metric)
+           |> List.filter_opt
+         in
+         let grid = header :: rows in
+         List.concat grid)
+    ]
+;;
+
+let table_detailed
+      (t :
+        ( Typed_variant.Packed.t
+          , t
+          , Typed_variant.Packed.comparator_witness )
+          Map_intf.Map.t
+          Bonsai.t)
+      metrics_order
+      ~theme
+      graph
+  =
+  let data =
+    Bonsai.assoc
+      (module Typed_variant.Packed)
+      t
+      ~f:(fun _key data graph ->
+        match%sub data with
+        | Sfb _ -> Bonsai.return None
+        | Sfs _ -> Bonsai.return None
+        | Speed _ -> Bonsai.return None
+        | Sfb_worst metric ->
+          row_2 Sfb_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
+        | Sfs_worst metric ->
+          row_2 Sfs_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return
+        | Speed_worst metric ->
+          row_2 Speed_worst ~metric ~theme graph |> Bonsai.map ~f:Option.return)
+      graph
+    |> Bonsai.Map.filter_map ~f:Fn.id
+  in
+  let%arr data = data graph
+  and theme = theme in
+  let header =
+    let all = Stem.Hand_finger.all in
+    let to_string = Stem.Hand_finger.to_string in
+    (all |> List.map ~f:to_string) @ [ "Total" ]
+  in
+  Vdom.Node.create
+    "card"
+    ~attrs:[ Design.Card.attr theme; [%css {|width: 100%;|}] ]
+    [ Vdom.Node.create
+        "hand-finger-table" (*table*)
+        ~attrs:[ grid_attr ~padding:"0" ~cell_height:"unset" ~theme 10 ]
+        (let header =
+           Vdom.Node.header (*th*) ~attrs:[] [ (* empty corner cell *) ]
+           :: List.map header ~f:(fun label ->
+             Vdom.Node.header (*th*) [ Vdom.Node.text label ])
+         in
+         let rows =
+           List.map metrics_order ~f:(fun metric -> Map.find data metric)
+           |> List.filter_opt
+         in
+         let grid = header :: rows in
+         List.concat grid)
+    ]
+;;
+
+let component ~keyboard ~finger_dexterity ~corpus ~theme graph =
+  let worst_counter, worst_counter_vdom =
+    let n, inject = Stem.Counter.counter 6 graph in
+    let vdom = Counter.vdom ~n ~inject ~msg:(fun n -> sprintf "%d" n) in
+    n, vdom
+  in
+  let controls =
+    let%arr controls = multiselect graph
+    and theme = theme
+    and worst_counter_vdom = worst_counter_vdom in
+    let worst_counter_vdom =
+      Vdom.Node.div
+        ~attrs:
+          [ [%css
+              {|
+                display: flex;
+                flex-direction: column;
+              |}]
+          ]
+        [ Vdom.Node.label [ Vdom.Node.text "Worst Counter" ]; worst_counter_vdom ]
+    in
+    Form.map_view controls ~f:(fun vdom ->
+      Vdom.Node.div
+        ~attrs:
+          [ Design.Card.attr theme
+          ; [%css
+              {|
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+              |}]
+          ]
+        [ vdom; worst_counter_vdom ])
+  in
+  let metrics =
+    let%arr controls = controls in
+    Form.value_or_default
+      controls
+      ~default:(Set.of_list (module Typed_variant.Packed) Typed_variant.Packed.all)
+  in
+  let diff_row_bigram_data =
+    let data = Stem.Bigram_data.make keyboard corpus graph in
+    bigram_data data graph
+  in
+  let stats_same_finger =
+    Stem.Stats_same_finger.component ~metrics ~worst_counter ~diff_row_bigram_data graph
+  in
+  let table_simple =
+    table_simple
+      finger_dexterity
+      (let%map _, stats_same_finger = stats_same_finger in
+       stats_same_finger)
+      Stem.Stats_same_finger.Typed_variant.Packed.all
+      ~theme
+      graph
+  in
+  let table_detailed =
+    table_detailed
+      (let%map _, stats_same_finger = stats_same_finger in
+       stats_same_finger)
+      Stem.Stats_same_finger.Typed_variant.Packed.all
+      ~theme
+      graph
+  in
+  let vdom =
+    let%arr metrics = metrics
+    and table_simple = table_simple
+    and table_detailed = table_detailed in
+    if Set.is_empty metrics
+    then Vdom.Node.none
+    else
+      Vdom.Node.div
+        ~attrs:
+          [ [%css
+              {|
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+                align-items: center;
+              |}]
+          ]
+        [ table_simple; table_detailed ]
+  in
+  stats_same_finger, controls, vdom
+;;

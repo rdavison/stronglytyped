@@ -1,6 +1,5 @@
-(executable
- (name main)
- (libraries core core_unix.command_unix stronglytyped.analyzer)
+(executables
+ (names main)
+ (libraries stronglytyped_server core_unix.command_unix)
  (preprocess
-  (pps ppx_jane))
- (modules main))
+  (pps ppx_jane)))

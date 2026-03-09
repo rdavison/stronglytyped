@@ -1,0 +1,21 @@
+(library
+ (name stronglytyped_server)
+ (libraries
+  async_extra.async_bus
+  async_rpc_websocket
+  async_rpc_kernel
+  async
+  bonsai
+  bonsai.driver
+  cohttp-async
+  cohttp_async_websocket
+  stronglytyped_stem)
+ (flags :standard -open Core -open Bonsai -open Bonsai.Let_syntax)
+ (preprocess
+  (pps ppx_jane bonsai.ppx_bonsai)))
+
+(rule
+ (targets embedded_files.ml embedded_files.mli)
+ (deps ../web/main.bc.js)
+ (action
+  (bash "%{bin:ocaml-embed-file} %{deps} -output embedded_files")))
